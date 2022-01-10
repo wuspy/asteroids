@@ -1,0 +1,51 @@
+{
+    "name": "website",
+    "author": "Jacob Jordan",
+    "version": "1.0.99",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/animejs": "^3.1.4",
+        "@types/webfontloader": "^1.6.34",
+        "@typescript-eslint/eslint-plugin": "^5.5.0",
+        "@typescript-eslint/parser": "^5.5.0",
+        "@webpack-cli/generators": "^2.4.1",
+        "circular-dependency-plugin": "^5.2.2",
+        "css-loader": "^6.5.1",
+        "eslint": "^8.4.0",
+        "html-inline-css-webpack-plugin": "^1.11.1",
+        "html-inline-script-webpack-plugin": "^2.0.3",
+        "html-webpack-plugin": "^5.5.0",
+        "mini-css-extract-plugin": "^2.4.6",
+        "sass": "^1.47.0",
+        "sass-loader": "^12.4.0",
+        "terser-webpack-plugin": "^5.2.5",
+        "ts-loader": "^9.2.6",
+        "ts-shader-loader": "^1.0.6",
+        "typescript": "^4.5.2",
+        "webpack": "^5.65.0",
+        "webpack-cli": "^4.9.1"
+    },
+    "scripts": {
+        "lint": "eslint src --ext .ts",
+        "build": "webpack --mode=production --node-env=production",
+        "watch": "webpack --watch",
+        "build:dev": "webpack --mode=development",
+        "build:prod": "webpack --mode=production --node-env=production"
+    },
+    "dependencies": {
+        "@pixi/constants": "^6.2.1",
+        "@pixi/core": "^6.2.1",
+        "@pixi/display": "^6.2.1",
+        "@pixi/filter-alpha": "^6.2.1",
+        "@pixi/filter-blur": "^6.2.1",
+        "@pixi/filter-glow": "^4.1.5",
+        "@pixi/filter-motion-blur": "^4.1.5",
+        "@pixi/graphics-smooth": "^0.0.19",
+        "@pixi/interaction": "^6.2.1",
+        "@pixi/math": "^6.2.1",
+        "@pixi/mixin-cache-as-bitmap": "^6.2.1",
+        "@pixi/text": "^6.2.1",
+        "animejs": "^3.2.1",
+        "tslib": "^2.3.1"
+    }
+}

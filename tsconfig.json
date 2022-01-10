@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "es6",
+        "moduleResolution": "node",
+        "target": "es6",
+        "strict": true,
+        "allowJs": false,
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "forceConsistentCasingInFileNames": true,
+        "importHelpers": true,
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}

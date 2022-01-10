@@ -1,0 +1,249 @@
+// @use "./abberation.scss";
+body {
+    font-family: Consolas, Monaco, Noto Sans Mono, Roboto Mono, Liberation Mono, monospace;
+    background: black;
+    color: white;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+    font-size: 12pt;
+}
+
+a {
+    color: inherit;
+}
+
+h1 {
+    font-size: 32pt;
+}
+
+h2 {
+    font-size: 24pt;
+}
+
+h3 {
+    font-size: 18pt;
+}
+
+h4 {
+    font-size: 15pt;
+    font-weight: normal;
+}
+
+svg {
+    fill: white;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
+}
+
+.striped-overlay {
+    background-size: 16px 3pt;
+    background-position: 50%;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, .05) 1pt, rgba(255, 255, 255, .025) 1pt);
+    z-index: 99999;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+.emoji {
+    // inherited text-shadow looks a bit too exaggerated on emojis
+    text-shadow: 0 0 6pt rgba(255, 255, 255, 0.25);
+    // chrome makes emojis monochrome when used with a bold font
+    font-weight: normal;
+    display: inline-block;
+}
+
+.button {
+    display: block;
+    cursor: pointer;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    background: #394871;
+    text-decoration: none;
+    padding: 12px;
+    transform: rotate3d(.5, -.866, 0, 15deg) rotate(1deg);
+    box-shadow: 2em 4em 6em -2em rgba(0, 0, 0, .5), 1em 2em 3.5em -2.5em rgba(0, 0, 0, .5);
+    transition: transform .4s, box-shadow .4s, background 1s;
+    border-radius: .5em;
+    border: 1pt solid rgba(255, 255, 255, .25);
+    .button-icon {
+        display: inline-block;
+        vertical-align: middle;
+        svg {
+            height: 18pt;
+            width: 18pt;
+        }
+    }
+    .button-text {
+        position: relative;
+        font-weight: bold;
+        display: inline-block;
+        vertical-align: middle;
+        text-decoration: none;
+        font-size: 14pt;
+    }
+    &:hover {
+        transform: rotate3d(0, 0, 0, 0deg) rotate(0deg);
+    }
+    &:after {
+        content: "";
+        display: block;
+        position: absolute;
+        border-radius: .5em;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0;
+        transition: all .25s;
+        background: white;
+        box-shadow: 0 0 10px 10px white;
+    }
+    &:active {
+        background: #97ff38;
+        transition: background .25s;
+        &:after {
+            background: transparent;
+            box-shadow: 0 0 0 0 white;
+            opacity: .25;
+            transition: 0s;
+        }
+    }
+}
+
+@media (min-width:500px) {
+    .button {
+        display: inline-block;
+    }
+}
+
+#background {
+    position: fixed;
+    display: block;
+    opacity: 0;
+    transition: opacity 1s;
+    /* background: linear-gradient(90deg, #00394c, #006a54); */
+    /* background: linear-gradient(75deg, #0e4035, #000128); */
+    /* background: radial-gradient(circle at center, #235b76, #202a4e); */
+    /* background: linear-gradient(75deg, #1c223a, #1a1a26, #1c223a); */
+    /* background: linear-gradient(0deg, #633446, #370f43); */
+    /* background: linear-gradient(75deg, #572771, #44091f); */
+    /* background: linear-gradient(0deg, black, #202028); */
+    /* background: radial-gradient(circle at center, #1d182e, #262a6a); */
+    /* background: radial-gradient(circle at center, #570900, #2f023d); */
+    /* background: linear-gradient(0deg, #4d250b, #1f1025); */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#background-overlay {
+    position: fixed;
+    display: block;
+    background: repeating-linear-gradient(7deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px), repeating-linear-gradient(97deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#striped-overlay {
+    background-size: 16px 3pt;
+    background-position: 50%;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, .05) 1pt, rgba(255, 255, 255, .025) 1pt);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+#radial-overlay {
+    background: radial-gradient(circle at center, transparent, transparent, rgba(255, 255, 255, 0.05));
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+#game {
+    position: fixed;
+    display: block;
+    /* background: repeating-linear-gradient(7deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px), repeating-linear-gradient(97deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px), linear-gradient(90deg, #013144, #007e53); */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#unsupported-message {
+    position: absolute;
+    top: 50%;
+    text-align: center;
+    left: 24px;
+    right: 24px;
+}
+
+#branding {
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 10pt;
+    position: fixed;
+    display: block;
+    text-align: center;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+}
+
+@media(max-width: 300px) {
+    .branding-separator {
+        display: none;
+    }
+    .branding-line {
+        display: block;
+    }
+}
+
+#content {
+    position: fixed;
+    display: block;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 24px;
+    /* max-width: 450px;
+    margin-left: auto;
+    margin-right: auto; */
+    text-align: center;
+}
+
+#loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -62px;
+    margin-left: -62px;
+    border: 12px solid transparent;
+    border-top: 12px solid white;
+    border-bottom: 12px solid white;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    animation: spin 1s linear infinite;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,72 @@
+.abberation {
+    position: relative;
+    display: inline-block;
+    // Default behavior for lacking mix-blend-mode support
+    >.red {
+        display: none;
+    }
+    >.blue {
+        display: none;
+    }
+}
+
+$red: rgba(255, 0, 0, .8);
+$green: rgba(0, 255, 0, .8);
+$blue: rgba(0, 0, 255, .8);
+@supports(mix-blend-mode:screen) {
+    .abberation {
+        >* {
+            mix-blend-mode: screen;
+        }
+        >.green {
+            color: $green;
+            svg {
+                fill: $green;
+            }
+        }
+        >.red {
+            display: initial;
+            position: absolute;
+            color: $red;
+            pointer-events: none;
+            user-select: none;
+            top: -1.5pt;
+            left: 1.5pt;
+            bottom: 1.5pt;
+            right: -1.5pt;
+            text-shadow: none;
+            svg {
+                fill: $red;
+                filter: none;
+            }
+        }
+        &.weak>.red {
+            top: -1pt;
+            left: 1pt;
+            bottom: 1pt;
+            right: -1pt;
+        }
+        >.blue {
+            display: initial;
+            position: absolute;
+            color: $blue;
+            pointer-events: none;
+            user-select: none;
+            top: 1.5pt;
+            left: -1.5pt;
+            bottom: -1.5pt;
+            right: 1.5pt;
+            text-shadow: none;
+            svg {
+                fill: $blue;
+                filter: none;
+            }
+        }
+        &.weak>.blue {
+            top: 1pt;
+            left: -1pt;
+            bottom: -1pt;
+            right: 1pt;
+        }
+    }
+}
