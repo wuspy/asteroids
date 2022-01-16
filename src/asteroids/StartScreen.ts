@@ -17,10 +17,12 @@ import anime from "animejs";
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { controls } from "./input";
 import { createControlDescription, getControlProps } from "./controlGraphic";
+import { Align, FlexDirection } from "./layout";
 
 export class StartScreen extends Widget implements Tickable {
     private _state: GameState;
     private _container: Container;
+    private _controlLayoutContainer: Container;
     private _timeline: anime.AnimeTimelineInstance;
     private _controlPointers: HelpPointer[];
 
@@ -33,6 +35,19 @@ export class StartScreen extends Widget implements Tickable {
 
         this._state = params.state;
         this._container = new Container();
+        this._container.flexContainer = true;
+        // this._container.debugLayout = true;
+        this._container.layout.style({
+            flexDirection: FlexDirection.Column,
+            alignItems: Align.Center,
+        });
+
+        this._controlLayoutContainer = new Container();
+        this._controlLayoutContainer.layout.style({
+            marginVertical: 48,
+            originAtCenter: true,
+        });
+        this._container.addChild(this._controlLayoutContainer);
         this._controlPointers = [];
 
         params.inputProvider.events.on("mappingChanged", this.onMappingChanged, this);
@@ -41,7 +56,7 @@ export class StartScreen extends Widget implements Tickable {
         const shipShadow = new Graphics(ship.geometry);
         shipShadow.filters = [new BlurFilter()];
         ship.cacheAsBitmap = true;
-        this._container.addChild(shipShadow, ship);
+        this._controlLayoutContainer.addChild(shipShadow, ship);
 
         // const inputSelector = this.createInputSelector();
         // inputSelector.x = -inputSelector.width / 2;
@@ -69,8 +84,6 @@ export class StartScreen extends Widget implements Tickable {
                 distance: 24,
             }),
         ];
-        startControl.x = -startControl.width / 2;
-        startControl.y = 200;
 
         this._timeline = anime.timeline({ autoplay: false }).add({
             easing: "linear",
@@ -223,7 +236,7 @@ export class StartScreen extends Widget implements Tickable {
             duration: 500,
         }));
 
-        this._container.addChild(...this._controlPointers.map((pointer) => pointer.container));
+        this._controlLayoutContainer.addChild(...this._controlPointers.map((pointer) => pointer.container));
     }
 
     fadeOut(complete: () => void): void {

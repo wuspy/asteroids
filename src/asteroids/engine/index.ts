@@ -6,8 +6,6 @@ export * from "./OneShotAnimation";
 export * from "./GameObject";
 export * from "./DynamicGameObject";
 export * from "./HitAreaDebugContainer";
-export * from "./RelativeLayout";
-export * from "./LinearLayout";
 export * from "./TickQueue";
 export * from "./EventManager";
 export * from "./Widget";

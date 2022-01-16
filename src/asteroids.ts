@@ -1,12 +1,13 @@
 import { AsteroidsGame } from "./asteroids/AsteroidsGame";
 import { initRandom } from "./asteroids/engine";
 import { HeadlessAsteroidsGame } from "./asteroids/HeadlessAsteroidsGame";
+import { initYoga } from "./asteroids/layout";
 
-// const BRANDING = "jacobjordan.tech | <a href=\"https://github.com/wuspy/asteroids\">Source Code</a>";
+window.setTimeout(async () => {
+    await initYoga();
 
-document.getElementById("loader")?.remove();
+    document.getElementById("loader")?.remove();
 
-window.setTimeout(() => {
     const randomSeed = initRandom();
     const game = new AsteroidsGame({ containerId: "game" });
 
@@ -25,4 +26,4 @@ window.setTimeout(() => {
             console.log("Simulated State", testGame.state);
         }
     });
-}, 100);
+});

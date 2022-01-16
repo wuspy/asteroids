@@ -1,26 +1,19 @@
 import { FONT_FAMILY, QUEUE_PRIORITIES } from "./constants";
 import { GameState } from "./GameState";
-import { OneShotAnimation, Tickable, RelativeLayout, CoreOneShotAnimationParams, Widget, CoreWidgetParams } from "./engine";
+import { OneShotAnimation, Tickable, CoreOneShotAnimationParams, Widget, CoreWidgetParams } from "./engine";
 import { Text } from "@pixi/text";
 import { Container } from "@pixi/display";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { ISize } from "@pixi/math";
-import '@pixi/mixin-cache-as-bitmap';
+import { FlexDirection } from "./layout";
 
 const FONT_SIZE = 48;
 const FONT_WEIGHT = "normal";
-const PADDING: ISize = {
-    width: 12,
-    height: 8
-};
 const MAX_DIGITS = 7;
 
 export class ScoreIndicator extends Widget implements Tickable {
     private readonly _state: GameState;
-    private readonly _container: RelativeLayout;
+    private readonly _container: Container;
     private readonly _zeroText: Text;
     private readonly _scoreText: Text;
-    private readonly _background: Graphics;
     private _lastScore: number;
 
     constructor(params: CoreWidgetParams & {
@@ -30,7 +23,23 @@ export class ScoreIndicator extends Widget implements Tickable {
         this._state = params.state;
         this._lastScore = -1;
 
-        this._container = new RelativeLayout();
+        this._container = new Container();
+        this._container.flexContainer = true;
+        this._container.layout.style({
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            flexDirection: FlexDirection.Row,
+        });
+        this._container.backgroundStyle = {
+            shape: "rectangle",
+            cornerRadius: 12,
+            cacheAsBitmap: true,
+            fill: {
+                color: this._state.theme.uiBackgroundColor,
+                alpha: this._state.theme.uiBackgroundAlpha,
+                smooth: true,
+            },
+        };
         this._zeroText = new Text(Array(MAX_DIGITS - 1).fill("0").join(""), {
             fontFamily: FONT_FAMILY,
             fontSize: FONT_SIZE,
@@ -45,41 +54,8 @@ export class ScoreIndicator extends Widget implements Tickable {
             fill: this._state.theme.uiForegroundColor,
         });
 
-        this._background = new Graphics();
-        this._background.x = 0;
-        this._background.y = 0;
-        this._background.beginFill(this._state.theme.uiBackgroundColor, this._state.theme.uiBackgroundAlpha, true);
-        this._background.drawRoundedRect(
-            0,
-            0,
-            this._zeroText.width + this._scoreText.width + PADDING.width * 2,
-            this._zeroText.height + PADDING.height * 2,
-            12,
-        );
-
-        this._container.height = this._background.height;
-        this._container.width = this._background.width;
-        this._container.addChildWithConstraints(this._background, {
-            constraints: {
-                left: ["parent", "left"],
-                top: ["parent", "top"],
-            },
-        });
-        this._container.addChildWithConstraints(this._zeroText, {
-            margin: { left: PADDING.width, top: PADDING.height },
-            constraints: {
-                left: ["parent", "left"],
-                top: ["parent", "top"],
-            },
-        });
-        this._container.addChildWithConstraints(this._scoreText, {
-            margin: { top: PADDING.height },
-            constraints: {
-                left: [this._zeroText, "right"],
-                top: ["parent", "top"],
-            },
-        });
-        this._background.cacheAsBitmap = true;
+        this._container.addChild(this._zeroText);
+        this._container.addChild(this._scoreText);
         this._zeroText.cacheAsBitmap = true;
         this._scoreText.cacheAsBitmap = true;
     }
@@ -93,7 +69,12 @@ export class ScoreIndicator extends Widget implements Tickable {
                 this._zeroText.cacheAsBitmap = true;
             }
             this._scoreText.cacheAsBitmap = false;
+            const needsUpdate = score.length !== this._scoreText.text.length;
             this._scoreText.text = score;
+            if (needsUpdate) {
+                // The reason we need to update the layout manually here is so we can position the animation
+                this._container.layout.update();
+            }
             this._scoreText.cacheAsBitmap = true;
             const animation = new ScoreAnimation({
                 state: this._state,
@@ -101,24 +82,24 @@ export class ScoreIndicator extends Widget implements Tickable {
                 score: this._state.score,
                 color: this._state.theme.uiForegroundColor,
             });
-            this._container.addChildWithConstraints(animation.container, {
-                constraints: {
-                    hcenter: [this._scoreText, "hcenter"],
-                    vcenter: [this._scoreText, "vcenter"],
-                },
-            });
+            animation.container.layout.excluded = true;
+            animation.container.position.set(
+                this._scoreText.x + this._scoreText.width / 2,
+                this._scoreText.y + this._scoreText.height / 2,
+            );
+            this._container.addChild(animation.container);
             this._lastScore = this._state.score;
         }
     }
 
-    get container(): RelativeLayout {
+    get container(): Container {
         return this._container;
     }
 }
 
 class ScoreAnimation extends OneShotAnimation {
-    private _score: string;
-    private _text: Text;
+    private readonly _score: string;
+    private readonly _text: Text;
 
     constructor(params: CoreOneShotAnimationParams & {
         score: number,
@@ -141,6 +122,7 @@ class ScoreAnimation extends OneShotAnimation {
             fontWeight: FONT_WEIGHT,
             fill: params.color,
         });
+        this._text.anchor.set(0.5);
         this._text.alpha = 0.8;
 
         this.timeline.add({

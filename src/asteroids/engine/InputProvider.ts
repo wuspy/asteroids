@@ -92,6 +92,9 @@ export interface InputProviderEvents<Controls extends readonly string[]> {
     mappingChanged: (mapping: InputMapping<Controls>) => void;
 }
 
+export const createEmptyInput = <Controls extends readonly string[]>(controls: Controls): InputState<Controls> =>
+    controls.reduce((o, name) => ({ ...o, [name]: 0 }), {}) as InputState<Controls>;
+
 export class InputProvider<Controls extends readonly string[]> {
     deadzone: number;
     private _initialState: InputState<Controls>;
@@ -103,24 +106,20 @@ export class InputProvider<Controls extends readonly string[]> {
     private _mapping: InputMapping<Controls>;
     private _events: EventManager<InputProviderEvents<Controls>>;
 
-    static createEmptyInput<Controls extends readonly string[]>(controls: Controls): InputState<Controls> {
-        return controls.reduce((o, name) => ({ ...o, [name]: 0 }), {}) as InputState<Controls>;
-    }
-
-    constructor(controls: Controls) {
-        this.deadzone = DEFAULT_DEADZONE;
+    constructor(controls: Controls, deadzone?: number) {
+        this.deadzone = deadzone ?? DEFAULT_DEADZONE;
         this._mapping = {};
         this._keyState = {};
         this._lastKeyState = {};
         this._lastButtonState = {};
         this._lastAnalogState = {};
         this._gamepad = null;
-        this._initialState = InputProvider.createEmptyInput(controls);
+        this._initialState = createEmptyInput(controls);
         this._events = new EventManager();
         window.addEventListener("keydown", this.onKeyDown);
         window.addEventListener("keyup", this.onKeyUp);
     }
-    
+
     destroy(): void {
         window.removeEventListener("keydown", this.onKeyDown);
         window.removeEventListener("keyup", this.onKeyUp);

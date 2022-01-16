@@ -10,8 +10,10 @@
         "@typescript-eslint/parser": "^5.5.0",
         "@webpack-cli/generators": "^2.4.1",
         "circular-dependency-plugin": "^5.2.2",
+        "copy-webpack-plugin": "^10.2.0",
         "css-loader": "^6.5.1",
         "eslint": "^8.4.0",
+        "file-loader": "^6.2.0",
         "html-inline-css-webpack-plugin": "^1.11.1",
         "html-inline-script-webpack-plugin": "^2.0.3",
         "html-webpack-plugin": "^5.5.0",
@@ -23,12 +25,14 @@
         "ts-shader-loader": "^1.0.6",
         "typescript": "^4.5.2",
         "webpack": "^5.65.0",
-        "webpack-cli": "^4.9.1"
+        "webpack-cli": "^4.9.1",
+        "webpack-dev-server": "^4.7.3"
     },
     "scripts": {
         "lint": "eslint src --ext .ts",
         "build": "webpack --mode=production --node-env=production",
         "watch": "webpack --watch",
+        "serve": "webpack serve",
         "build:dev": "webpack --mode=development",
         "build:prod": "webpack --mode=production --node-env=production"
     },
@@ -46,6 +50,7 @@
         "@pixi/mixin-cache-as-bitmap": "^6.2.1",
         "@pixi/text": "^6.2.1",
         "animejs": "^3.2.1",
-        "tslib": "^2.3.1"
+        "tslib": "^2.3.1",
+        "yoga-layout-wasm": "^1.9.3-alpha.7"
     }
 }

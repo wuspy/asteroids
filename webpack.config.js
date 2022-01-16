@@ -6,19 +6,28 @@ const HtmlInlineScriptPlugin = require("html-inline-script-webpack-plugin");
 const HtmlInlineCssPlugin = require("html-inline-css-webpack-plugin").default;
 const CircularDependencyPlugin = require("circular-dependency-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 const mode = process.env.NODE_ENV === "production" ? "production" : "development";
+const dist = path.resolve(__dirname, "dist");
 
 const index = {
     entry: ["./src/index.ts", "./src/scss/index.scss"],
     target: ["web", "es5"],
     output: {
-        path: path.resolve(__dirname, "dist"),
+        path: dist,
         clean: true,
+    },
+    devtool: mode === "development" ? "source-map" : undefined,
+    devServer: {
+        static: {
+            directory: dist,
+        },
+        port: 9000,
     },
     plugins: [
         new webpack.DefinePlugin({
-            'process.env.npm_package_version': JSON.stringify(process.env.npm_package_version),
+            "process.env.npm_package_version": JSON.stringify(process.env.npm_package_version),
         }),
         new MiniCssExtractPlugin({
             filename: "[name].css",
@@ -39,9 +48,9 @@ const index = {
                 use: [{
                     loader: 'ts-loader',
                     options: {
-                        configFile: "tsconfig.es5.json"
+                        configFile: "tsconfig.es5.json",
                     },
-                }],
+                }, ],
                 exclude: ["/node_modules/"],
             },
             {
@@ -50,12 +59,8 @@ const index = {
             },
             {
                 test: /\.s[ac]ss$/i,
-                use: [
-                    MiniCssExtractPlugin.loader,
-                    "css-loader",
-                    "sass-loader",
-                ],
-            }
+                use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
+            },
         ],
     },
     resolve: {
@@ -68,8 +73,9 @@ const asteroids = {
     target: ["web", "es6"],
     output: {
         filename: "asteroids.js",
-        path: path.resolve(__dirname, "dist"),
+        path: dist,
     },
+    devtool: mode === "development" ? "source-map" : undefined,
     plugins: [
         new CircularDependencyPlugin({
             exclude: /node_modules/,
@@ -81,6 +87,11 @@ const asteroids = {
             allowAsyncCycles: false,
             // set the current working directory for displaying module paths
             cwd: process.cwd(),
+        }),
+        new CopyPlugin({
+            patterns: [
+                "node_modules/yoga-layout-wasm/dist/yoga.wasm",
+            ],
         }),
     ],
     module: {
@@ -98,6 +109,11 @@ const asteroids = {
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
+        // Required for yoga-layout-wasm
+        alias: {
+            path: false,
+            fs: false,
+        },
     },
     optimization: {
         minimizer: [new TerserPlugin({

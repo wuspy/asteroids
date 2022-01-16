@@ -1,9 +1,10 @@
 import { Container } from "@pixi/display";
-import { Text } from "@pixi/text";
+import { Text, TextStyle } from "@pixi/text";
 import { FONT_FAMILY } from "./constants";
-import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping, RelativeLayout } from "./engine";
+import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "./engine";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { controls } from "./input";
+import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 
 export type ControlType = "key" | "button" | "trigger" | "stick";
 
@@ -23,7 +24,13 @@ export const createControlGraphic = (params: {
     background: number;
     foreground: number;
 }): Container => {
-    const container = new RelativeLayout();
+    const container = new Container();
+    container.flexContainer = true;
+    // container.debugLayout = true;
+    container.layout.style({
+        alignItems: Align.Center,
+        justifyContent: JustifyContent.Center,
+    })
     const label = params.type === "key" && params.control in KEY_LABELS ? KEY_LABELS[params.control] : params.control;
     const text = new Text(label.toUpperCase(), {
         fontFamily: FONT_FAMILY,
@@ -31,33 +38,35 @@ export const createControlGraphic = (params: {
         fontWeight: "bold",
         fill: params.foreground ?? 0,
     });
+    text.layout.position = PositionType.Absolute;
+
     const background = new Graphics();
     background.beginFill(params.background, 1, true);
     if (params.type === "stick") {
         const margin = Math.round(params.fontSize * 1.25);
-        container.height = container.width = Math.max(text.height + margin, text.width + margin);
-        background.drawCircle(container.width / 2, container.height / 2, container.width / 2);
+        const radius = Math.max(text.height + margin, text.width + margin) / 2;
+        background.drawCircle(radius, radius, radius);
         // Draw a dot on each side to make it more clear this is an analog stick and not a button
         background.endFill();
         background.beginFill(params.foreground ?? 0, 1, true);
-        background.drawCircle(container.width / 2, container.height * 0.125, container.width / 24);
-        background.drawCircle(container.width / 2, container.height * 0.875, container.width / 24);
-        background.drawCircle(container.width * 0.125, container.height / 2, container.width / 24);
-        background.drawCircle(container.width * 0.875, container.height / 2, container.width / 24);
+        background.drawCircle(radius, radius * 0.25, radius / 12);
+        background.drawCircle(radius, radius * 0.75, radius / 12);
+        background.drawCircle(radius * 0.25, radius, radius / 12);
+        background.drawCircle(radius * 0.75, radius, radius / 12);
     } else if (params.type === "button") {
         const margin = Math.round(params.fontSize * 0.67);
-        container.height = container.width = Math.max(text.height + margin, text.width + margin);
-        background.drawCircle(container.width / 2, container.height / 2, container.width / 2);
+        const radius = Math.max(text.height + margin, text.width + margin);
+        background.drawCircle(radius, radius, radius);
     } else { // trigger and key
         const margin = Math.round(params.fontSize * 0.5);
-        container.height = text.height + margin;
+        const height = text.height + margin;
         // Make sure the container width isn't narrower than the height, otherwise single letter
         // keys will look off
-        container.width = Math.max(container.height, text.width + margin);
-        background.drawRoundedRect(0, 0, container.width, container.height, container.height * 0.2);
+        const width = Math.max(height, text.width + margin);
+        background.drawRoundedRect(0, 0, width, height, height * 0.2);
     }
-    container.addChildWithConstraints(background, { constraints: RelativeLayout.centeredIn("parent") });
-    container.addChildWithConstraints(text, { constraints: RelativeLayout.centeredIn("parent") });
+    container.addChild(background);
+    container.addChild(text);
     return container;
 }
 
@@ -75,71 +84,39 @@ export const createControlDescription = (params: {
         ...params,
         fontSize: params.fontSize * 0.75,
     });
-    const beforeText = !params.beforeLabel ? null : new Text(params.beforeLabel, {
-        fontFamily: FONT_FAMILY,
-        fontSize: params.fontSize,
-        fill: 0xffffff,
-    });
-    const afterText = !params.afterLabel ? null : new Text(params.afterLabel, {
-        fontFamily: FONT_FAMILY,
-        fontSize: params.fontSize,
-        fill: 0xffffff,
-    });
-    const container = new RelativeLayout();
+    const container = new Container();
+    container.flexContainer = true;
+    // container.debugLayout = true;
+    container.layout.alignItems = Align.Center;
     if (params.direction === "horizontal") {
         const margin = Math.round(params.fontSize * 0.5);
-        container.width = control.width + (beforeText ? beforeText.width + margin : 0) + (afterText ? afterText.width + margin : 0);
-        container.height = control.height;
-        if (beforeText) {
-            container.addChildWithConstraints(beforeText, {
-                constraints: {
-                    vcenter: ["parent", "vcenter"],
-                    left: ["parent", "left"],
-                }
-            });
-        }
-        container.addChildWithConstraints(control, {
-            margin: { left: beforeText ? margin : 0, right: afterText ? margin : 0 },
-            constraints: {
-                vcenter: ["parent", "vcenter"],
-                left: beforeText ? [beforeText, "right"] : ["parent", "left"],
-            }
+        container.layout.flexDirection = FlexDirection.Row;
+        control.layout.style({
+            marginLeft: params.beforeLabel ? margin : 0,
+            marginRight: params.afterLabel ? margin : 0,
         });
-        if (afterText) {
-            container.addChildWithConstraints(afterText, {
-                constraints: {
-                    vcenter: ["parent", "vcenter"],
-                    left: [control, "right"],
-                }
-            });
-        }
     } else {
         const margin = Math.round(params.fontSize * 0.3);
-        container.width = Math.max(control.width, beforeText?.width || 0, afterText?.width || 0);
-        container.height = control.height + (beforeText ? beforeText.height + margin : 0) + (afterText ? afterText.height + margin : 0);
-        if (beforeText) {
-            container.addChildWithConstraints(beforeText, {
-                constraints: {
-                    top: ["parent", "top"],
-                    hcenter: ["parent", "hcenter"],
-                }
-            });
-        }
-        container.addChildWithConstraints(control, {
-            margin: { top: beforeText ? margin : 0, bottom: afterText ? margin : 0 },
-            constraints: {
-                top: beforeText ? [beforeText, "bottom"] : ["parent", "top"],
-                hcenter: ["parent", "hcenter"],
-            }
+        container.layout.flexDirection = FlexDirection.Column;
+        control.layout.style({
+            marginTop: params.beforeLabel ? margin : 0,
+            marginBottom: params.afterLabel ? margin : 0,
         });
-        if (afterText) {
-            container.addChildWithConstraints(afterText, {
-                constraints: {
-                    top: [control, "bottom"],
-                    hcenter: ["parent", "hcenter"],
-                }
-            });
-        }
+    }
+    if (params.beforeLabel) {
+        container.addChild(new Text(params.beforeLabel, {
+            fontFamily: FONT_FAMILY,
+            fontSize: params.fontSize,
+            fill: 0xffffff,
+        }));
+    }
+    container.addChild(control);
+    if (params.afterLabel) {
+        container.addChild(new Text(params.afterLabel, {
+            fontFamily: FONT_FAMILY,
+            fontSize: params.fontSize,
+            fill: 0xffffff,
+        }));
     }
     return container;
 }

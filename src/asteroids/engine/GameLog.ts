@@ -1,5 +1,5 @@
 import { ISize } from "@pixi/math";
-import { InputProvider, InputState } from "./InputProvider";
+import { InputState, createEmptyInput } from "./InputProvider";
 
 export type InputLogConfig<Controls extends readonly string[]> = {
     [Key in Controls[number]]: {
@@ -27,7 +27,7 @@ export class GameLog<Controls extends readonly string[]> {
         this._log = "";
         this._inputLogConfig = inputLogConfig;
 
-        const initialInput = InputProvider.createEmptyInput(Object.keys(inputLogConfig) as any as Controls);
+        const initialInput = createEmptyInput(Object.keys(inputLogConfig) as any as Controls);
         this.logFrame(0, initialInput, initialWorldSize);
     }
 
@@ -114,7 +114,7 @@ export function* parseGameLog<Controls extends readonly string[]>(
     inputLogConfig: InputLogConfig<Controls>,
 ): Generator<[number, Readonly<ISize>, Readonly<InputState<Controls>>, number]> {
     validateInputCodes(inputLogConfig);
-    const input = InputProvider.createEmptyInput(Object.keys(inputLogConfig) as any as Controls);
+    const input = createEmptyInput(Object.keys(inputLogConfig) as any as Controls);
     const worldSize: ISize = { width: 0, height: 0 };
     for (let i = 0; i < log.length;) {
         // Parse time elapsed

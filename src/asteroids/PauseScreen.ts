@@ -1,6 +1,6 @@
 import { Text } from "@pixi/text";
 import { Container } from "@pixi/display";
-import { Tickable, RelativeLayout, Widget, CoreWidgetParams, InputProvider } from "./engine";
+import { Tickable, Widget, CoreWidgetParams, InputProvider } from "./engine";
 import { FONT_FAMILY } from "./constants";
 import { BlurFilter } from "@pixi/filter-blur";
 import { GlowFilter } from "@pixi/filter-glow";
@@ -9,9 +9,10 @@ import { GameState } from "./GameState";
 import { createControlDescription, getControlProps } from "./controlGraphic";
 import { controls } from "./input";
 import { AlphaFilter } from "@pixi/filter-alpha";
+import { Align, FlexDirection } from "./layout";
 
 export class PauseScreen extends Widget implements Tickable {
-    private _container: RelativeLayout;
+    private _container: Container;
     private _timeline: anime.AnimeTimelineInstance;
 
     constructor(params: CoreWidgetParams & {
@@ -20,10 +21,16 @@ export class PauseScreen extends Widget implements Tickable {
         onResumeRequested: () => void,
     }) {
         super({ ...params, queuePriority: 0 });
-        this._container = new RelativeLayout("matchParent", 0);
+        this._container = new Container();
+        this._container.flexContainer = true;
+        this._container.layout.style({
+            width: [100, "%"],
+            flexDirection: FlexDirection.Column,
+            alignItems: Align.Center,
+        });
         this._container.backgroundStyle = {
             shape: "rectangle",
-            fillStyle: {
+            fill: {
                 color: params.state.theme.uiBackgroundColor,
                 alpha: params.state.theme.uiBackgroundAlpha,
             },
@@ -34,6 +41,11 @@ export class PauseScreen extends Widget implements Tickable {
             fontSize: 64,
             fill: params.state.theme.uiForegroundColor,
         });
+        title.layout.style({
+            margin: 24,
+        });
+        this._container.addChild(title);
+
         const startControl = createControlDescription({
             ...getControlProps("start", params.inputProvider.mapping)!,
             foreground: params.state.theme.foregroundContrastColor,
@@ -43,23 +55,11 @@ export class PauseScreen extends Widget implements Tickable {
             afterLabel: "to resume",
             direction: "horizontal",
         });
-
-        this._container.addChildWithConstraints(title, {
-            margin: { top: 24, bottom: 24 },
-            constraints: {
-                hcenter: ["parent", "hcenter"],
-                top: ["parent", "top"],
-            }
+        startControl.layout.style({
+            margin: 24,
+            marginTop: 0,
         });
-        this._container.addChildWithConstraints(startControl, {
-            margin: { bottom: 24 },
-            constraints: {
-                hcenter: ["parent", "hcenter"],
-                top: [title, "bottom"],
-            }
-        });
-
-        this._container.height = title.height + startControl.height + 24 * 3;
+        this._container.addChild(startControl);
 
         startControl.filters = [
             new GlowFilter({

@@ -6,7 +6,7 @@ import { LevelIndicator } from "./LevelIndicator";
 import { Asteroid } from "./Asteroid";
 import { ScoreIndicator } from "./ScoreIndicator";
 import { LifeIndicator } from "./LifeIndicator";
-import { GameObject, HitAreaDebugContainer, RelativeLayout, TickQueue } from "./engine";
+import { GameObject, HitAreaDebugContainer, TickQueue } from "./engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { AbstractAsteroidsGame } from "./AbstractAsteroidsGame";
 import { FPSIndicator } from "./FPSIndicator";
@@ -17,6 +17,8 @@ import { AlphaFilter } from "@pixi/filter-alpha";
 import { controls, arrowMapping, gamepadMapping, ijklMapping, inputLogConfig, wasdMapping } from "./input";
 import { PauseScreen } from "./PauseScreen";
 import { GameOverScreen } from "./GameOverScreen";
+import "./layout";
+import { Align, JustifyContent, PositionType } from "./layout";
 
 declare global {
     interface Window {
@@ -40,8 +42,8 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
     private readonly _backgroundContainer: Container;
     private readonly _mainContainer: Container;
     private readonly _effectsContainer: Container;
-    private readonly _hudContainer: RelativeLayout;
-    private readonly _hitAreaDebugContainer: HitAreaDebugContainer;
+    private readonly _hudContainer: Container;
+    private readonly _hitAreaDebugContainer!: HitAreaDebugContainer;
     private readonly _fpsIndicator: FPSIndicator;
     private readonly _lifeIndicator: LifeIndicator;
     private readonly _scoreIndicator: ScoreIndicator;
@@ -54,7 +56,7 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
     private _timestamp: number;
     private _queuedResizeId?: number;
     private _backgroundAsteroids: Asteroid[];
-    private _nextAnimationFrame?: number;
+    private _nextAnimationFrameId?: number;
 
     constructor(params: { containerId: string }) {
         super();
@@ -104,13 +106,21 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
         this._effectsContainer = new Container();
         this._mainContainer.addChild(this._effectsContainer);
 
-        this._hitAreaDebugContainer = new HitAreaDebugContainer({
-            queue: this._uiQueue,
-            queuePriority: 0
-        });
-        this._mainContainer.addChild(this._hitAreaDebugContainer.container);
+        if (process.env.NODE_ENV === "development") {
+            this._hitAreaDebugContainer = new HitAreaDebugContainer({
+                queue: this._uiQueue,
+                queuePriority: 0
+            });
+            this._mainContainer.addChild(this._hitAreaDebugContainer.container);
+        }
 
-        this._hudContainer = new RelativeLayout(this.worldSize.width, this.worldSize.height);
+        this._hudContainer = new Container();
+        this._hudContainer.flexContainer = true;
+        this._hudContainer.layout.style({
+            alignItems: Align.Center,
+            justifyContent: JustifyContent.Center,
+        });
+        // this._hudContainer.debugLayout = true;
         this._mainContainer.addChild(this._hudContainer);
 
         this.executeResize();
@@ -121,48 +131,48 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
             state: this.state,
             queue: this._uiQueue,
         });
-        this._hudContainer.addChildWithConstraints(this._scoreIndicator.container, {
+        this._scoreIndicator.container.layout.style({
             margin: 12,
-            constraints: {
-                left: ["parent", "left"],
-                top: ["parent", "top"],
-            },
+            position: PositionType.Absolute,
+            top: 0,
+            left: 0,
         });
+        this._hudContainer.addChild(this._scoreIndicator.container);
 
         this._lifeIndicator = new LifeIndicator({
             state: this.state,
             queue: this._uiQueue,
         });
-        this._hudContainer.addChildWithConstraints(this._lifeIndicator.container, {
+        this._lifeIndicator.container.layout.style({
             margin: 12,
-            constraints: {
-                right: ["parent", "right"],
-                top: ["parent", "top"],
-            },
+            position: PositionType.Absolute,
+            top: 0,
+            right: 0,
         });
+        this._hudContainer.addChild(this._lifeIndicator.container);
 
         this._levelIndicator = new LevelIndicator({
             queue: this._uiQueue,
             state: this.state,
         });
-        this._hudContainer.addChildWithConstraints(this._levelIndicator.container, {
-            margin: { bottom: 12 },
-            constraints: {
-                bottom: ["parent", "bottom"],
-                left: ["parent", "left"],
-            },
+        this._levelIndicator.container.layout.style({
+            marginVertical: 12,
+            position: PositionType.Absolute,
+            bottom: 0,
+            left: 0,
         });
+        this._hudContainer.addChild(this._levelIndicator.container);
 
         this._fpsIndicator = new FPSIndicator({
             queue: this._uiQueue,
         });
-        this._hudContainer.addChildWithConstraints(this._fpsIndicator.container, {
-            margin: { bottom: 12, left: 48 },
-            constraints: {
-                bottom: ["parent", "bottom"],
-                left: [this._levelIndicator.container, "right"],
-            },
+        this._fpsIndicator.container.layout.style({
+            margin: 24,
+            position: PositionType.Absolute,
+            top: 0,
+            right: [45, "%"],
         });
+        this._hudContainer.addChild(this._fpsIndicator.container);
 
         this._startScreen = new StartScreen({
             queue: this._uiQueue,
@@ -170,12 +180,7 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
             inputProvider: this._input,
             onStartRequested: () => this.start(),
         });
-        this._hudContainer.addChildWithConstraints(this._startScreen.container, {
-            constraints: {
-                top: ["parent", "vcenter"],
-                left: ["parent", "hcenter"],
-            },
-        });
+        this._hudContainer.addChild(this._startScreen.container);
 
         this._backgroundAsteroids = Asteroid.createBackground({
             count: 20,
@@ -198,12 +203,7 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
                 state: this.state,
                 inputProvider: this._input,
             });
-            this._hudContainer.addChildWithConstraints(this._gameOverScreen.container, {
-                constraints: {
-                    left: ["parent", "left"],
-                    vcenter: ["parent", "vcenter"],
-                },
-            });
+            this._hudContainer.addChild(this._gameOverScreen.container);
         }, this);
         this.events.on("pause", () => {
             this._pauseScreen = new PauseScreen({
@@ -212,22 +212,17 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
                 inputProvider: this._input,
                 onResumeRequested: () => this.resume(),
             });
-            this._hudContainer.addChildWithConstraints(this._pauseScreen.container, {
-                constraints: {
-                    left: ["parent", "left"],
-                    vcenter: ["parent", "vcenter"],
-                },
-            });
+            this._hudContainer.addChild(this._pauseScreen.container);
         }, this);
 
         this._timestamp = 0;
-        this._nextAnimationFrame = window.requestAnimationFrame(this.onAnimationFrame);
+        this._nextAnimationFrameId = window.requestAnimationFrame(this.onAnimationFrame);
     }
 
     destroy(): void {
-        if (this._nextAnimationFrame) {
-            window.cancelAnimationFrame(this._nextAnimationFrame);
-            this._nextAnimationFrame = undefined;
+        if (this._nextAnimationFrameId) {
+            window.cancelAnimationFrame(this._nextAnimationFrameId);
+            this._nextAnimationFrameId = undefined;
         }
         if (this._queuedResizeId) {
             window.cancelAnimationFrame(this._queuedResizeId);
@@ -297,21 +292,23 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
 
         this._fpsIndicator.visible = !!window.asteroids_showFps;
 
-        if (window.asteroids_showHitareas) {
-            this._hitAreaDebugContainer.visible = true;
-            const objects: GameObject<any, any>[] = [...this.state.projectiles, ...this.state.asteroids, ...this.state.ufos];
-            if (this.state.ship) {
-                objects.push(this.state.ship);
+        if (process.env.NODE_ENV === "development") {
+            if (window.asteroids_showHitareas) {
+                this._hitAreaDebugContainer.visible = true;
+                const objects: GameObject<any, any>[] = [...this.state.projectiles, ...this.state.asteroids, ...this.state.ufos];
+                if (this.state.ship) {
+                    objects.push(this.state.ship);
+                }
+                this._hitAreaDebugContainer.objects = objects;
+            } else if (this._hitAreaDebugContainer.visible) {
+                this._hitAreaDebugContainer.visible = false;
             }
-            this._hitAreaDebugContainer.objects = objects;
-        } else if (this._hitAreaDebugContainer.visible) {
-            this._hitAreaDebugContainer.visible = false;
         }
 
         // Render
 
         this._renderer.render(this._stage);
-        this._nextAnimationFrame = window.requestAnimationFrame(this.onAnimationFrame);
+        this._nextAnimationFrameId = window.requestAnimationFrame(this.onAnimationFrame);
     }
 
     private queueResize = (): void => {
@@ -331,8 +328,10 @@ export class AsteroidsGame extends AbstractAsteroidsGame {
         this.aspectRatio = this._container.clientWidth / this._container.clientHeight;
         this._renderer.resize(this._container.clientWidth, this._container.clientHeight);
         this._stage.scale.set(this._container.clientWidth / this.worldSize.width);
-        this._hudContainer.width = this.worldSize.width;
-        this._hudContainer.height = this.worldSize.height;
+        this._hudContainer.layout.style({
+            width: this.worldSize.width,
+            height: this.worldSize.height,
+        });
         (this._mainContainer.filters![0] as ChromaticAbberationFilter).maxDisplacement = RGB_SPLIT_SEPARATION * this._stage.scale.x;
         // Redistribute background asteroids
         if (this._backgroundAsteroids) {
