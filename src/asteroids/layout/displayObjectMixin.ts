@@ -4,15 +4,17 @@ import FlexLayout, { ComputedLayout } from "./FlexLayout";
 declare module "@pixi/display"
 {
     export interface DisplayObject {
-        _layout?: FlexLayout;
-        _excludeFromLayout: boolean;
         get layout(): FlexLayout;
         get isLayoutChild(): boolean;
         onLayout(layout: ComputedLayout): void;
     }
 }
 
-const displayObject = DisplayObject.prototype;
+interface DisplayObjectPrivate extends DisplayObject {
+    _layout?: FlexLayout;
+}
+
+const displayObject = DisplayObject.prototype as DisplayObjectPrivate;
 
 const _super = {
     render: displayObject.render,
@@ -21,7 +23,7 @@ const _super = {
 
 Object.defineProperties(displayObject, {
     layout: {
-        get(): FlexLayout {
+        get(this: DisplayObjectPrivate): FlexLayout {
             if (!this._layout) {
                 this._layout = new FlexLayout(this);
             }
@@ -29,13 +31,13 @@ Object.defineProperties(displayObject, {
         },
     },
     isLayoutChild: {
-        get(): boolean {
-            return !!this.parent && this.parent.flexContainer && !this.excludeFromLayout;
+        get(this: DisplayObjectPrivate): boolean {
+            return !!this.parent && this.parent.flexContainer && !this.layout.excluded;
         }
     },
 });
 
-displayObject.destroy = function (options: IDestroyOptions) {
+displayObject.destroy = function (this: DisplayObjectPrivate, options: IDestroyOptions) {
     _super.destroy.call(this, options);
     this._layout?.destroy();
 }
