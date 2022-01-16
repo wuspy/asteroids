@@ -1,0 +1,59 @@
+$background: #394871;
+$active-background: #97ff38;
+.button {
+    display: block;
+    cursor: pointer;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    background: $background;
+    text-decoration: none;
+    padding: 12px;
+    transform: rotate3d(.5, -.866, 0, 15deg) rotate(1deg);
+    box-shadow: 2em 4em 6em -2em rgba(0, 0, 0, .5), 1em 2em 3.5em -2.5em rgba(0, 0, 0, .5);
+    transition: transform .4s, box-shadow .4s, background 1s;
+    border-radius: .5em;
+    border: 1pt solid rgba(255, 255, 255, .25);
+    .button-icon {
+        display: inline-block;
+        vertical-align: middle;
+        svg {
+            height: 18pt;
+            width: 18pt;
+        }
+    }
+    .button-text {
+        position: relative;
+        font-weight: bold;
+        display: inline-block;
+        vertical-align: middle;
+        text-decoration: none;
+        font-size: 14pt;
+    }
+    &:hover {
+        transform: rotate3d(0, 0, 0, 0deg) rotate(0deg);
+    }
+    &:after {
+        content: "";
+        display: block;
+        position: absolute;
+        border-radius: .5em;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0;
+        transition: all .25s;
+        background: white;
+        box-shadow: 0 0 10px 10px white;
+    }
+    &:active {
+        background: $active-background;
+        transition: background .25s;
+        &:after {
+            background: transparent;
+            box-shadow: 0 0 0 0 white;
+            opacity: .25;
+            transition: 0s;
+        }
+    }
+}
