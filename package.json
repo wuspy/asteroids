@@ -32,8 +32,7 @@
         "lint": "eslint src --ext .ts",
         "build": "webpack --mode=production --node-env=production",
         "watch": "webpack --watch",
-        "serve": "webpack --mode=development serve",
-        "serve:prod": "webpack --mode=production serve",
+        "serve": "webpack serve",
         "build:dev": "webpack --mode=development",
         "build:prod": "webpack --mode=production --node-env=production"
     },
