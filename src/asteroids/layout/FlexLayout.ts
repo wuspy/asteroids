@@ -176,6 +176,7 @@ export default class FlexLayout {
         if (i !== -1) {
             this._node.removeChild(child._node);
             this._children.splice(i, 1);
+            child._parent = undefined;
         }
     }
 
@@ -183,10 +184,6 @@ export default class FlexLayout {
         this.measure();
         this._node.calculateLayout();
         this.apply();
-    }
-
-    markDirty(): void {
-        this._node.markDirty();
     }
 
     reset(): void {

@@ -37,9 +37,10 @@ Object.defineProperties(displayObject, {
     },
 });
 
-displayObject.destroy = function (this: DisplayObjectPrivate, options: IDestroyOptions) {
+displayObject.destroy = function (this: DisplayObjectPrivate, options?: boolean | IDestroyOptions) {
     _super.destroy.call(this, options);
     this._layout?.destroy();
+    this._layout = undefined;
 }
 
 displayObject.onLayout = function () { };
