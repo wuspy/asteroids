@@ -1,7 +1,6 @@
 import { Explosion, ExplosionParams } from "./Explosion";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { DEG_TO_RAD } from "@pixi/math";
-import { Container } from "@pixi/display";
 import { LINE_JOIN } from "@pixi/graphics";
 import { random } from "./engine";
 
@@ -18,7 +17,6 @@ interface Shrapnel {
 
 // TODO remove this?
 export class ShipExplosion extends Explosion {
-    private _container: Container;
     private _shrapnel: Shrapnel[];
 
     constructor(params: ExplosionParams) {
@@ -66,10 +64,9 @@ export class ShipExplosion extends Explosion {
             opacity: 0,
             easing: 'easeInQuad',
         }, 0);
-        this._container = new Container();
-        // this._container.addChild(super.container);
+
         for (const shrapnel of this._shrapnel) {
-            this._container.addChild(shrapnel.graphics);
+            this.addChild(shrapnel.graphics);
         }
 
         this.timeline.change = () => {
@@ -79,9 +76,5 @@ export class ShipExplosion extends Explosion {
                 shrapnel.graphics.rotation = shrapnel.rotation;
             }
         }
-    }
-
-    override get container(): Container {
-        return this._container;
     }
 }

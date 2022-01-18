@@ -1,50 +1,59 @@
 import { Text } from "@pixi/text";
 import { Container } from "@pixi/display";
-import { Tickable, Widget, CoreWidgetParams, InputProvider } from "./engine";
+import { EventManager, FadeContainer, InputProvider, TickQueue } from "./engine";
 import { FONT_FAMILY } from "./constants";
-import { BlurFilter } from "@pixi/filter-blur";
 import { GlowFilter } from "@pixi/filter-glow";
 import anime from "animejs";
 import { GameState } from "./GameState";
 import { createControlDescription, getControlProps } from "./controlGraphic";
 import { controls } from "./input";
-import { AlphaFilter } from "@pixi/filter-alpha";
-import { Align, FlexDirection } from "./layout";
+import { Align, ContainerBackgroundShape, FlexDirection } from "./layout";
+import { Button } from "./ui";
+import { ButtonType, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
+import { GameEvents } from "./GameEvents";
 
-export class PauseScreen extends Widget implements Tickable {
-    private _container: Container;
-    private _timeline: anime.AnimeTimelineInstance;
+export class PauseScreen extends FadeContainer {
+    private readonly _events: EventManager<GameEvents>;
+    private readonly _startGlowFilter: GlowFilter;
+    private _timeline?: anime.AnimeTimelineInstance;
 
-    constructor(params: CoreWidgetParams & {
+    constructor(params: {
+        queue: TickQueue,
         state: GameState,
+        events: EventManager<GameEvents>,
         inputProvider: InputProvider<typeof controls>,
-        onResumeRequested: () => void,
     }) {
-        super({ ...params, queuePriority: 0 });
-        this._container = new Container();
-        this._container.flexContainer = true;
-        this._container.layout.style({
+        super({
+            queue: params.queue,
+            fadeInDuration: 100,
+            fadeOutDuration: 100,
+            fadeOutExtraDelay: 100
+        });
+        this._events = params.events;
+        this.flexContainer = true;
+        this.layout.style({
             width: [100, "%"],
             flexDirection: FlexDirection.Column,
             alignItems: Align.Center,
         });
-        this._container.backgroundStyle = {
-            shape: "rectangle",
+        this.backgroundStyle = {
+            shape: ContainerBackgroundShape.Rectangle,
             fill: {
-                color: params.state.theme.uiBackgroundColor,
-                alpha: params.state.theme.uiBackgroundAlpha,
+                color: UI_BACKGROUND_COLOR,
+                alpha: UI_BACKGROUND_ALPHA,
             },
         };
 
         const title = new Text("PAUSED", {
             fontFamily: FONT_FAMILY,
             fontSize: 64,
-            fill: params.state.theme.uiForegroundColor,
+            fill: UI_FOREGROUND_COLOR,
         });
         title.layout.style({
             margin: 24,
+            marginBottom: 12
         });
-        this._container.addChild(title);
+        this.addChild(title);
 
         const startControl = createControlDescription({
             ...getControlProps("start", params.inputProvider.mapping)!,
@@ -55,14 +64,10 @@ export class PauseScreen extends Widget implements Tickable {
             afterLabel: "to resume",
             direction: "horizontal",
         });
-        startControl.layout.style({
-            margin: 24,
-            marginTop: 0,
-        });
-        this._container.addChild(startControl);
+        this.addChild(startControl);
 
         startControl.filters = [
-            new GlowFilter({
+            this._startGlowFilter = new GlowFilter({
                 innerStrength: 0,
                 outerStrength: 0,
                 distance: 24,
@@ -70,64 +75,43 @@ export class PauseScreen extends Widget implements Tickable {
         ];
         startControl.interactive = true;
         startControl.buttonMode = true;
-        startControl.on("click", params.onResumeRequested);
+        startControl.on("click", () => this._events.trigger("resumeRequested"));
 
-        this._container.filters = [
-            new AlphaFilter(0),
-            new BlurFilter(10),
-        ];
+        const buttonContainer = new Container();
+        buttonContainer.flexContainer = true;
+        buttonContainer.layout.style({
+            flexDirection: FlexDirection.Row,
+            margin: 12,
+            marginTop: 24,
+        });
 
-        this._timeline = anime.timeline({
-            autoplay: false,
-            easing: "linear",
-            duration: 100,
-            complete: () => {
-                this._container.filters = [];
-                this._timeline = anime.timeline({
-                    autoplay: false,
-                    loop: true,
-                    direction: "alternate",
-                }).add({
-                    easing: "linear",
-                    duration: 1200,
-                    targets: startControl.filters![0],
-                    outerStrength: 2,
-                    innerStrength: 2,
-                });
-            },
-        }).add({
-            targets: this._container.filters[0],
-            alpha: 1,
-        }).add({
-            targets: this._container.filters[1],
-            blur: 0,
-        }, 0);
+        const newGameButton = new Button(ButtonType.Danger, "Restart", () => this._events.trigger("restartRequested"));
+        newGameButton.layout.margin = 12;
+        buttonContainer.addChild(newGameButton);
+
+        // const optionsButton = new Button(ButtonType.Secondary, "Options", () => undefined);
+        // optionsButton.layout.margin = 12;
+        // buttonContainer.addChild(optionsButton);
+
+        this.addChild(buttonContainer);
+
+        this.fadeIn(() => {
+            this._timeline = anime.timeline({
+                autoplay: false,
+                loop: true,
+                direction: "alternate",
+            }).add({
+                easing: "linear",
+                duration: 1200,
+                targets: this._startGlowFilter,
+                outerStrength: 2,
+                innerStrength: 2,
+            });
+        });
     }
 
-    fadeOut(complete: () => void): void {
-        this._container.filters = [
-            new AlphaFilter(1),
-            new BlurFilter(0),
-        ];
-        this._timeline = anime.timeline({
-            autoplay: false,
-            duration: 100,
-            easing: "linear",
-            complete,
-        }).add({
-            targets: this._container.filters[0],
-            alpha: 0,
-        }).add({
-            targets: this._container.filters[1],
-            blur: 10,
-        }, 0).add({});
-    }
-
-    tick(timestamp: number, elapsed: number): void {
-        this._timeline.tick(timestamp);
-    }
-
-    get container(): Container {
-        return this._container;
+    override tick(timestamp: number, elapsed: number): void {
+        super.tick(timestamp, elapsed);
+        this._timeline?.tick(timestamp);
     }
 }

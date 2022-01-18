@@ -1,90 +1,58 @@
 import { Text } from "@pixi/text";
-import { Container } from "@pixi/display";
-import { Tickable, Widget, CoreWidgetParams, InputProvider } from "./engine";
+import { EventManager, FadeContainer, InputProvider, TickQueue } from "./engine";
 import { FONT_FAMILY } from "./constants";
-import { BlurFilter } from "@pixi/filter-blur";
-import anime from "animejs";
 import { GameState } from "./GameState";
 import { controls } from "./input";
-import { AlphaFilter } from "@pixi/filter-alpha";
-import { Align, FlexDirection } from "./layout";
+import { Align, ContainerBackgroundShape, FlexDirection } from "./layout";
+import { Button } from "./ui";
+import { ButtonType, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
+import { GameEvents } from "./GameEvents";
 
-export class GameOverScreen extends Widget implements Tickable {
-    private _container: Container;
-    private _timeline: anime.AnimeTimelineInstance;
+export class GameOverScreen extends FadeContainer {
+    private readonly _events: EventManager<GameEvents>;
 
-    constructor(params: CoreWidgetParams & {
+    constructor(params: {
+        queue: TickQueue,
+        events: EventManager<GameEvents>,
         state: GameState,
-        inputProvider: InputProvider<typeof controls>
+        inputProvider: InputProvider<typeof controls>,
     }) {
-        super({ ...params, queuePriority: 0 });
-        this._container = new Container();
-        this._container.flexContainer = true;
-        this._container.layout.style({
+        super({
+            queue: params.queue,
+            fadeInDuration: 100,
+            fadeOutDuration: 100,
+            fadeOutExtraDelay: 100
+        });
+        this._events = params.events;
+        this.flexContainer = true;
+        this.layout.style({
             width: [100, "%"],
             flexDirection: FlexDirection.Column,
             alignItems: Align.Center,
         });
-        this._container.backgroundStyle = {
-            shape: "rectangle",
+        this.backgroundStyle = {
+            shape: ContainerBackgroundShape.Rectangle,
             fill: {
-                color: params.state.theme.uiBackgroundColor,
-                alpha: params.state.theme.uiBackgroundAlpha,
+                color: UI_BACKGROUND_COLOR,
+                alpha: UI_BACKGROUND_ALPHA,
             },
         };
 
         const title = new Text("GAME OVER", {
             fontFamily: FONT_FAMILY,
             fontSize: 64,
-            fill: params.state.theme.uiForegroundColor,
+            fill: UI_FOREGROUND_COLOR,
         });
-        title.layout.style({
+        title.layout.margin = 24;
+        this.addChild(title);
+
+        const newGameButton = new Button(ButtonType.Primary, "New Game", () => this._events.trigger("startRequested"));
+        newGameButton.layout.style({
             margin: 24,
+            marginTop: 0,
         });
-        this._container.addChild(title);
+        this.addChild(newGameButton);
 
-        this._container.filters = [
-            new AlphaFilter(0),
-            new BlurFilter(10),
-        ];
-
-        this._timeline = anime.timeline({
-            autoplay: false,
-            easing: "linear",
-            duration: 100,
-        }).add({
-            targets: this._container.filters[0],
-            alpha: 1,
-        }).add({
-            targets: this._container.filters[1],
-            blur: 0,
-        }, 0);
-    }
-
-    fadeOut(complete: () => void): void {
-        this._container.filters = [
-            new AlphaFilter(1),
-            new BlurFilter(0),
-        ];
-        this._timeline = anime.timeline({
-            autoplay: false,
-            duration: 100,
-            easing: "linear",
-            complete,
-        }).add({
-            targets: this._container.filters[0],
-            alpha: 0,
-        }).add({
-            targets: this._container.filters[1],
-            blur: 10,
-        }, 0).add({});
-    }
-
-    tick(timestamp: number, elapsed: number): void {
-        this._timeline.tick(timestamp);
-    }
-
-    get container(): Container {
-        return this._container;
+        this.fadeIn(() => {});
     }
 }

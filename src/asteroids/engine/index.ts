@@ -8,4 +8,5 @@ export * from "./DynamicGameObject";
 export * from "./HitAreaDebugContainer";
 export * from "./TickQueue";
 export * from "./EventManager";
-export * from "./Widget";
+export * from "./TickableContainer";
+export * from "./FadeContainer";

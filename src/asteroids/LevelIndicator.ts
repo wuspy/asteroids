@@ -1,6 +1,5 @@
-import { CoreWidgetParams, random, Tickable, Widget } from "./engine";
+import { random, TickableContainer, TickQueue } from "./engine";
 import { Text } from "@pixi/text";
-import { Container } from "@pixi/display";
 import { GameState } from "./GameState";
 import { FONT_FAMILY } from "./constants";
 
@@ -10,22 +9,24 @@ const LEVEL_CHANGE_ANIMATION_DURATION = 1;
 
 const CHARS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-export class LevelIndicator extends Widget implements Tickable {
+export class LevelIndicator extends TickableContainer {
     private readonly _state: GameState;
     private readonly _text: Text;
     private _lastLevel: number;
     private _levelChangeAnimationCountdown: number;
 
-    constructor(params: CoreWidgetParams & {
-        state: GameState;
+    constructor(params: {
+        queue: TickQueue,
+        state: GameState,
     }) {
-        super({ ...params, queuePriority: 0 });
+        super(params.queue);
         this._state = params.state;
         this._text = new Text("", {
             fontFamily: FONT_FAMILY,
             fontSize: FONT_SIZE,
             fill: this._state.theme.foregroundColor,
         });
+        this.addChild(this._text);
         this._lastLevel = -1;
         this._levelChangeAnimationCountdown = 0;
     }
@@ -48,9 +49,5 @@ export class LevelIndicator extends Widget implements Tickable {
                 this._text.text = text;
             }
         }
-    }
-
-    get container(): Container {
-        return this._text;
     }
 }

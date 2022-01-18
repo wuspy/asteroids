@@ -9,8 +9,6 @@ import { atan2, calculateVelocityToIntercept, CoreGameObjectParams, GameObject, 
 import { Explosion } from "./Explosion";
 import { Projectile } from "./Projectile";
 
-// const COLOR = 0x01d6ff;
-
 const EXPLOSION_SIZES: Readonly<{ [Key in UFOType]: number }> = {
     large: 250,
     small: 200,
@@ -182,9 +180,9 @@ export class UFO extends GameObject<GameState, GameEvents> {
                 maxDuration: 2000,
                 color: this.state.theme.ufoColor,
             });
-            explosion.container.position.copyFrom(this.position);
-            explosion.container.rotation = this.rotation;
-            this.container.parent.addChild(explosion.container);
+            explosion.position.copyFrom(this.position);
+            explosion.rotation = this.rotation;
+            this.container.parent.addChild(explosion);
         }
         super.destroy();
         this.events.trigger("ufoDestroyed", this);

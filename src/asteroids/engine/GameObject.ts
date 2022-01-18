@@ -20,8 +20,8 @@ import {
     atan2
 } from "./math";
 import { EventManager, EventMap } from "./EventManager";
-import { Widget, WidgetParams } from "./Widget";
 import { Container } from "@pixi/display";
+import { TickQueue } from "./TickQueue";
 
 export const enum WrapMode {
     None = 0,
@@ -30,9 +30,11 @@ export const enum WrapMode {
     Both = WrapMode.Vertical | WrapMode.Horizontal
 }
 
-export interface GameObjectParams<State, Events extends EventMap<keyof Events>> extends WidgetParams {
-    state: State;
+export interface GameObjectParams<State, Events extends EventMap<keyof Events>> {
+    state: Readonly<State>;
     events: EventManager<Events>,
+    queue: TickQueue;
+    queuePriority: number;
     worldSize: ISize;
     hitArea: HitArea;
     wrapMode?: WrapMode;
@@ -48,12 +50,15 @@ export type CoreGameObjectParams<State, Events extends EventMap<keyof Events>> =
         | "state"
         | "events"
         | "queue"
+        | "queue"
         | "worldSize"
     >
 
-export abstract class GameObject<State, Events extends EventMap<keyof Events>> extends Widget {
+export abstract class GameObject<State, Events extends EventMap<keyof Events>> {
     protected readonly state: Readonly<State>;
     protected readonly events: EventManager<Events>
+    protected readonly queue: TickQueue;
+    protected readonly queuePriority: number;
     protected readonly worldSize: ISize;
     private readonly _container: Container;
     private readonly _position: ObservablePoint;
@@ -68,9 +73,10 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> e
     private _ignoreNextPositionChange: boolean;
 
     constructor(params: GameObjectParams<State, Events>) {
-        super(params);
         this.state = params.state;
         this.events = params.events;
+        this.queue = params.queue;
+        this.queuePriority = params.queuePriority;
         this.worldSize = params.worldSize;
         this._position = new ObservablePoint(this.onPositionChange, this, params.position?.x || 0, params.position?.y || 0);
         this._wrapMode = params.wrapMode ?? WrapMode.Both;
@@ -94,6 +100,7 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> e
         this._container = new Container();
         this._container.position.copyFrom(this._position);
         this._container.rotation = this._rotation;
+        this.queue.add(this.queuePriority, this);
     }
 
     tick(timestamp: number, elapsed: number) {
@@ -131,9 +138,10 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> e
         return false;
     }
 
-    override destroy() {
-        super.destroy();
+    destroy() {
+        this.container.destroy();
         this.events.offThis(this);
+        this.queue.remove(this.queuePriority, this);
     }
 
     get container(): Container {

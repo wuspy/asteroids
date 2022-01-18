@@ -8,7 +8,7 @@ import { GameEvents } from "./GameEvents";
 import { EventManager } from "./engine/EventManager";
 import { random, TickQueue } from "./engine";
 import { UFO } from "./UFO";
-import { THEMES } from "./Theme";
+import { Theme, THEMES } from "./Theme";
 import { controls } from "./input";
 import { Container } from "@pixi/display";
 
@@ -36,7 +36,7 @@ export abstract class AbstractAsteroidsGame {
             lives: LIVES,
             status: "init",
             timestamp: 0,
-            theme: THEMES[random(0, THEMES.length - 1, false)],
+            theme: this.getRandomTheme(),
             asteroids: [],
             projectiles: [],
             ufos: [],
@@ -46,14 +46,14 @@ export abstract class AbstractAsteroidsGame {
         this._nextLevelCountdown = 0;
         this._nextUFOSpawn = 0;
 
-        this.events.on("shipCreated", (ship) => {
+        this.events.on("shipCreated", this, (ship) => {
             if (this.state.ship) {
                 throw new Error("Multiple ships created");
             }
             this.state.ship = ship;
             this.gameplayContainer?.addChild(ship.container);
-        }, this);
-        this.events.on("shipDestroyed", () => {
+        });
+        this.events.on("shipDestroyed", this, () => {
             this.state.ship = undefined;
             if (this.state.lives) {
                 this.state.lives--;
@@ -61,30 +61,29 @@ export abstract class AbstractAsteroidsGame {
                     this._respawnCountdown = RESPAWN_DELAY;
                 }
             }
-        }, this);
-        this.events.on("asteroidsCreated", (asteroids) => {
-            this.state.asteroids.push(...asteroids);
-            this.gameplayContainer?.addChild(...asteroids.map((asteroid) => asteroid.container));
-        }, this);
-        this.events.on("asteroidDestroyed", (asteroid) => this.removeGameObject("asteroids", asteroid), this);
-        this.events.on("ufoCreated", (ufo) => {
-            this.state.ufos.push(ufo);
-            this.gameplayContainer?.addChild(ufo.container);
-        }, this);
-        this.events.on("ufoDestroyed", (ufo) => this.removeGameObject("ufos", ufo), this);
-        this.events.on("projectileCreated", (projectile) => {
-            this.state.projectiles.push(projectile);
-            this.gameplayContainer?.addChild(projectile.container);
-        }, this);
-        this.events.on("projectileDestroyed", (projectile) => this.removeGameObject("projectiles", projectile), this);
+        });
+        this.events.on("asteroidsCreated", this, (asteroids) => this.addGameObjects("asteroids", ...asteroids));
+        this.events.on("asteroidDestroyed", this, (asteroid) => this.removeGameObject("asteroids", asteroid));
+        this.events.on("ufoCreated", this, (ufo) => this.addGameObjects("ufos", ufo));
+        this.events.on("ufoDestroyed", this, (ufo) => this.removeGameObject("ufos", ufo));
+        this.events.on("projectileCreated", this, (projectile) => this.addGameObjects("projectiles", projectile));
+        this.events.on("projectileDestroyed", this, (projectile) => this.removeGameObject("projectiles", projectile));
+    }
+
+    protected destroy(): void {
+        this.reset(false);
+        this.events.offThis(this);
+    }
+
+    protected getRandomTheme(): Theme {
+        return THEMES[random(0, THEMES.length - 1, false)];
     }
 
     protected start(): void {
-        if (this.state.status !== "finished" && this.state.status !== "init") {
+        if (this.state.status !== "init") {
             return;
         }
-        this.reset();
-        this.events.trigger("preStart");
+        this.reset(false);
 
         this.spawnShip(false);
         this.setNextUFOSpawn();
@@ -95,26 +94,54 @@ export abstract class AbstractAsteroidsGame {
             worldSize: this.worldSize,
         });
         this.state.status = "running";
-        this.events.trigger("start");
+        this.events.trigger("started");
     }
 
-    protected reset(): void {
+    protected reset(newTheme: boolean): void {
         if (this.state.ship) {
-            this.state.ship.destroy(false);
+            this.state.ship.destroy();
         }
-        this.state.ship = undefined;
-        for (const projectile of this.state.projectiles) {
-            projectile.destroy();
+        for (let i = this.state.projectiles.length - 1; i >= 0; i--) {
+            this.state.projectiles[i].destroy();
         }
-        this.state.projectiles = [];
-        for (const asteroid of this.state.asteroids) {
-            asteroid.destroy(false);
+        for (let i = this.state.asteroids.length - 1; i >= 0; i--) {
+            this.state.asteroids[i].destroy();
         }
-        this.state.asteroids = [];
-        for (const ufo of this.state.ufos) {
-            ufo.destroy(false);
+        for (let i = this.state.ufos.length - 1; i >= 0; i--) {
+            this.state.ufos[i].destroy();
         }
-        this.state.ufos = [];
+
+        if (process.env.NODE_ENV === "development") {
+            if (this.state.ship) {
+                throw new Error("Ship remaining after reset");
+            }
+            if (this.state.asteroids.length) {
+                throw new Error(`${this.state.asteroids.length} asteroids remaining after reset`);
+            }
+            if (this.state.ufos.length) {
+                throw new Error(`${this.state.ufos.length} ufos remaining after reset`);
+            }
+            if (this.state.projectiles.length) {
+                throw new Error(`${this.state.projectiles.length} projectiles remaining after reset`);
+            }
+        }
+
+        // Remove anything else that may be remaining in the queue and container (animations, etc)
+        if (this.gameplayContainer) {
+            for (let i = this.gameplayContainer.children.length - 1; i >= 0; i--) {
+                this.gameplayContainer.children[i].destroy();
+            }
+        }
+        this.queue.clear();
+        
+        if (process.env.NODE_ENV === "development") {
+            if (this.gameplayContainer?.children.length) {
+                throw new Error(`${this.gameplayContainer.children.length} children remaining in gameplay container after reset`);
+            }
+            if (this.queue.length) {
+                throw new Error(`${this.queue.length} items remaining in queue after reset`);
+            }
+        }
 
         this.state.level = 1;
         this.state.lives = LIVES;
@@ -122,22 +149,32 @@ export abstract class AbstractAsteroidsGame {
         this.state.timestamp = 0;
         this.state.status = "init";
 
+        if (newTheme) {
+            let theme;
+            do {
+                theme = this.getRandomTheme();
+            } while (theme === this.state.theme);
+            this.state.theme = theme;
+            this.events.trigger("themeChanged", theme);
+        }
+
         this._respawnCountdown = 0;
         this._nextLevelCountdown = 0;
         this._nextUFOSpawn = 0;
+        this.events.trigger("reset");
     }
 
     protected resume(): void {
         if (this.state.status === "paused") {
             this.state.status = "running";
-            this.events.trigger("resume");
+            this.events.trigger("resumed");
         }
     }
 
     protected pause(): void {
         if (this.state.status === "running") {
             this.state.status = "paused";
-            this.events.trigger("pause");
+            this.events.trigger("paused");
         }
     }
 
@@ -294,7 +331,16 @@ export abstract class AbstractAsteroidsGame {
         }
     }
 
-    private removeGameObject<T extends "asteroids" | "ufos" | "projectiles">(type: T, object: GameState[T][number]): void {
+    private addGameObjects<T extends "asteroids" | "ufos" | "projectiles">(type: T, ...objects: GameState[T][0][]): void {
+        this.state[type].push(...objects as any[]);
+        if (this.gameplayContainer) {
+            for (const obj of objects) {
+                this.gameplayContainer.addChild(obj.container);
+            }
+        }
+    }
+
+    private removeGameObject<T extends "asteroids" | "ufos" | "projectiles">(type: T, object: GameState[T][0]): void {
         const i = this.state[type].indexOf(object as any);
         if (i !== -1) {
             this.state[type].splice(i, 1);

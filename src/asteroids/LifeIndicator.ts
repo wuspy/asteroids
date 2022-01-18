@@ -1,46 +1,45 @@
-import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LIVES, QUEUE_PRIORITIES } from "./constants";
-import { OneShotAnimation, Tickable, CoreOneShotAnimationParams, Widget, CoreWidgetParams } from "./engine";
+import { OneShotAnimation, TickableContainer, TickQueue } from "./engine";
 import { Ship } from "./Ship";
 import { GameState } from "./GameState";
 import '@pixi/mixin-cache-as-bitmap';
-import { FlexDirection } from "./layout";
+import { ContainerBackgroundShape, FlexDirection } from "./layout";
+import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
 
 const SIZE = 36;
 
-export class LifeIndicator extends Widget implements Tickable {
+export class LifeIndicator extends TickableContainer {
     private _state: GameState;
-    private _indicators: Graphics[]
-    private _container: Container;
+    private readonly _indicators: Graphics[]
     private _lastLives: number;
 
-    constructor(params: CoreWidgetParams & {
-        state: GameState;
+    constructor(params:  {
+        queue: TickQueue,
+        state: GameState,
     }) {
-        super({ ...params, queuePriority: 0 });
+        super(params.queue);
         this._state = params.state;
         this._lastLives = LIVES;
-        this._container = new Container();
-        this._container.flexContainer = true;
-        this._container.layout.style({
+        this.flexContainer = true;
+        this.layout.style({
             paddingHorizontal: 14,
             paddingVertical: 12,
             flexDirection: FlexDirection.Row,
         });
-        this._container.backgroundStyle = {
-            shape: "rectangle",
+        this.backgroundStyle = {
+            shape: ContainerBackgroundShape.Rectangle,
             cornerRadius: 12,
             cacheAsBitmap: true,
             fill: {
-                color: this._state.theme.uiBackgroundColor,
-                alpha: this._state.theme.uiBackgroundAlpha,
+                color: UI_BACKGROUND_COLOR,
+                alpha: UI_BACKGROUND_ALPHA,
                 smooth: true
             },
         };
 
         this._indicators = [];
-        const baseIndicator = Ship.createModel(this._state.theme.uiForegroundColor, 3, SIZE);
+        const baseIndicator = Ship.createModel(UI_FOREGROUND_COLOR, 3, SIZE);
 
         for (let i = 0; i < LIVES; i++) {
             const indicator = new Graphics(baseIndicator.geometry);
@@ -50,7 +49,7 @@ export class LifeIndicator extends Widget implements Tickable {
                 indicator.layout.marginLeft = 8;
             }
             this._indicators.push(indicator);
-            this._container.addChild(indicator);
+            this.addChild(indicator);
         }
     }
 
@@ -70,24 +69,21 @@ export class LifeIndicator extends Widget implements Tickable {
                     queue: this.queue,
                     color: 0xffffff,
                 });
-                animation.container.layout.excluded = true;
-                animation.container.position.copyFrom(indicator.position);
-                this._container.addChild(animation.container);
+                animation.layout.excluded = true;
+                animation.position.copyFrom(indicator.position);
+                this.addChild(animation);
             }
         }
-    }
-
-    get container(): Container {
-        return this._container;
     }
 }
 
 class LifeAnimation extends OneShotAnimation {
+    private readonly _graphics: Graphics;
     size: number;
-    private _graphic: Graphics;
 
-    constructor(params: CoreOneShotAnimationParams & {
-        color: number
+    constructor(params: {
+        queue: TickQueue,
+        color: number,
     }) {
         super({
             ...params,
@@ -99,21 +95,18 @@ class LifeAnimation extends OneShotAnimation {
         });
         this.size = SIZE;
 
-        this._graphic = Ship.createModel(params.color, 3, SIZE);
-        this._graphic.cacheAsBitmap = true;
-        this._graphic.alpha = 0.8;
+        this._graphics = Ship.createModel(params.color, 3, SIZE);
+        this._graphics.cacheAsBitmap = true;
+        this._graphics.alpha = 0.8;
+        this.addChild(this._graphics);
 
         this.timeline.add({
-            targets: this._graphic,
+            targets: this._graphics,
             alpha: 0,
         }, 0).add({
             targets: this,
             size: SIZE * 3,
-            change: () => this._graphic.scale.set(this.size / SIZE),
+            change: () => this._graphics.scale.set(this.size / SIZE),
         }, 0);
-    }
-
-    get container(): Container {
-        return this._graphic;
     }
 }

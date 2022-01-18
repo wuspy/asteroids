@@ -7,7 +7,7 @@ export class EventManager<Events extends EventMap<keyof Events>> {
         this._callbacks = { };
     }
 
-    on<K extends keyof Events>(event: K, callback: Events[K], thisArg?: any): void {
+    on<K extends keyof Events>(event: K, thisArg: any, callback: Events[K]): void {
         if (!this._callbacks[event]) {
             this._callbacks[event] = [[callback, thisArg]];
         } else {
@@ -15,15 +15,19 @@ export class EventManager<Events extends EventMap<keyof Events>> {
         }
     }
 
-    off<K extends keyof Events>(event: K, callback: Events[K], thisArg?: any): void {
+    off<K extends keyof Events>(event: K, thisArg: any, callback?: Events[K]): void {
         if (this._callbacks[event]) {
-            this._callbacks[event] = this._callbacks[event]!.filter(([cb, ta]) => cb !== callback && ta !== thisArg);
+            if (callback) {
+                this._callbacks[event] = this._callbacks[event]!.filter(([cb, ta]) => cb !== callback && ta !== thisArg);
+            } else {
+                this._callbacks[event] = this._callbacks[event]!.filter(([, ta]) => ta !== thisArg);
+            }
         }
     }
 
     offThis(thisArg: any) {
         for (const name in this._callbacks) {
-            this._callbacks[name] = this._callbacks[name]!.filter(([, ta]) => ta !== thisArg);
+            this.off(name, thisArg);
         }
     }
 

@@ -1,18 +1,16 @@
 import anime from "animejs";
-import { Tickable } from "./TickQueue";
-import { Widget, WidgetParams } from "./Widget";
+import { TickableContainer } from "./TickableContainer";
+import { TickQueue } from "./TickQueue";
 
-export interface OneShotAnimationParams extends WidgetParams {
-    defaultAnimeParams?: anime.AnimeParams;
-}
-
-export type CoreOneShotAnimationParams = Pick<OneShotAnimationParams, "queue">;
-
-export abstract class OneShotAnimation extends Widget implements Tickable {
+export abstract class OneShotAnimation extends TickableContainer {
     protected readonly timeline: anime.AnimeTimelineInstance;
 
-    constructor(params: OneShotAnimationParams) {
-        super(params);
+    constructor(params: {
+        queue: TickQueue,
+        queuePriority?: number,
+        defaultAnimeParams?: anime.AnimeParams,
+    }) {
+        super(params.queue, params.queuePriority);
         this.timeline = anime.timeline({
             ...params.defaultAnimeParams,
             autoplay: false

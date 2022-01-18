@@ -1,42 +1,41 @@
 import { FONT_FAMILY, QUEUE_PRIORITIES } from "./constants";
 import { GameState } from "./GameState";
-import { OneShotAnimation, Tickable, CoreOneShotAnimationParams, Widget, CoreWidgetParams } from "./engine";
+import { OneShotAnimation, TickableContainer, TickQueue } from "./engine";
 import { Text } from "@pixi/text";
-import { Container } from "@pixi/display";
-import { FlexDirection } from "./layout";
+import { ContainerBackgroundShape, FlexDirection } from "./layout";
+import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
 
 const FONT_SIZE = 48;
 const FONT_WEIGHT = "normal";
 const MAX_DIGITS = 7;
 
-export class ScoreIndicator extends Widget implements Tickable {
+export class ScoreIndicator extends TickableContainer {
     private readonly _state: GameState;
-    private readonly _container: Container;
     private readonly _zeroText: Text;
     private readonly _scoreText: Text;
     private _lastScore: number;
 
-    constructor(params: CoreWidgetParams & {
+    constructor(params: {
+        queue: TickQueue,
         state: GameState,
     }) {
-        super({ ...params, queuePriority: 0 });
+        super(params.queue);
         this._state = params.state;
         this._lastScore = -1;
 
-        this._container = new Container();
-        this._container.flexContainer = true;
-        this._container.layout.style({
+        this.flexContainer = true;
+        this.layout.style({
             paddingHorizontal: 12,
             paddingVertical: 8,
             flexDirection: FlexDirection.Row,
         });
-        this._container.backgroundStyle = {
-            shape: "rectangle",
+        this.backgroundStyle = {
+            shape: ContainerBackgroundShape.Rectangle,
             cornerRadius: 12,
             cacheAsBitmap: true,
             fill: {
-                color: this._state.theme.uiBackgroundColor,
-                alpha: this._state.theme.uiBackgroundAlpha,
+                color: UI_BACKGROUND_COLOR,
+                alpha: UI_BACKGROUND_ALPHA,
                 smooth: true,
             },
         };
@@ -44,18 +43,18 @@ export class ScoreIndicator extends Widget implements Tickable {
             fontFamily: FONT_FAMILY,
             fontSize: FONT_SIZE,
             fontWeight: FONT_WEIGHT,
-            fill: this._state.theme.uiForegroundColor,
+            fill: UI_FOREGROUND_COLOR,
         });
         this._zeroText.alpha = 0.25;
         this._scoreText = new Text("0", {
             fontFamily: FONT_FAMILY,
             fontSize: FONT_SIZE,
             fontWeight: FONT_WEIGHT,
-            fill: this._state.theme.uiForegroundColor,
+            fill: UI_FOREGROUND_COLOR,
         });
 
-        this._container.addChild(this._zeroText);
-        this._container.addChild(this._scoreText);
+        this.addChild(this._zeroText);
+        this.addChild(this._scoreText);
         this._zeroText.cacheAsBitmap = true;
         this._scoreText.cacheAsBitmap = true;
     }
@@ -63,45 +62,37 @@ export class ScoreIndicator extends Widget implements Tickable {
     tick(timestamp: number, elapsed: number): void {
         if (this._lastScore !== this._state.score) {
             const score = this._state.score.toFixed();
+            this._scoreText.cacheAsBitmap = false;
+            this._scoreText.text = score;
+            this._scoreText.cacheAsBitmap = true;
             if (this._lastScore.toFixed().length !== score.length) {
                 this._zeroText.cacheAsBitmap = false;
                 this._zeroText.text = Array(MAX_DIGITS - score.length).fill("0").join("");
                 this._zeroText.cacheAsBitmap = true;
-            }
-            this._scoreText.cacheAsBitmap = false;
-            const needsUpdate = score.length !== this._scoreText.text.length;
-            this._scoreText.text = score;
-            if (needsUpdate) {
                 // The reason we need to update the layout manually here is so we can position the animation
-                this._container.layout.update();
+                // since the number of digits, and therefore the score position, has changed
+                this.layout.update();
             }
-            this._scoreText.cacheAsBitmap = true;
             const animation = new ScoreAnimation({
                 state: this._state,
                 queue: this.queue,
                 score: this._state.score,
-                color: this._state.theme.uiForegroundColor,
+                color: UI_FOREGROUND_COLOR,
             });
-            animation.container.layout.excluded = true;
-            animation.container.position.set(
+            animation.layout.excluded = true;
+            animation.position.set(
                 this._scoreText.x + this._scoreText.width / 2,
                 this._scoreText.y + this._scoreText.height / 2,
             );
-            this._container.addChild(animation.container);
+            this.addChild(animation);
             this._lastScore = this._state.score;
         }
-    }
-
-    get container(): Container {
-        return this._container;
     }
 }
 
 class ScoreAnimation extends OneShotAnimation {
-    private readonly _score: string;
-    private readonly _text: Text;
-
-    constructor(params: CoreOneShotAnimationParams & {
+    constructor(params: {
+        queue: TickQueue,
         score: number,
         state: GameState,
         color: number,
@@ -114,27 +105,24 @@ class ScoreAnimation extends OneShotAnimation {
                 easing: "linear",
             })
         });
-        this._score = params.score.toFixed();
+        const score = params.score.toFixed();
 
-        this._text = new Text(this._score, {
+        const text = new Text(score, {
             fontFamily: FONT_FAMILY,
             fontSize: FONT_SIZE,
             fontWeight: FONT_WEIGHT,
             fill: params.color,
         });
-        this._text.anchor.set(0.5);
-        this._text.alpha = 0.8;
+        text.anchor.set(0.5);
+        text.alpha = 0.8;
+        this.addChild(text);
 
         this.timeline.add({
-            targets: this._text,
+            targets: text,
             alpha: 0,
         }, 0).add({
-            targets: this._text.style,
+            targets: text.style,
             fontSize: FONT_SIZE * 2,
         }, 0);
-    }
-
-    get container(): Container {
-        return this._text;
     }
 }

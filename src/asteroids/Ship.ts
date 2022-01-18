@@ -17,7 +17,6 @@ import { GameEvents } from "./GameEvents";
 import { DynamicGameObject, random, findUnoccupiedPosition, CoreGameObjectParams, Vec2 } from "./engine";
 import { IPointData, DEG_TO_RAD, Rectangle } from "@pixi/math";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { Container } from "@pixi/display";
 import { BlurFilter } from "@pixi/filter-blur";
 import { LINE_JOIN } from "@pixi/graphics";
 import { Projectile } from "./Projectile";
@@ -70,7 +69,7 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
             color: this.state.theme.foregroundColor,
             diameter: 50,
             queue: this.queue,
-        }).container);
+        }));
 
         this.events.trigger("shipCreated", this);
     }
@@ -143,7 +142,7 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
                     color: this.state.theme.foregroundColor,
                     diameter: 50,
                     queue: this.queue,
-                }).container);
+                }));
             }
             this._hyperspaceCountdown = Math.max(0, this._hyperspaceCountdown - elapsed);
         }
@@ -190,9 +189,9 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
                 maxDuration: 3000,
                 color: this.state.theme.foregroundColor,
             });
-            explosion.container.position.copyFrom(this.position);
-            explosion.container.rotation = this.rotation;
-            this.container.parent.addChild(explosion.container);
+            explosion.position.copyFrom(this.position);
+            explosion.rotation = this.rotation;
+            this.container.parent.addChild(explosion);
         }
         super.destroy();
         this.events.trigger("shipDestroyed", this);

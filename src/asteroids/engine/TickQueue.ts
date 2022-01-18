@@ -11,7 +11,7 @@ export class TickQueue implements Tickable {
         this._priorities = [];
     }
 
-    add(priority: number, ...items: Tickable[]) {
+    add(priority: number, ...items: Tickable[]): void {
         if (this._items[priority]) {
             this._items[priority]!.push(...items);
         } else {
@@ -20,7 +20,7 @@ export class TickQueue implements Tickable {
         }
     }
 
-    remove(priority: number, ...items: Tickable[]) {
+    remove(priority: number, ...items: Tickable[]): void {
         if (!this._items[priority]) {
             return;
         }
@@ -32,8 +32,17 @@ export class TickQueue implements Tickable {
         }
     }
 
+    clear(): void {
+        this._items = [];
+        this._priorities = [];
+    }
+
     tick(timestamp: number, elapsed: number): void {
         this._priorities.forEach((priority) => this._items[priority]!.forEach((item) => item.tick(timestamp, elapsed)));
+    }
+
+    get length(): number {
+        return this._priorities.reduce((priority, count) => count + this._items[priority]!.length, 0);
     }
 
     private insertPriority(priority: number): void {

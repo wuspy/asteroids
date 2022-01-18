@@ -1,15 +1,20 @@
 import { Asteroid } from "./Asteroid";
 import { Projectile } from "./Projectile";
 import { Ship } from "./Ship";
+import { Theme } from "./Theme";
 import { UFO } from "./UFO";
 
 export interface GameEvents {
-    startScreenFadeOut: () => void;
-    preStart: () => void;
-    start: () => void;
-    pause: () => void;
-    resume: () => void;
+    reset: () => void;
+    startRequested: () => void;
+    restartRequested: () => void;
+    pauseRequested: () => void;
+    resumeRequested: () => void;
+    started: () => void;
+    paused: () => void;
+    resumed: () => void;
     finished: () => void;
+    themeChanged: (theme: Theme) => void;
     shipCreated: (ship: Ship) => void;
     shipDestroyed: (ship: Ship) => void;
     ufoCreated: (ufo: UFO) => void;

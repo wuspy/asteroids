@@ -1,21 +1,21 @@
 import { GameObject } from "./GameObject";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { Container } from "@pixi/display";
-import { Tickable } from "./TickQueue";
-import { Widget, WidgetParams } from "./Widget";
+import { TickableContainer } from "./TickableContainer";
+import { TickQueue } from "./TickQueue";
 
-export class HitAreaDebugContainer extends Widget implements Tickable {
+export class HitAreaDebugContainer extends TickableContainer {
     private _objects: readonly GameObject<any, any>[];
     private readonly _graphics: Graphics;
 
-    public constructor(params: WidgetParams) {
-        super(params);
+    public constructor(queue: TickQueue) {
+        super(queue);
         this._graphics = new Graphics();
+        this.addChild(this._graphics);
         this._objects = [];
     }
 
     tick(timestamp: number, elapsed: number): void {
-        if (this._graphics.visible) {
+        if (this.visible) {
             this._graphics.clear();
             for (const object of this._objects) {
                 this._graphics.lineStyle({
@@ -39,23 +39,5 @@ export class HitAreaDebugContainer extends Widget implements Tickable {
 
     set objects(objects: readonly GameObject<any, any>[]) {
         this._objects = objects;
-    }
-
-    get container(): Container {
-        return this._graphics;
-    }
-
-    get visible(): boolean {
-        return this.container.visible;
-    }
-
-    set visible(visible: boolean) {
-        if (visible && !this.visible) {
-            this.container.visible = true;
-            this.queue.add(this.queuePriority, this);
-        } else if (!visible && this.visible) {
-            this.container.visible = false;
-            this.queue.remove(this.queuePriority, this);
-        }
     }
 }

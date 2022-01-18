@@ -1,12 +1,13 @@
 import { Renderer } from "@pixi/core";
 import { Container, DisplayObject } from "@pixi/display";
+import { BlurFilter } from "@pixi/filter-blur";
 import { IFillStyleOptions, ILineStyleOptions, SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { ComputedLayout } from "./FlexLayout";
 
 declare module "@pixi/display"
 {
     export interface Container {
-        set backgroundStyle(background: ContainerBackground);
+        set backgroundStyle(background: ContainerBackground | undefined);
         get debugLayout(): boolean;
         set debugLayout(debugLayout: boolean);
         get flexContainer(): boolean;
@@ -22,23 +23,63 @@ interface ContainerPrivate extends Container {
     _backgroundStyle?: ContainerBackground;
     _backgroundWidth: number;
     _backgroundHeight: number;
+    _blurFilter: [BlurFilter];
     createBackgroundGraphics(): void;
     destroyBackgroundGraphics(): void;
     createDebugGraphics(): void;
     destroyDebugGraphics(): void;
 }
 
+export const enum ContainerBackgroundShape {
+    Rectangle,
+    Ellipse,
+};
+
 export type ContainerBackground = ((graphics: Graphics, width: number, height: number) => void) | {
-    shape: "rectangle" | "ellipse",
+    shape: ContainerBackgroundShape,
     fill?: IFillStyleOptions,
     stroke?: ILineStyleOptions;
     cornerRadius?: number;
     cacheAsBitmap?: boolean;
 }
 
+export const drawContainerBackground = (graphics: Graphics, background: ContainerBackground, width: number, height: number) => {
+    if (typeof (background) === "function") {
+        background(graphics, width, height);
+    } else {
+        const cacheAsBitmap = background.cacheAsBitmap && "cacheAsBitmap" in graphics;
+        if (cacheAsBitmap) {
+            (graphics as any).cacheAsBitmap = false;
+        }
+        const { shape, fill, stroke, cornerRadius } = background;
+        if (fill) {
+            graphics.beginTextureFill(fill);
+        }
+        if (stroke) {
+            graphics.lineStyle(stroke);
+        }
+        if (shape === ContainerBackgroundShape.Rectangle) {
+            if (cornerRadius) {
+                graphics.drawRoundedRect(0, 0, width, height, cornerRadius);
+            } else {
+                graphics.drawRect(0, 0, width, height);
+            }
+        } else if (shape === ContainerBackgroundShape.Ellipse) {
+            graphics.drawEllipse(width / 2, height / 2, width, height);
+        }
+        if (fill) {
+            graphics.endFill();
+        }
+        if (cacheAsBitmap) {
+            (graphics as any).cacheAsBitmap = true;
+        }
+    }
+};
+
 const container = Container.prototype as ContainerPrivate;
 
 container._flexContainer = false;
+container._blurFilter = [new BlurFilter()];
 container._backgroundWidth = 0;
 container._backgroundHeight = 0;
 
@@ -118,10 +159,9 @@ Object.defineProperties(container, {
 
 container.addChild = function <T extends DisplayObject[]>(this: ContainerPrivate, ...children: T): T[0] {
     const result = _super.addChild.call(this, ...children);
-    if (this._flexContainer) {
-        for (const child of children) {
-            this.layout.appendChild(child.layout);
-        }
+    // Container calls addChild recursively on every item in children
+    if (this._flexContainer && children.length === 1) {
+        this.layout.appendChild(children[0].layout);
     }
     return result;
 }
@@ -136,10 +176,9 @@ container.addChildAt = function <T extends DisplayObject>(this: ContainerPrivate
 
 container.removeChild = function <T extends DisplayObject[]>(this: ContainerPrivate, ...children: T): T[0] {
     const result = _super.removeChild.call(this, ...children);
-    if (this._flexContainer) {
-        for (const child of children) {
-            this.layout.removeChild(child.layout);
-        }
+    // Container calls removeChild recursively on every item in children
+    if (this._flexContainer && children.length === 1) {
+        this.layout.removeChild(children[0].layout);
     }
     return result;
 }
@@ -203,36 +242,7 @@ container.onLayout = function (this: ContainerPrivate, layout: ComputedLayout): 
     const { width, height } = layout;
     if (this._backgroundGraphics && this._backgroundStyle && (width !== this._backgroundWidth || height !== this._backgroundHeight)) {
         this._backgroundGraphics.clear();
-        if (typeof (this._backgroundStyle) === "function") {
-            this._backgroundStyle(this._backgroundGraphics, width, height);
-        } else {
-            const cache = this._backgroundStyle.cacheAsBitmap && "cacheAsBitmap" in this._backgroundGraphics;
-            if (cache) {
-                (this._backgroundGraphics as any).cacheAsBitmap = false;
-            }
-            const { shape, fill, stroke, cornerRadius } = this._backgroundStyle;
-            if (fill) {
-                this._backgroundGraphics.beginTextureFill(fill);
-            }
-            if (stroke) {
-                this._backgroundGraphics.lineStyle(stroke);
-            }
-            if (shape === "rectangle") {
-                if (cornerRadius) {
-                    this._backgroundGraphics.drawRoundedRect(0, 0, width, height, cornerRadius);
-                } else {
-                    this._backgroundGraphics.drawRect(0, 0, width, height);
-                }
-            } else if (shape === "ellipse") {
-                this._backgroundGraphics.drawEllipse(width / 2, height / 2, width, height);
-            }
-            if (fill) {
-                this._backgroundGraphics.endFill();
-            }
-            if (cache) {
-                (this._backgroundGraphics as any).cacheAsBitmap = true;
-            }
-        }
+        drawContainerBackground(this._backgroundGraphics, this._backgroundStyle, width, height);
         this._backgroundWidth = width;
         this._backgroundHeight = height;
     }

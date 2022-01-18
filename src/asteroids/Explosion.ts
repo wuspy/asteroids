@@ -1,7 +1,6 @@
 import { DEG_TO_RAD } from "@pixi/math";
-import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { random, OneShotAnimation, CoreOneShotAnimationParams } from "./engine";
+import { random, OneShotAnimation, TickQueue } from "./engine";
 import { QUEUE_PRIORITIES } from "./constants";
 
 interface Particle {
@@ -12,7 +11,8 @@ interface Particle {
     endY: number;
 }
 
-export interface ExplosionParams extends CoreOneShotAnimationParams {
+export interface ExplosionParams {
+    queue: TickQueue;
     diameter: number;
     maxDuration: number;
     color: number;
@@ -34,6 +34,7 @@ export class Explosion extends OneShotAnimation {
         this._color = params.color;
         this._particles = [];
         this._graphics = new Graphics();
+        this.addChild(this._graphics);
         for (let i = 0; i < params.diameter / 6; i++) {
             const angle = random(0, 360, false) * DEG_TO_RAD;
             const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
@@ -62,9 +63,5 @@ export class Explosion extends OneShotAnimation {
                 }
             },
         });
-    }
-
-    get container(): Container {
-        return this._graphics
     }
 }

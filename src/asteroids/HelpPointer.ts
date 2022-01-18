@@ -1,12 +1,12 @@
 import anime from "animejs";
 import { Container } from "@pixi/display";
-import { CoreWidgetParams, Vec2, Widget } from "./engine";
+import { Vec2 } from "./engine";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { DEG_TO_RAD, PI_2 } from "@pixi/math";
+import { Renderer } from "@pixi/core";
 
-export class HelpPointer extends Widget {
-    private _container: Container;
+export class HelpPointer extends Container {
     private _timeline: anime.AnimeTimelineInstance;
     private _graphics: Graphics;
     private _content: Container;
@@ -22,7 +22,7 @@ export class HelpPointer extends Widget {
     protected segment1Progress: number;
     protected segment2Progress: number;
 
-    constructor(params: CoreWidgetParams & {
+    constructor(params: {
         position: Vec2,
         content: Container,
         segmentLength: number,
@@ -31,14 +31,13 @@ export class HelpPointer extends Widget {
         duration: number,
         delay: number,
     }) {
-        super({...params, queuePriority: 0});
-        this._container = new Container();
-        this._container.position.set(params.position.x, params.position.y);
+        super();
+        this.position.set(params.position.x, params.position.y);
         this._timeline = anime.timeline({ autoplay: false, easing: "linear" });
 
         this._graphics = new Graphics();
         this._content = params.content;
-        this._container.addChild(this._graphics, this._content);
+        this.addChild(this._graphics, this._content);
         this._segmentLength = params.segmentLength;
         this._angle1 = params.angle1 % PI_2;
         this._angle2 = params.angle2 % PI_2;
@@ -73,9 +72,9 @@ export class HelpPointer extends Widget {
         this._timeline.reverse();
     }
 
-    tick(timestamp: number, elapsed: number): void {
+    override render(renderer: Renderer): void {
         if (!this._timeline.completed) {
-            this._timeline.tick(timestamp);
+            this._timeline.tick(Date.now());
             this._graphics.clear();
             this._graphics.lineStyle({
                 color: 0xffffff,
@@ -111,9 +110,6 @@ export class HelpPointer extends Widget {
         } else {
             this._content.position.set(this._contentPosition.x - this._content.width / 2, this._contentPosition.y);
         }
-    }
-
-    get container(): Container {
-        return this._container;
+        super.render(renderer);
     }
 }

@@ -162,7 +162,7 @@ export class Asteroid extends GameObject<GameState, GameEvents> {
             this.position.copyFrom(position);
     }
 
-    override destroy(explode: boolean = false, createChildren: boolean = true): void {
+    override destroy(explode: boolean = false, createChildren: boolean = false): void {
         if (explode && this.container.parent) {
             const explosion = new Explosion({
                 queue: this.queue,
@@ -170,8 +170,8 @@ export class Asteroid extends GameObject<GameState, GameEvents> {
                 maxDuration: 2000,
                 color: this.state.theme.foregroundColor,
             });
-            explosion.container.position.copyFrom(this.position);
-            this.container.parent.addChild(explosion.container);
+            explosion.position.copyFrom(this.position);
+            this.container.parent.addChild(explosion);
         }
         super.destroy();
         const generation = this._generation + 1;
