@@ -1,8 +1,8 @@
-import { AbstractAsteroidsGame } from "./AbstractAsteroidsGame";
+import { CoreAsteroidsGame } from "./CoreAsteroidsGame";
 import { seedRandom, parseGameLog } from "./engine";
 import { inputLogConfig } from "./input";
 
-export class HeadlessAsteroidsGame extends AbstractAsteroidsGame {
+export class HeadlessAsteroidsGame extends CoreAsteroidsGame {
     private _log: string;
     private _didParserComplete: boolean;
     private _parseError?: any;

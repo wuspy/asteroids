@@ -14,7 +14,7 @@ import { Container } from "@pixi/display";
 
 const WORLD_AREA_PX = WORLD_AREA * 1000000;
 
-export abstract class AbstractAsteroidsGame {
+export abstract class CoreAsteroidsGame {
     readonly state: GameState;
     readonly events: EventManager<GameEvents>;
     readonly worldSize: ISize;

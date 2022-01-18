@@ -8,7 +8,7 @@ import { ScoreIndicator } from "./ScoreIndicator";
 import { LifeIndicator } from "./LifeIndicator";
 import { GameObject, HitAreaDebugContainer, TickQueue } from "./engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
-import { AbstractAsteroidsGame } from "./AbstractAsteroidsGame";
+import { CoreAsteroidsGame } from "./CoreAsteroidsGame";
 import { FPSIndicator } from "./FPSIndicator";
 // import { AlphaFilter } from "@pixi/filter-alpha";
 import { GameLog } from "./engine/GameLog";
@@ -32,7 +32,7 @@ const RGB_SPLIT_SEPARATION = 3;
 
 const ENABLE_LOGGING = true;
 
-export class AsteroidsGame extends AbstractAsteroidsGame {
+export class AsteroidsGame extends CoreAsteroidsGame {
     private readonly _container: HTMLElement;
     private readonly _renderer: AbstractRenderer;
     private readonly _stage: Container;
