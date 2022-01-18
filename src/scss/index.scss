@@ -118,6 +118,7 @@ svg {
 
 #branding {
     color: rgba(255, 255, 255, 0.25);
+    user-select: none;
     font-size: 10pt;
     position: fixed;
     display: block;
