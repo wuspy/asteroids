@@ -2,6 +2,7 @@ import { IFillStyleOptions, ILineStyleOptions } from "@pixi/graphics-smooth";
 
 // UI theme is constant and does not change with game theme
 
+export const FONT_FAMILY = "Consolas, Monaco, Noto Sans Mono, Roboto Mono, Liberation Mono, monospace";
 export const UI_FOREGROUND_COLOR = 0xffffff;
 export const UI_BACKGROUND_COLOR = 0;
 export const UI_BACKGROUND_ALPHA = 0.6;
@@ -125,10 +126,6 @@ export const THEMES: readonly Theme[] = [
     {
         ...DEFAULTS,
         background: "radial-gradient(circle at center, #235b76, #202a4e)",
-    },
-    {
-        ...DEFAULTS,
-        background: "linear-gradient(75deg, #1c223a, #1a1a26, #1c223a)",
     },
     {
         ...DEFAULTS,
