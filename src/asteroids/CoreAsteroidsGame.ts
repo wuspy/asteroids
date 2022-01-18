@@ -366,9 +366,12 @@ export abstract class CoreAsteroidsGame {
     }
 
     private addScore(increase: number): void {
-        // if (this.state.lives < LIVES && Math.floor((this.state.score + increase) / EXTRA_LIFE_AT_SCORE) > Math.floor(this.state.score / EXTRA_LIFE_AT_SCORE)) {
-        //     this.state.lives++;
-        // }
+        if (EXTRA_LIFE_AT_SCORE
+            && this.state.lives < LIVES
+            && Math.floor((this.state.score + increase) / EXTRA_LIFE_AT_SCORE) > Math.floor(this.state.score / EXTRA_LIFE_AT_SCORE)
+        ) {
+            this.state.lives = Math.min(LIVES, this.state.lives + Math.ceil(increase / EXTRA_LIFE_AT_SCORE));
+        }
         this.state.score += increase;
     }
 

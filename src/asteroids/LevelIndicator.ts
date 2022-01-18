@@ -1,7 +1,7 @@
 import { random, TickableContainer, TickQueue } from "./engine";
 import { Text } from "@pixi/text";
 import { GameState } from "./GameState";
-import { FONT_FAMILY } from "./constants";
+import { FONT_FAMILY } from "./Theme";
 
 const FONT_SIZE = 28;
 const MAX_DIGITS = 3;

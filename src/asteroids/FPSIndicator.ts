@@ -1,5 +1,5 @@
 import { Text } from "@pixi/text";
-import { FONT_FAMILY } from "./constants";
+import { FONT_FAMILY } from "./Theme";
 import { TickableContainer, TickQueue } from "./engine";
 
 const FONT_SIZE = 30;

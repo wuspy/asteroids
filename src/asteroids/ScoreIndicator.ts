@@ -1,9 +1,9 @@
-import { FONT_FAMILY, QUEUE_PRIORITIES } from "./constants";
+import { QUEUE_PRIORITIES } from "./constants";
 import { GameState } from "./GameState";
 import { OneShotAnimation, TickableContainer, TickQueue } from "./engine";
 import { Text } from "@pixi/text";
 import { ContainerBackgroundShape, FlexDirection } from "./layout";
-import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
+import { FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
 
 const FONT_SIZE = 48;
 const FONT_WEIGHT = "normal";

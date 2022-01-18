@@ -2,9 +2,8 @@ import { Container } from "@pixi/display";
 import { GlowFilter } from "@pixi/filter-glow";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Text } from "@pixi/text";
-import { FONT_FAMILY } from "../constants";
 import { ComputedLayout, ContainerBackground, ContainerBackgroundShape, drawContainerBackground } from "../layout";
-import { ButtonTheme, ButtonType, BUTTON_THEMES } from "../Theme";
+import { ButtonTheme, ButtonType, BUTTON_THEMES, FONT_FAMILY } from "../Theme";
 
 const TRANSITION_TIME = 250;
 

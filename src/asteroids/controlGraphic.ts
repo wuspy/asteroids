@@ -1,6 +1,6 @@
 import { Container } from "@pixi/display";
-import { Text, TextStyle } from "@pixi/text";
-import { FONT_FAMILY } from "./constants";
+import { Text } from "@pixi/text";
+import { FONT_FAMILY } from "./Theme";
 import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "./engine";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { controls } from "./input";

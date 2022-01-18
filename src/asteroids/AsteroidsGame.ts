@@ -328,6 +328,9 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         document.getElementById("background")!.style.background = theme.background;
         document.getElementById("background")!.style.opacity = "1";
         this._mainAlphaFilter.alpha = theme.foregroundAlpha;
+        if (process.env.NODE_ENV === "development") {
+            console.log("Applied theme", theme);
+        }
     }
 
     private restart(): void {
