@@ -37,6 +37,7 @@ export const FRICTION = 500; // 500
 export const ROTATION_FRICTION = Math.PI * 12;
 export const RECOIL = 80;
 export const INVULNERABLE_TIME = 2;
+export const HYPERSPACE_COOLDOWN = 0.5;
 export const SHIP_HITAREA = new Polygon(
     { x: 20, y: 30 },
     { x: 0, y: -30 },

@@ -10,7 +10,8 @@ import {
     SHIP_HITAREA,
     HYPERSPACE_DELAY,
     SHIP_PROJECTILE_SPEED,
-    QUEUE_PRIORITIES
+    QUEUE_PRIORITIES,
+    HYPERSPACE_COOLDOWN
 } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
@@ -34,6 +35,7 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
     private _lastFireAnimation: number;
     private _invulnerableCountdown!: number;
     private _hyperspaceCountdown: number;
+    private _lastHyperspaceTime: number;
 
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         invulnerable: boolean,
@@ -51,6 +53,7 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
         this._accelerationAmount = 0;
         this._lastFireAnimation = 0;
         this._hyperspaceCountdown = 0;
+        this._lastHyperspaceTime = 0;
         this._rotationAmount = 0;
         this.invulnerable = params.invulnerable;
 
@@ -127,17 +130,21 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
                 // We're in the middle of the hyperspace delay, the ship is invisible, so find a new location and move the ship to it
                 this.stop();
                 this.rotation = random(0, 360, true) * DEG_TO_RAD;
-                this.position.copyFrom(findUnoccupiedPosition({
-                    bounds: new Rectangle(
-                        this.boundingBox.width,
-                        this.boundingBox.height,
-                        this.worldSize.width - this.boundingBox.width * 2,
-                        this.worldSize.height - this.boundingBox.height * 2,
-                    ),
-                    objectSize: this.boundingBox,
-                    obstacles: [...this.state.asteroids, ...this.state.ufos].map((obstacle) => obstacle.boundingBox),
-                    useSeededRandom: true,
-                }));
+                // this.position.copyFrom(findUnoccupiedPosition({
+                //     bounds: new Rectangle(
+                //         this.boundingBox.width,
+                //         this.boundingBox.height,
+                //         this.worldSize.width - this.boundingBox.width * 2,
+                //         this.worldSize.height - this.boundingBox.height * 2,
+                //     ),
+                //     objectSize: this.boundingBox,
+                //     obstacles: [...this.state.asteroids, ...this.state.ufos].map((obstacle) => obstacle.boundingBox),
+                //     useSeededRandom: true,
+                // }));
+                this.position.set(
+                    random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2, true),
+                    random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2, true),
+                );
                 this.container.addChild(new ShipSpawnAnimation({
                     color: this.state.theme.foregroundColor,
                     diameter: 50,
@@ -218,7 +225,10 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
     }
 
     hyperspace(): void {
-        this._hyperspaceCountdown = HYPERSPACE_DELAY;
+        if (this.state.timestamp - this._lastHyperspaceTime >= HYPERSPACE_COOLDOWN * 1000) {
+            this._hyperspaceCountdown = HYPERSPACE_DELAY;
+            this._lastHyperspaceTime = this.state.timestamp;
+        }
     }
 
     get gunPosition(): IPointData {
