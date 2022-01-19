@@ -1,6 +1,6 @@
-import { Text } from "@pixi/text";
-import { FONT_FAMILY } from "./Theme";
+import { Text } from "./ui";
 import { TickableContainer, TickQueue } from "./engine";
+import { UI_FOREGROUND_COLOR } from "./Theme";
 
 const FONT_SIZE = 30;
 
@@ -14,9 +14,8 @@ export class FPSIndicator extends TickableContainer {
         this._lastUpdate = 0;
         this._frameCount = 0;
         this._text = new Text("", {
-            fontFamily: FONT_FAMILY,
             fontSize: FONT_SIZE,
-            fill: 0xffffff,
+            fill: UI_FOREGROUND_COLOR,
         });
         this.addChild(this._text);
     }

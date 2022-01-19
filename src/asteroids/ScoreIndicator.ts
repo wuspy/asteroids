@@ -1,13 +1,15 @@
-import { QUEUE_PRIORITIES } from "./constants";
 import { GameState } from "./GameState";
-import { OneShotAnimation, TickableContainer, TickQueue } from "./engine";
-import { Text } from "@pixi/text";
+import { TickableContainer, TickQueue } from "./engine";
+import { Text } from "./ui";
 import { ContainerBackgroundShape, FlexDirection } from "./layout";
-import { FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
+import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
+import { PopAnimation } from "./PopAnimation";
 
-const FONT_SIZE = 48;
-const FONT_WEIGHT = "normal";
 const MAX_DIGITS = 7;
+const TEXT_STYLE = {
+    fontSize: 48,
+    fill: UI_FOREGROUND_COLOR,
+};
 
 export class ScoreIndicator extends TickableContainer {
     private readonly _state: GameState;
@@ -39,19 +41,9 @@ export class ScoreIndicator extends TickableContainer {
                 smooth: true,
             },
         };
-        this._zeroText = new Text(Array(MAX_DIGITS - 1).fill("0").join(""), {
-            fontFamily: FONT_FAMILY,
-            fontSize: FONT_SIZE,
-            fontWeight: FONT_WEIGHT,
-            fill: UI_FOREGROUND_COLOR,
-        });
+        this._zeroText = new Text(Array(MAX_DIGITS - 1).fill("0").join(""), TEXT_STYLE);
         this._zeroText.alpha = 0.25;
-        this._scoreText = new Text("0", {
-            fontFamily: FONT_FAMILY,
-            fontSize: FONT_SIZE,
-            fontWeight: FONT_WEIGHT,
-            fill: UI_FOREGROUND_COLOR,
-        });
+        this._scoreText = new Text("0", TEXT_STYLE);
 
         this.addChild(this._zeroText);
         this.addChild(this._scoreText);
@@ -74,10 +66,8 @@ export class ScoreIndicator extends TickableContainer {
                 this.layout.update();
             }
             const animation = new ScoreAnimation({
-                state: this._state,
                 queue: this.queue,
                 score: this._state.score,
-                color: UI_FOREGROUND_COLOR,
             });
             animation.layout.excluded = true;
             animation.position.set(
@@ -90,39 +80,20 @@ export class ScoreIndicator extends TickableContainer {
     }
 }
 
-class ScoreAnimation extends OneShotAnimation {
+class ScoreAnimation extends PopAnimation {
     constructor(params: {
         queue: TickQueue,
         score: number,
-        state: GameState,
-        color: number,
     }) {
-        super({
-            ...params,
-            queuePriority: QUEUE_PRIORITIES.animation,
-            defaultAnimeParams: ({
-                duration: 250,
-                easing: "linear",
-            })
-        });
-        const score = params.score.toFixed();
-
-        const text = new Text(score, {
-            fontFamily: FONT_FAMILY,
-            fontSize: FONT_SIZE,
-            fontWeight: FONT_WEIGHT,
-            fill: params.color,
-        });
+        const text = new Text(params.score.toFixed(), TEXT_STYLE);
         text.anchor.set(0.5);
         text.alpha = 0.8;
-        this.addChild(text);
+        text.cacheAsBitmap = true;
 
-        this.timeline.add({
-            targets: text,
-            alpha: 0,
-        }, 0).add({
-            targets: text.style,
-            fontSize: FONT_SIZE * 2,
-        }, 0);
+        super({
+            queue: params.queue,
+            target: text,
+            scale: 2,
+        });
     }
 }

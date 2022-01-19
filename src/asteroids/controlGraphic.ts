@@ -1,5 +1,5 @@
 import { Container } from "@pixi/display";
-import { Text } from "@pixi/text";
+import { Text } from "./ui";
 import { FONT_FAMILY } from "./Theme";
 import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "./engine";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
@@ -38,6 +38,7 @@ export const createControlGraphic = (params: {
         fontWeight: "bold",
         fill: params.foreground ?? 0,
     });
+    text.cacheAsBitmap = true;
     text.layout.position = PositionType.Absolute;
 
     const background = new Graphics();
@@ -103,19 +104,23 @@ export const createControlDescription = (params: {
         });
     }
     if (params.beforeLabel) {
-        container.addChild(new Text(params.beforeLabel, {
+        const beforeLabel = new Text(params.beforeLabel, {
             fontFamily: FONT_FAMILY,
             fontSize: params.fontSize,
             fill: params.background,
-        }));
+        });
+        beforeLabel.cacheAsBitmap = true;
+        container.addChild(beforeLabel);
     }
     container.addChild(control);
     if (params.afterLabel) {
-        container.addChild(new Text(params.afterLabel, {
+        const afterLabel = new Text(params.afterLabel, {
             fontFamily: FONT_FAMILY,
             fontSize: params.fontSize,
             fill: params.background,
-        }));
+        });
+        afterLabel.cacheAsBitmap = true;
+        container.addChild(afterLabel);
     }
     return container;
 }

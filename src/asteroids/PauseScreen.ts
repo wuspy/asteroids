@@ -1,4 +1,3 @@
-import { Text } from "@pixi/text";
 import { Container } from "@pixi/display";
 import { EventManager, FadeContainer, InputProvider, TickQueue } from "./engine";
 import { GlowFilter } from "@pixi/filter-glow";
@@ -7,7 +6,7 @@ import { GameState } from "./GameState";
 import { createControlDescription, getControlProps } from "./controlGraphic";
 import { controls } from "./input";
 import { Align, ContainerBackgroundShape, FlexDirection } from "./layout";
-import { Button } from "./ui";
+import { Button, Text } from "./ui";
 import { ButtonType, FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
 import { GameEvents } from "./GameEvents";
 
@@ -48,6 +47,7 @@ export class PauseScreen extends FadeContainer {
             fontSize: 64,
             fill: UI_FOREGROUND_COLOR,
         });
+        title.cacheAsBitmap = true;
         title.layout.style({
             margin: 24,
             marginBottom: 12

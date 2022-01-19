@@ -1,11 +1,12 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { LIVES, QUEUE_PRIORITIES } from "./constants";
-import { OneShotAnimation, TickableContainer, TickQueue } from "./engine";
+import { LIVES } from "./constants";
+import { TickableContainer, TickQueue } from "./engine";
 import { Ship } from "./Ship";
 import { GameState } from "./GameState";
 import '@pixi/mixin-cache-as-bitmap';
 import { ContainerBackgroundShape, FlexDirection } from "./layout";
 import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
+import { PopAnimation } from "./PopAnimation";
 
 const SIZE = 36;
 
@@ -14,7 +15,7 @@ export class LifeIndicator extends TickableContainer {
     private readonly _indicators: Graphics[]
     private _lastLives: number;
 
-    constructor(params:  {
+    constructor(params: {
         queue: TickQueue,
         state: GameState,
     }) {
@@ -65,10 +66,7 @@ export class LifeIndicator extends TickableContainer {
                 } else {
                     continue;
                 }
-                const animation = new LifeAnimation({
-                    queue: this.queue,
-                    color: 0xffffff,
-                });
+                const animation = new LifeAnimation(this.queue);
                 animation.layout.excluded = true;
                 animation.position.copyFrom(indicator.position);
                 this.addChild(animation);
@@ -77,36 +75,11 @@ export class LifeIndicator extends TickableContainer {
     }
 }
 
-class LifeAnimation extends OneShotAnimation {
-    private readonly _graphics: Graphics;
-    size: number;
-
-    constructor(params: {
-        queue: TickQueue,
-        color: number,
-    }) {
-        super({
-            ...params,
-            queuePriority: QUEUE_PRIORITIES.animation,
-            defaultAnimeParams: ({
-                duration: 250,
-                easing: "linear",
-            })
-        });
-        this.size = SIZE;
-
-        this._graphics = Ship.createModel(params.color, 3, SIZE);
-        this._graphics.cacheAsBitmap = true;
-        this._graphics.alpha = 0.8;
-        this.addChild(this._graphics);
-
-        this.timeline.add({
-            targets: this._graphics,
-            alpha: 0,
-        }, 0).add({
-            targets: this,
-            size: SIZE * 3,
-            change: () => this._graphics.scale.set(this.size / SIZE),
-        }, 0);
+class LifeAnimation extends PopAnimation {
+    constructor(queue: TickQueue) {
+        const target = Ship.createModel(UI_FOREGROUND_COLOR, 3, SIZE);
+        target.cacheAsBitmap = true;
+        target.alpha = 0.8;
+        super({ queue, target, scale: 3 });
     }
 }

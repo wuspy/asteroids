@@ -1,9 +1,9 @@
 import { Container } from "@pixi/display";
 import { GlowFilter } from "@pixi/filter-glow";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { Text } from "@pixi/text";
+import { Text } from "./Text";
 import { ComputedLayout, ContainerBackground, ContainerBackgroundShape, drawContainerBackground } from "../layout";
-import { ButtonTheme, ButtonType, BUTTON_THEMES, FONT_FAMILY } from "../Theme";
+import { ButtonTheme, ButtonType, BUTTON_THEMES } from "../Theme";
 
 const TRANSITION_TIME = 250;
 
@@ -43,7 +43,6 @@ export class Button extends Container {
             paddingVertical: 10,
         });
         this._text = new Text(text, {
-            fontFamily: FONT_FAMILY,
             fontSize: 20,
             fill: this._theme.textColor,
         });
@@ -80,6 +79,7 @@ export class Button extends Container {
         this._timestamp = Date.now();
         this.interactive = true;
         this.buttonMode = true;
+        this._text.cacheAsBitmap = true;
 
         this.on("click", () => this._onClick());
         this.on("mouseover", () => { this._hover = true; });
@@ -128,7 +128,9 @@ export class Button extends Container {
     }
 
     set text(text: string) {
+        this._text.cacheAsBitmap = false;
         this._text.text = text;
+        this._text.cacheAsBitmap = true;
     }
 
     set onClick(onClick: () => void) {

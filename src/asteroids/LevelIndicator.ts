@@ -1,7 +1,6 @@
 import { random, TickableContainer, TickQueue } from "./engine";
-import { Text } from "@pixi/text";
+import { Text } from "./ui";
 import { GameState } from "./GameState";
-import { FONT_FAMILY } from "./Theme";
 
 const FONT_SIZE = 28;
 const MAX_DIGITS = 3;
@@ -22,7 +21,6 @@ export class LevelIndicator extends TickableContainer {
         super(params.queue);
         this._state = params.state;
         this._text = new Text("", {
-            fontFamily: FONT_FAMILY,
             fontSize: FONT_SIZE,
             fill: this._state.theme.foregroundColor,
         });
@@ -36,6 +34,7 @@ export class LevelIndicator extends TickableContainer {
             this._levelChangeAnimationCountdown = LEVEL_CHANGE_ANIMATION_DURATION;
             this._lastLevel = this._state.level;
         } else if (this._levelChangeAnimationCountdown) {
+            this._text.cacheAsBitmap = false;
             let text = "LVL ";
             this._levelChangeAnimationCountdown = Math.max(0, this._levelChangeAnimationCountdown - elapsed);
             if ((this._levelChangeAnimationCountdown * 1000) % 50 < 25) {
@@ -48,6 +47,8 @@ export class LevelIndicator extends TickableContainer {
                 }
                 this._text.text = text;
             }
+        } else {
+            this._text.cacheAsBitmap = true;
         }
     }
 }

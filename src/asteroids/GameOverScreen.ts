@@ -1,9 +1,8 @@
-import { Text } from "@pixi/text";
 import { EventManager, FadeContainer, InputProvider, TickQueue } from "./engine";
 import { GameState } from "./GameState";
 import { controls } from "./input";
 import { Align, ContainerBackgroundShape, FlexDirection } from "./layout";
-import { Button } from "./ui";
+import { Button, Text } from "./ui";
 import { ButtonType, FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
 import { GameEvents } from "./GameEvents";
 
