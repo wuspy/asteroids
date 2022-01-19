@@ -130,17 +130,6 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
                 // We're in the middle of the hyperspace delay, the ship is invisible, so find a new location and move the ship to it
                 this.stop();
                 this.rotation = random(0, 360, true) * DEG_TO_RAD;
-                // this.position.copyFrom(findUnoccupiedPosition({
-                //     bounds: new Rectangle(
-                //         this.boundingBox.width,
-                //         this.boundingBox.height,
-                //         this.worldSize.width - this.boundingBox.width * 2,
-                //         this.worldSize.height - this.boundingBox.height * 2,
-                //     ),
-                //     objectSize: this.boundingBox,
-                //     obstacles: [...this.state.asteroids, ...this.state.ufos].map((obstacle) => obstacle.boundingBox),
-                //     useSeededRandom: true,
-                // }));
                 this.position.set(
                     random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2, true),
                     random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2, true),
