@@ -115,6 +115,7 @@ export class StartScreen extends FadeContainer {
                         innerStrength: 0,
                         outerStrength: 0,
                         distance: 24,
+                        color: this._state.theme.foregroundColor,
                     }),
                 ];
                 this._timeline = anime.timeline({
@@ -144,19 +145,24 @@ export class StartScreen extends FadeContainer {
         }
         this._controlPointers = [];
 
-        const themeProps = {
+        const controlThemeProps = {
             foreground: this._state.theme.foregroundContrastColor,
             background: this._state.theme.foregroundColor,
             fontSize: 24,
         };
+        const pointerThemeProps = {
+            color: this._state.theme.foregroundColor,
+            alpha: this._state.theme.foregroundAlpha * 0.5,
+        };
 
         const fireControl = createControlDescription({
             ...getControlProps("fire", inputMapping)!,
-            ...themeProps,
+            ...controlThemeProps,
             beforeLabel: "Fire",
             direction: "vertical",
         });
         this._controlPointers.push(new HelpPointer({
+            ...pointerThemeProps,
             content: fireControl,
             position: { x: 0, y: -40 },
             angle1: 0,
@@ -171,11 +177,12 @@ export class StartScreen extends FadeContainer {
 
         const rightControl = createControlDescription({
             ...getControlProps("turn", inputMapping, 1)!,
-            ...themeProps,
+            ...controlThemeProps,
             afterLabel: "Turn Right",
             direction: "horizontal",
         });
         this._controlPointers.push(new HelpPointer({
+            ...pointerThemeProps,
             content: rightControl,
             position: { x: 20, y: -10 },
             angle1: 45 * DEG_TO_RAD,
@@ -187,11 +194,12 @@ export class StartScreen extends FadeContainer {
 
         const hyperspaceControl = createControlDescription({
             ...getControlProps("hyperspace", inputMapping)!,
-            ...themeProps,
+            ...controlThemeProps,
             afterLabel: "Hyperspace",
             direction: "horizontal",
         });
         this._controlPointers.push(new HelpPointer({
+            ...pointerThemeProps,
             content: hyperspaceControl,
             position: { x: 25, y: 40 },
             angle1: 135 * DEG_TO_RAD,
@@ -203,11 +211,12 @@ export class StartScreen extends FadeContainer {
 
         const thrustControl = createControlDescription({
             ...getControlProps("thrust", inputMapping)!,
-            ...themeProps,
+            ...controlThemeProps,
             afterLabel: "Thrust",
             direction: "vertical",
         });
         this._controlPointers.push(new HelpPointer({
+            ...pointerThemeProps,
             content: thrustControl,
             position: { x: 0, y: 40 },
             angle1: 180 * DEG_TO_RAD,
@@ -222,11 +231,12 @@ export class StartScreen extends FadeContainer {
 
         const pauseControl = createControlDescription({
             ...getControlProps("start", inputMapping)!,
-            ...themeProps,
+            ...controlThemeProps,
             beforeLabel: "Pause",
             direction: "horizontal",
         });
         this._controlPointers.push(new HelpPointer({
+            ...pointerThemeProps,
             content: pauseControl,
             position: { x: -25, y: 40 },
             angle1: 225 * DEG_TO_RAD,
@@ -238,11 +248,12 @@ export class StartScreen extends FadeContainer {
 
         const leftControl = createControlDescription({
             ...getControlProps("turn", inputMapping, -1)!,
-            ...themeProps,
+            ...controlThemeProps,
             beforeLabel: "Turn Left",
             direction: "horizontal",
         });
         this._controlPointers.push(new HelpPointer({
+            ...pointerThemeProps,
             content: leftControl,
             position: { x: -20, y: -10 },
             angle1: 315 * DEG_TO_RAD,

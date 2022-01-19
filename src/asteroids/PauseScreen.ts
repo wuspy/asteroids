@@ -56,8 +56,8 @@ export class PauseScreen extends FadeContainer {
 
         const startControl = createControlDescription({
             ...getControlProps("start", params.inputProvider.mapping)!,
-            foreground: params.state.theme.foregroundContrastColor,
-            background: params.state.theme.foregroundColor,
+            foreground: UI_BACKGROUND_COLOR,
+            background: UI_FOREGROUND_COLOR,
             fontSize: 32,
             beforeLabel: "Press",
             afterLabel: "to resume",
@@ -70,6 +70,7 @@ export class PauseScreen extends FadeContainer {
                 innerStrength: 0,
                 outerStrength: 0,
                 distance: 24,
+                color: UI_FOREGROUND_COLOR,
             }),
         ];
         startControl.interactive = true;

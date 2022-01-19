@@ -86,7 +86,6 @@ export const createControlDescription = (params: {
     });
     const container = new Container();
     container.flexContainer = true;
-    // container.debugLayout = true;
     container.layout.alignItems = Align.Center;
     if (params.direction === "horizontal") {
         const margin = Math.round(params.fontSize * 0.5);
@@ -107,7 +106,7 @@ export const createControlDescription = (params: {
         container.addChild(new Text(params.beforeLabel, {
             fontFamily: FONT_FAMILY,
             fontSize: params.fontSize,
-            fill: 0xffffff,
+            fill: params.background,
         }));
     }
     container.addChild(control);
@@ -115,7 +114,7 @@ export const createControlDescription = (params: {
         container.addChild(new Text(params.afterLabel, {
             fontFamily: FONT_FAMILY,
             fontSize: params.fontSize,
-            fill: 0xffffff,
+            fill: params.background,
         }));
     }
     return container;

@@ -10,6 +10,8 @@ export class HelpPointer extends Container {
     private _timeline: anime.AnimeTimelineInstance;
     private _graphics: Graphics;
     private _content: Container;
+    private _color: number;
+    private _alpha: number;
     private _angle1: number;
     private _angle2: number;
     private _angle1Sin: number;
@@ -25,6 +27,8 @@ export class HelpPointer extends Container {
     constructor(params: {
         position: Vec2,
         content: Container,
+        color: number,
+        alpha: number,
         segmentLength: number,
         angle1: number,
         angle2: number,
@@ -37,6 +41,8 @@ export class HelpPointer extends Container {
 
         this._graphics = new Graphics();
         this._content = params.content;
+        this._color = params.color;
+        this._alpha = params.alpha;
         this.addChild(this._graphics, this._content);
         this._segmentLength = params.segmentLength;
         this._angle1 = params.angle1 % PI_2;
@@ -77,8 +83,8 @@ export class HelpPointer extends Container {
             this._timeline.tick(Date.now());
             this._graphics.clear();
             this._graphics.lineStyle({
-                color: 0xffffff,
-                alpha: 0.5,
+                color: this._color,
+                alpha: this._alpha,
                 width: 2,
                 join: LINE_JOIN.BEVEL,
             });

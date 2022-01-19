@@ -121,7 +121,7 @@ export const THEMES: readonly Theme[] = [
     },
     {
         ...DEFAULTS,
-        background: "linear-gradient(75deg, #0e4035, #000128)",
+        background: "linear-gradient(120deg, #0e4035, #000128)",
     },
     {
         ...DEFAULTS,
@@ -146,5 +146,13 @@ export const THEMES: readonly Theme[] = [
     {
         ...DEFAULTS,
         background: "linear-gradient(0deg, #4d250b, #1f1025)",
+    },
+    {
+        ...DEFAULTS,
+        background: "linear-gradient(90deg, #235f7b, #202950)",
+    },
+    {
+        ...DEFAULTS,
+        background: "linear-gradient(120deg, #37093a, #083957)",
     },
 ] as const;
