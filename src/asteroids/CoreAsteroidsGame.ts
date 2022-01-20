@@ -388,7 +388,7 @@ export abstract class CoreAsteroidsGame {
             }
             for (const asteroid of asteroids) {
                 if (ship.collidesWith(asteroid)) {
-                    asteroid.destroy(true);
+                    asteroid.destroy(true, true);
                     ship.destroy(true);
                     this.addScore(asteroid.score);
                     return;
