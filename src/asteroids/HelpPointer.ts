@@ -7,22 +7,22 @@ import { DEG_TO_RAD, PI_2 } from "@pixi/math";
 import { Renderer } from "@pixi/core";
 
 export class HelpPointer extends Container {
-    private _timeline: anime.AnimeTimelineInstance;
-    private _graphics: Graphics;
-    private _content: Container;
-    private _color: number;
-    private _alpha: number;
-    private _angle1: number;
-    private _angle2: number;
-    private _angle1Sin: number;
-    private _angle1Cos: number;
-    private _angle2Sin: number;
-    private _angle2Cos: number;
-    private _segmentLength: number;
-    private _contentPosition: Vec2;
-    protected circleProgress: number;
-    protected segment1Progress: number;
-    protected segment2Progress: number;
+    private readonly _timeline: anime.AnimeTimelineInstance;
+    private readonly _graphics: Graphics;
+    private readonly _content: Container;
+    private readonly _color: number;
+    private readonly _alpha: number;
+    private readonly _angle1: number;
+    private readonly _angle2: number;
+    private readonly _angle1Sin: number;
+    private readonly _angle1Cos: number;
+    private readonly _angle2Sin: number;
+    private readonly _angle2Cos: number;
+    private readonly _segmentLength: number;
+    private readonly _contentPosition: Vec2;
+    circleProgress: number;
+    segment1Progress: number;
+    segment2Progress: number;
 
     constructor(params: {
         position: Vec2,

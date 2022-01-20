@@ -30,5 +30,5 @@ if (!supportsES6() || !supportsWebgl() || !supportsWasm()) {
     loader.id = "loader";
     const s = document.createElement("script");
     s.src = `asteroids.js?v=${process.env.npm_package_version}`;
-    document.getElementsByTagName("body")[0].appendChild(s);
+    document.body.appendChild(s);
 }

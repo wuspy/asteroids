@@ -1,7 +1,7 @@
 import { EventManager, FadeContainer, InputProvider, TickQueue } from "./engine";
 import { GameState } from "./GameState";
 import { controls } from "./input";
-import { Align, ContainerBackgroundShape, FlexDirection } from "./layout";
+import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
 import { Button, Text } from "./ui";
 import { ButtonType, FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
 import { GameEvents } from "./GameEvents";
@@ -24,6 +24,7 @@ export class GameOverScreen extends FadeContainer {
         this._events = params.events;
         this.flexContainer = true;
         this.layout.style({
+            position: PositionType.Absolute,
             width: [100, "%"],
             flexDirection: FlexDirection.Column,
             alignItems: Align.Center,
@@ -51,6 +52,6 @@ export class GameOverScreen extends FadeContainer {
         });
         this.addChild(newGameButton);
 
-        this.fadeIn(() => {});
+        this.fadeIn();
     }
 }

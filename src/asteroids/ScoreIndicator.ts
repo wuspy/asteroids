@@ -24,6 +24,7 @@ export class ScoreIndicator extends TickableContainer {
         super(params.queue);
         this._state = params.state;
         this._lastScore = -1;
+        this.interactiveChildren = false;
 
         this.flexContainer = true;
         this.layout.style({

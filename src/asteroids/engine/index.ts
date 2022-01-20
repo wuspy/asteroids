@@ -10,3 +10,4 @@ export * from "./TickQueue";
 export * from "./EventManager";
 export * from "./TickableContainer";
 export * from "./FadeContainer";
+export * from "./ScrollInteractionManager";

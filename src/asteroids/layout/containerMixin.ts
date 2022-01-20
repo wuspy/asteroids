@@ -2,6 +2,7 @@ import { Renderer } from "@pixi/core";
 import { Container, DisplayObject } from "@pixi/display";
 import { BlurFilter } from "@pixi/filter-blur";
 import { IFillStyleOptions, ILineStyleOptions, SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { FlexLayoutProps } from ".";
 import { ComputedLayout } from "./FlexLayout";
 
 declare module "@pixi/display"
@@ -24,10 +25,6 @@ interface ContainerPrivate extends Container {
     _backgroundWidth: number;
     _backgroundHeight: number;
     _blurFilter: [BlurFilter];
-    createBackgroundGraphics(): void;
-    destroyBackgroundGraphics(): void;
-    createDebugGraphics(): void;
-    destroyDebugGraphics(): void;
 }
 
 export const enum ContainerBackgroundShape {
@@ -106,17 +103,15 @@ Object.defineProperties(container, {
                 for (const child of this.children) {
                     this.layout.appendChild(child.layout);
                 }
-                if (this._backgroundStyle) {
-                    this.createBackgroundGraphics();
-                }
-                this._debugGraphics?.clear();
             } else if (!flexContainer && this._flexContainer) {
                 // Remove child nodes
                 for (const child of this.children) {
                     this.layout.removeChild(child.layout);
                 }
-                this.destroyBackgroundGraphics();
-                this.destroyDebugGraphics();
+                if (this._debugGraphics) {
+                    this._debugGraphics.destroy();
+                    this._debugGraphics = undefined;
+                }
             }
             this._flexContainer = flexContainer;
         },
@@ -132,10 +127,14 @@ Object.defineProperties(container, {
         },
         set(this: ContainerPrivate, debugLayout: boolean) {
             if (process.env.NODE_ENV === "development") {
-                if (debugLayout && this._flexContainer) {
-                    this.createDebugGraphics();
-                } else {
-                    this.destroyDebugGraphics();
+                if (debugLayout && this._flexContainer && !this._debugGraphics) {
+                    this._debugGraphics = new Graphics();
+                    this._debugGraphics.layout.excluded = true;
+                    this._debugGraphics.zIndex = Number.MAX_SAFE_INTEGER;
+                    this.addChild(this._debugGraphics);
+                } else if (!debugLayout && this._debugGraphics) {
+                    this._debugGraphics.destroy();
+                    this._debugGraphics = undefined;
                 }
             }
         },
@@ -145,10 +144,13 @@ Object.defineProperties(container, {
             return this._backgroundStyle;
         },
         set(this: ContainerPrivate, background?: ContainerBackground) {
-            if (background) {
-                this.createBackgroundGraphics();
-            } else {
-                this.destroyBackgroundGraphics();
+            if (background && !this._backgroundGraphics) {
+                this._backgroundGraphics = new Graphics();
+                this._backgroundGraphics.layout.excluded = true;
+                this.addChildAt(this._backgroundGraphics, 0);
+            } else if (!background && this._backgroundGraphics) {
+                this._backgroundGraphics.destroy();
+                this._backgroundGraphics = undefined;
             }
             this._backgroundStyle = background;
             this._backgroundWidth = 0;
@@ -327,35 +329,3 @@ container.onLayout = function (this: ContainerPrivate, layout: ComputedLayout): 
     }
 }
 
-container.createBackgroundGraphics = function (this: ContainerPrivate): void {
-    if (this._flexContainer && !this._backgroundGraphics) {
-        this._backgroundGraphics = new Graphics();
-        this._backgroundGraphics.layout.excluded = true;
-        this.addChildAt(this._backgroundGraphics, 0);
-    }
-}
-
-container.destroyBackgroundGraphics = function (this: ContainerPrivate): void {
-    if (this._backgroundGraphics) {
-        this._backgroundGraphics.destroy();
-        this._backgroundGraphics = undefined;
-    }
-}
-
-if (process.env.NODE_ENV === "development") {
-    container.createDebugGraphics = function (this: ContainerPrivate): void {
-        if (this._flexContainer && !this._debugGraphics) {
-            this._debugGraphics = new Graphics();
-            this._debugGraphics.layout.excluded = true;
-            this._debugGraphics.zIndex = Number.MAX_SAFE_INTEGER;
-            this.addChild(this._debugGraphics);
-        }
-    }
-
-    container.destroyDebugGraphics = function (this: ContainerPrivate): void {
-        if (this._debugGraphics) {
-            this._debugGraphics.destroy();
-            this._debugGraphics = undefined;
-        }
-    }
-}

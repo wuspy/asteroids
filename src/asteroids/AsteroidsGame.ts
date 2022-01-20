@@ -1,7 +1,7 @@
 import { Container } from "@pixi/display";
 import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
-import { FadeContainer, initRandom, InputProvider } from "./engine";
+import { FadeContainer, initRandom, InputProvider, ScrollInteractionManager } from "./engine";
 import { LevelIndicator } from "./LevelIndicator";
 import { Asteroid } from "./Asteroid";
 import { ScoreIndicator } from "./ScoreIndicator";
@@ -9,7 +9,6 @@ import { LifeIndicator } from "./LifeIndicator";
 import { GameObject, HitAreaDebugContainer, TickQueue } from "./engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { CoreAsteroidsGame } from "./CoreAsteroidsGame";
-import { FPSIndicator } from "./FPSIndicator";
 // import { AlphaFilter } from "@pixi/filter-alpha";
 import { GameLog } from "./engine/GameLog";
 import { StartScreen } from "./StartScreen";
@@ -17,20 +16,44 @@ import { AlphaFilter } from "@pixi/filter-alpha";
 import { controls, arrowMapping, gamepadMapping, ijklMapping, inputLogConfig, wasdMapping } from "./input";
 import { PauseScreen } from "./PauseScreen";
 import { GameOverScreen } from "./GameOverScreen";
-import "./layout";
 import { Align, JustifyContent, PositionType } from "./layout";
 import { Theme } from "./Theme";
-
-declare global {
-    interface Window {
-        asteroids: AsteroidsGame;
-    }
-}
+import Stats from "stats.js";
 
 const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
 
 const ENABLE_LOGGING = true;
+
+declare global {
+    interface Window {
+        asteroidsInstance: AsteroidsGame;
+        asteroids: any;
+    }
+}
+
+if (process.env.NODE_ENV === "development") {
+    window.asteroids = {
+        showStats: () => {
+            window.asteroidsInstance.statsDiv.style.display = "block";
+        },
+        hideStats: () => {
+            window.asteroidsInstance.statsDiv.style.display = "none";
+        },
+        showHitareas: () => {
+            window.asteroidsInstance.hitAreaDebugContainer.visible = true;
+        },
+        hideHitareas: () => {
+            window.asteroidsInstance.hitAreaDebugContainer.visible = false;
+        },
+        kill: () => {
+            if (window.asteroidsInstance.state.ship) {
+                window.asteroidsInstance.state.lives = 1;
+                window.asteroidsInstance.state.ship.destroy();
+            }
+        },
+    };
+}
 
 export class AsteroidsGame extends CoreAsteroidsGame {
     private readonly _container: HTMLElement;
@@ -40,8 +63,6 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private readonly _backgroundContainer: Container;
     private readonly _mainContainer: Container;
     private readonly _hudContainer: Container;
-    private readonly _hitAreaDebugContainer!: HitAreaDebugContainer;
-    private readonly _fpsIndicator!: FPSIndicator;
     private readonly _lifeIndicator: LifeIndicator;
     private readonly _scoreIndicator: ScoreIndicator;
     private readonly _levelIndicator: LevelIndicator;
@@ -61,6 +82,12 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private _backgroundAsteroids: Asteroid[];
     private _nextAnimationFrameId?: number;
 
+    // Only used in development mode
+    readonly fpsStats!: Stats;
+    readonly memoryStats!: Stats;
+    readonly statsDiv!: HTMLElement;
+    readonly hitAreaDebugContainer!: HitAreaDebugContainer;
+
     constructor(params: { containerId: string, backgroundId: string }) {
         super();
         this._container = document.getElementById(params.containerId)!;
@@ -72,8 +99,31 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             throw new Error(`#${params.backgroundId} does not exist`);
         }
 
+        if (process.env.NODE_ENV === "development") {
+            window.asteroidsInstance = this;
+
+            this.fpsStats = new Stats();
+            this.fpsStats.showPanel(0);
+            this.fpsStats.dom.style.position = "relative";
+            this.fpsStats.dom.style.display = "inline-block";
+
+            this.memoryStats = new Stats();
+            this.memoryStats.showPanel(2);
+            this.memoryStats.dom.style.position = "relative";
+            this.memoryStats.dom.style.display = "inline-block";
+
+            this.statsDiv = document.createElement("div");
+            this.statsDiv.style.position = "absolute";
+            this.statsDiv.style.right = "0";
+            this.statsDiv.style.bottom = "0";
+            this.statsDiv.appendChild(this.fpsStats.dom);
+            this.statsDiv.appendChild(this.memoryStats.dom);
+            document.body.appendChild(this.statsDiv);
+        }
+
         Renderer.registerPlugin("batch", BatchRenderer);
         Renderer.registerPlugin("interaction", InteractionManager);
+        Renderer.registerPlugin("scrollInteraction", ScrollInteractionManager);
         this._stage = new Container();
         this._renderer = autoDetectRenderer({
             width: this._container.clientWidth,
@@ -91,6 +141,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._input.mapping = wasdMapping;
 
         this._backgroundContainer = new Container();
+        this._backgroundContainer.interactiveChildren = false;
         this._stage.addChild(this._backgroundContainer);
 
         this._mainContainer = new Container();
@@ -111,6 +162,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             fadeOutDuration: 500,
             fadeOutExtraDelay: 500,
         });
+        this.gameplayContainer.interactiveChildren = false;
         this._mainContainer.addChild(this.gameplayContainer);
 
         this._hudContainer = new Container();
@@ -123,21 +175,9 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._mainContainer.addChild(this._hudContainer);
 
         if (process.env.NODE_ENV === "development") {
-            this._fpsIndicator = new FPSIndicator(this._uiQueue);
-            this._fpsIndicator.layout.style({
-                margin: 24,
-                position: PositionType.Absolute,
-                top: 0,
-                right: [45, "%"],
-            });
-            this._fpsIndicator.visible = false;
-            this._hudContainer.addChild(this._fpsIndicator);
-
-            this._hitAreaDebugContainer = new HitAreaDebugContainer(this._uiQueue);
-            this._hitAreaDebugContainer.visible = false;
-            this._mainContainer.addChild(this._hitAreaDebugContainer);
-
-            window.asteroids = this;
+            this.hitAreaDebugContainer = new HitAreaDebugContainer(this._uiQueue);
+            this.hitAreaDebugContainer.visible = false;
+            this._mainContainer.addChild(this.hitAreaDebugContainer);
         }
 
         this.executeResize();
@@ -244,7 +284,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
                     inputProvider: this._input,
                 });
                 this._hudContainer.addChild(this._pauseScreen);
-                this._pauseScreen.fadeIn(() => { });
+                this._pauseScreen.fadeIn();
             }
         });
         this.events.on("resumeRequested", this, () => {
@@ -285,37 +325,6 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._renderer.destroy(true);
     }
 
-    showFps(): void {
-        if (process.env.NODE_ENV === "development") {
-            this._fpsIndicator.visible = true;
-        }
-    }
-
-    hideFps(): void {
-        if (process.env.NODE_ENV === "development") {
-            this._fpsIndicator.visible = false;
-        }
-    }
-
-    showHitareas(): void {
-        if (process.env.NODE_ENV === "development") {
-            this._hitAreaDebugContainer.visible = true;
-        }
-    }
-
-    hideHitareas(): void {
-        if (process.env.NODE_ENV === "development") {
-            this._hitAreaDebugContainer.visible = false;
-        }
-    }
-
-    kill(): void {
-        if (process.env.NODE_ENV === "development" && this.state.ship) {
-            this.state.lives = 1;
-            this.state.ship.destroy();
-        }
-    }
-
     get log(): string | undefined {
         return this._logger?.log;
     }
@@ -348,6 +357,10 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     }
 
     private onAnimationFrame = (timestamp: number): void => {
+        if (process.env.NODE_ENV === "development") {
+            this.fpsStats.begin();
+            this.memoryStats.begin();
+        }
         let elapsed = timestamp - this._timestamp;
         let input = this._input.poll();
 
@@ -374,19 +387,24 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         // Debug options
 
         if (process.env.NODE_ENV === "development") {
-            if (this._hitAreaDebugContainer.visible) {
-                this._hitAreaDebugContainer.visible = true;
+            if (this.hitAreaDebugContainer.visible) {
+                this.hitAreaDebugContainer.visible = true;
                 const objects: GameObject<any, any>[] = [...this.state.projectiles, ...this.state.asteroids, ...this.state.ufos];
                 if (this.state.ship) {
                     objects.push(this.state.ship);
                 }
-                this._hitAreaDebugContainer.objects = objects;
+                this.hitAreaDebugContainer.objects = objects;
             }
         }
 
         // Render
 
         this._renderer.render(this._stage);
+
+        if (process.env.NODE_ENV === "development") {
+            this.fpsStats.end();
+            this.memoryStats.end();
+        }
         this._nextAnimationFrameId = window.requestAnimationFrame(this.onAnimationFrame);
     }
 

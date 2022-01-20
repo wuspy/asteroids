@@ -1,5 +1,4 @@
 import { DisplayObject } from "@pixi/display";
-import { ISize } from "@pixi/math";
 import yoga, { getYoga, YogaUnit, YogaNode, YogaEdge, } from "./yoga";
 
 export type Dimension = number | [number, "%"];
@@ -124,8 +123,6 @@ export interface FlexLayoutProps {
     minHeight: Dimension | undefined;
     originAtCenter: boolean;
 }
-
-export type MeasureCallback = () => ISize;
 
 export default class FlexLayout {
     private readonly _node: YogaNode;

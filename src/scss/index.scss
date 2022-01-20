@@ -123,9 +123,17 @@ svg {
     position: fixed;
     display: block;
     text-align: center;
-    bottom: 8px;
+    bottom: 10pt;
     left: 0;
     right: 0;
+    svg {
+        fill: rgba(255, 255, 255, 0.25);
+        filter: drop-shadow(0 0 6px white);
+        width: 10pt;
+        height: 10pt;
+        margin-bottom: -3px;
+        margin-right: 4px;
+    }
 }
 
 @media(max-width: 300px) {

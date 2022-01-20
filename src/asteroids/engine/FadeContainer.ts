@@ -51,7 +51,7 @@ export class FadeContainer extends TickableContainer {
         }
     }
 
-    fadeIn(complete: () => void): void {
+    fadeIn(complete?: () => void): void {
         if (!this._fadeTimeline && !this.visible) {
             this.onFadeInStart();
             this.visible = true;
@@ -63,7 +63,9 @@ export class FadeContainer extends TickableContainer {
                 duration: this.fadeInDuration,
                 complete: () => {
                     this.show();
-                    complete();
+                    if (complete) {
+                        complete();
+                    }
                 },
             }).add({
                 targets: this._fadeAlphaFilter,
@@ -75,7 +77,7 @@ export class FadeContainer extends TickableContainer {
         }
     }
 
-    fadeOut(complete: () => void): void {
+    fadeOut(complete?: () => void): void {
         if (!this._fadeTimeline && this.visible) {
             this.onFadeOutStart();
             this._fadeAlphaFilter.enabled = true;
@@ -83,10 +85,13 @@ export class FadeContainer extends TickableContainer {
             this._fadeTimeline = anime.timeline({
                 autoplay: false,
                 duration: this.fadeOutDuration,
+                endDelay: this.fadeOutExtraDelay,
                 easing: "linear",
                 complete: () => {
                     this.hide();
-                    complete();
+                    if (complete) {
+                        complete();
+                    }
                 },
             }).add({
                 targets: this._fadeAlphaFilter,
@@ -94,9 +99,7 @@ export class FadeContainer extends TickableContainer {
             }).add({
                 targets: this._fadeBlurFilter,
                 blur: BLUR,
-            }, 0).add({
-                duration: this.fadeOutExtraDelay,
-            });
+            }, 0);
         }
     }
 

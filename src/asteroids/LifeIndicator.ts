@@ -1,12 +1,13 @@
+import "@pixi/mixin-cache-as-bitmap";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LIVES } from "./constants";
 import { TickableContainer, TickQueue } from "./engine";
 import { Ship } from "./Ship";
 import { GameState } from "./GameState";
-import '@pixi/mixin-cache-as-bitmap';
 import { ContainerBackgroundShape, FlexDirection } from "./layout";
 import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./Theme";
 import { PopAnimation } from "./PopAnimation";
+import { LinearGroup } from "./ui";
 
 const SIZE = 36;
 
@@ -23,11 +24,12 @@ export class LifeIndicator extends TickableContainer {
         this._state = params.state;
         this._lastLives = LIVES;
         this.flexContainer = true;
+        this.interactiveChildren = false;
         this.layout.style({
             paddingHorizontal: 14,
             paddingVertical: 12,
-            flexDirection: FlexDirection.Row,
         });
+        
         this.backgroundStyle = {
             shape: ContainerBackgroundShape.Rectangle,
             cornerRadius: 12,
@@ -46,12 +48,9 @@ export class LifeIndicator extends TickableContainer {
             const indicator = new Graphics(baseIndicator.geometry);
             indicator.layout.originAtCenter = true;
             indicator.cacheAsBitmap = true;
-            if (i > 0) {
-                indicator.layout.marginLeft = 8;
-            }
             this._indicators.push(indicator);
-            this.addChild(indicator);
         }
+        this.addChild(new LinearGroup(FlexDirection.Row, 8, this._indicators));
     }
 
     tick(timestamp: number, elapsed: number): void {
@@ -69,7 +68,7 @@ export class LifeIndicator extends TickableContainer {
                 const animation = new LifeAnimation(this.queue);
                 animation.layout.excluded = true;
                 animation.position.copyFrom(indicator.position);
-                this.addChild(animation);
+                indicator.parent.addChild(animation);
             }
         }
     }
