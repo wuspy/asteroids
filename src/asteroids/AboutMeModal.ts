@@ -84,7 +84,7 @@ export class AboutMeModal extends Modal {
         this.addChild(headerContainer);
         // this.addChild(new Divider(24));
 
-        const bio = new Text("I'm a programmer, among other things. I currently work as a full-stack web developer using Typescript, React, C#, PHP & MySQL, and I also have experience with Android/Kotlin, Rust, and C++/Qt/QML. You can check out the source code for this website and other projects I've made on my Github.\n\nBesides programming? Hmm... I like cycling, mountain biking, 3D printing & 3D modeling... ok instead of boring you with my life story I'm just gonna show you some pictures of my cats.", {
+        const bio = new Text("I'm a programmer, among other things. I currently work as a full-stack web developer using Typescript, React, C#, PHP & MySQL, and I also have experience with Android/Kotlin, Rust, and C++/Qt/QML. You can check out the source code for this website and other projects I've made on GitHub.\n\nBesides programming? Hmm... I like cycling, mountain biking, 3D printing & 3D modeling... ok instead of boring you with my life story I'm just gonna show you some pictures of my cats.", {
             fontSize: 20,
             lineHeight: 24,
             fill: UI_FOREGROUND_COLOR,
@@ -117,7 +117,7 @@ export class AboutMeModal extends Modal {
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "G.K.",
-            subCaption: "it stands for gray kitten don't judge me",
+            subCaption: "it stands for gray kitty don't judge me",
             resource: "gk.webp",
         }));
 
