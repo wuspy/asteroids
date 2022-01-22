@@ -9,7 +9,6 @@ import { LifeIndicator } from "./LifeIndicator";
 import { GameObject, HitAreaDebugContainer, TickQueue } from "./engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { CoreAsteroidsGame } from "./CoreAsteroidsGame";
-// import { AlphaFilter } from "@pixi/filter-alpha";
 import { GameLog } from "./engine/GameLog";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
