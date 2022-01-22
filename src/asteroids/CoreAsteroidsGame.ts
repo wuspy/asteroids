@@ -2,7 +2,7 @@ import { ISize } from "@pixi/math";
 import { InputState } from "./engine";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
-import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE } from "./constants";
+import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { EventManager } from "./engine/EventManager";
@@ -28,7 +28,7 @@ export abstract class CoreAsteroidsGame {
         this.worldSize = { width: 0, height: 0 };
         this.aspectRatio = 1;
         this.events = new EventManager();
-        this.queue = new TickQueue();
+        this.queue = new TickQueue("core");
 
         this.state = {
             level: 1,
@@ -183,6 +183,9 @@ export abstract class CoreAsteroidsGame {
     }
 
     protected set aspectRatio(aspectRatio: number) {
+        if (aspectRatio > MAX_ASPECT_RATIO || aspectRatio < MIN_ASPECT_RATIO) {
+            throw new Error(`Aspect ratio ${aspectRatio} must be between ${MIN_ASPECT_RATIO} and ${MAX_ASPECT_RATIO}`);
+        }
         this.worldSize.width = Math.floor(Math.sqrt(WORLD_AREA_PX * aspectRatio));
         this.worldSize.height = Math.floor(WORLD_AREA_PX / this.worldSize.width);
     }

@@ -62,7 +62,7 @@ export const drawContainerBackground = (graphics: Graphics, background: Containe
                 graphics.drawRect(0, 0, width, height);
             }
         } else if (shape === ContainerBackgroundShape.Ellipse) {
-            graphics.drawEllipse(width / 2, height / 2, width, height);
+            graphics.drawEllipse(width / 2, height / 2, width / 2, height / 2);
         }
         if (fill) {
             graphics.endFill();
@@ -296,7 +296,7 @@ container.onLayout = function (this: ContainerPrivate, layout: ComputedLayout): 
 
             // Draw border
             this._debugGraphics.lineStyle({
-                color: 0,
+                color: 0x808080,
                 alpha: 1,
                 width: Math.max(2, border.top),
                 smooth: false,
@@ -304,21 +304,21 @@ container.onLayout = function (this: ContainerPrivate, layout: ComputedLayout): 
             this._debugGraphics.moveTo(childLeft - border.left / 2, childTop - border.top / 2);
             this._debugGraphics.lineTo(childLeft + childWidth + border.right / 2, childTop - border.top / 2);
             this._debugGraphics.lineStyle({
-                color: 0,
+                color: 0x808080,
                 alpha: 1,
                 width: Math.max(2, border.right),
                 smooth: false,
             });
             this._debugGraphics.lineTo(childLeft + childWidth + border.right / 2, childTop + childHeight + border.bottom / 2);
             this._debugGraphics.lineStyle({
-                color: 0,
+                color: 0x808080,
                 alpha: 1,
                 width: Math.max(2, border.bottom),
                 smooth: false,
             });
             this._debugGraphics.lineTo(childLeft - border.left / 2, childTop + childHeight + border.bottom / 2);
             this._debugGraphics.lineStyle({
-                color: 0,
+                color: 0x808080,
                 alpha: 1,
                 width: Math.max(2, border.left),
                 smooth: false,

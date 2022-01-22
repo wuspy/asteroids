@@ -86,7 +86,12 @@ export class PauseScreen extends FadeContainer {
             marginTop: 24,
         });
 
-        const newGameButton = new Button(ButtonType.Danger, "Restart", () => this._events.trigger("restartRequested"));
+        const newGameButton = new Button({
+            queue: this.queue,
+            type: ButtonType.Danger,
+            text: "Quit",
+            onClick: () => this._events.trigger("quitRequested"),
+        });
         newGameButton.layout.margin = 12;
         buttonContainer.addChild(newGameButton);
 
@@ -103,9 +108,9 @@ export class PauseScreen extends FadeContainer {
                 direction: "alternate",
             }).add({
                 easing: "linear",
-                duration: 1200,
+                duration: 1500,
                 targets: this._startGlowFilter,
-                outerStrength: 2,
+                outerStrength: 2.5,
                 innerStrength: 2,
             });
         });

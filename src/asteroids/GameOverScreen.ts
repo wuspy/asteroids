@@ -45,7 +45,12 @@ export class GameOverScreen extends FadeContainer {
         title.layout.margin = 24;
         this.addChild(title);
 
-        const newGameButton = new Button(ButtonType.Primary, "New Game", () => this._events.trigger("startRequested"));
+        const newGameButton = new Button({
+            queue: this.queue,
+            type: ButtonType.Primary,
+            text: "New Game",
+            onClick: () => this._events.trigger("startRequested")
+        });
         newGameButton.layout.style({
             margin: 24,
             marginTop: 0,

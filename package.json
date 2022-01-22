@@ -5,6 +5,7 @@
     "license": "MIT",
     "devDependencies": {
         "@types/animejs": "^3.1.4",
+        "@types/stats.js": "^0.17.0",
         "@types/webfontloader": "^1.6.34",
         "@typescript-eslint/eslint-plugin": "^5.5.0",
         "@typescript-eslint/parser": "^5.5.0",
@@ -43,13 +44,16 @@
         "@pixi/filter-alpha": "^6.2.1",
         "@pixi/filter-blur": "^6.2.1",
         "@pixi/filter-glow": "^4.1.5",
-        "@pixi/filter-motion-blur": "^4.1.5",
-        "@pixi/graphics-smooth": "^0.0.19",
+        "@pixi/graphics-smooth": "^0.0.20",
         "@pixi/interaction": "^6.2.1",
+        "@pixi/loaders": "^6.2.1",
         "@pixi/math": "^6.2.1",
         "@pixi/mixin-cache-as-bitmap": "^6.2.1",
+        "@pixi/mixin-get-global-position": "^6.2.1",
+        "@pixi/sprite": "^6.2.1",
         "@pixi/text": "^6.2.1",
         "animejs": "^3.2.1",
+        "stats.js": "^0.17.0",
         "tslib": "^2.3.1",
         "yoga-layout-wasm": "^1.9.3-alpha.7"
     }

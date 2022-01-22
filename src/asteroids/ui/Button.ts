@@ -1,14 +1,16 @@
-import { Container } from "@pixi/display";
 import { GlowFilter } from "@pixi/filter-glow";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Text } from "./Text";
-import { ComputedLayout, ContainerBackground, ContainerBackgroundShape, drawContainerBackground } from "../layout";
+import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection } from "../layout";
 import { ButtonTheme, ButtonType, BUTTON_THEMES } from "../Theme";
+import { Image } from "./Image";
+import { TickableContainer, TickQueue } from "../engine";
 
-const TRANSITION_TIME = 250;
+const TRANSITION_TIME = 0.25;
 
-export class Button extends Container {
+export class Button extends TickableContainer {
     private readonly _text: Text;
+    private _image?: Image;
     private readonly _inactiveGraphics: Graphics;
     private readonly _activeGraphics: Graphics;
     private readonly _theme: ButtonTheme;
@@ -16,14 +18,20 @@ export class Button extends Container {
     private readonly _inactiveBackground: ContainerBackground;
     private _glowFilter: GlowFilter;
     private _activeGlowFilter: GlowFilter;
-    private _onClick: () => void;
     private _hover: boolean;
     private _active: boolean;
-    private _timestamp: number;
 
-    constructor(type: ButtonType, text: string, onClick?: () => void) {
-        super();
-        this._theme = BUTTON_THEMES[type];
+    onClick: () => void;
+
+    constructor(params: {
+        queue: TickQueue,
+        type: ButtonType,
+        text: string,
+        imageResource?: string,
+        onClick?: () => void,
+    }) {
+        super(params.queue);
+        this._theme = BUTTON_THEMES[params.type];
         this._activeBackground = {
             shape: ContainerBackgroundShape.Rectangle,
             cornerRadius: 8,
@@ -41,19 +49,39 @@ export class Button extends Container {
         this.layout.style({
             paddingHorizontal: 14,
             paddingVertical: 10,
+            flexDirection: FlexDirection.Row,
+            alignItems: Align.Center,
         });
-        this._text = new Text(text, {
-            fontSize: 20,
-            fill: this._theme.textColor,
-        });
-        this._text.alpha = this._theme.textAlpha;
 
-        this._onClick = onClick ?? (() => { });
+        this.onClick = params.onClick ?? (() => { });
         this._inactiveGraphics = new Graphics();
         this._inactiveGraphics.layout.excluded = true;
         this._activeGraphics = new Graphics();
         this._activeGraphics.layout.excluded = true;
-        this.addChild(this._inactiveGraphics, this._activeGraphics, this._text);
+        this.addChild(this._inactiveGraphics, this._activeGraphics);
+
+        if (params.imageResource) {
+            this._image = new Image({
+                queue: params.queue,
+                resource: params.imageResource,
+                fadeInOnLoad: false,
+                tint: this._theme.textColor,
+            });
+            this._image.alpha = this._theme.textAlpha;
+            this._image.layout.style({
+                width: 20,
+                height: 20,
+                marginRight: 8,
+            });
+            this.addChild(this._image);
+        }
+
+        this._text = new Text(params.text, {
+            fontSize: 20,
+            fill: this._theme.textColor,
+        });
+        this._text.alpha = this._theme.textAlpha;
+        this.addChild(this._text);
 
         this._inactiveGraphics.filters = [
             this._glowFilter = new GlowFilter({
@@ -76,12 +104,11 @@ export class Button extends Container {
         this._active = false;
         this._activeGraphics.alpha = 0;
         this._activeGraphics.visible = false;
-        this._timestamp = Date.now();
         this.interactive = true;
         this.buttonMode = true;
         this._text.cacheAsBitmap = true;
 
-        this.on("click", () => this._onClick());
+        this.on("click", () => this.onClick());
         this.on("mouseover", () => { this._hover = true; });
         this.on("mouseout", () => { this._hover = false; });
         this.on("mousedown", () => { this._active = true; });
@@ -92,11 +119,9 @@ export class Button extends Container {
         this.on("touchendoutside", () => { this._active = false; });
     }
 
-    override onLayout(layout: ComputedLayout): void {
-        super.onLayout(layout);
-        const { width, height } = layout;
-        const diff = Date.now() - this._timestamp;
-        const alphaDiff = diff / TRANSITION_TIME;
+    tick(timestamp: number, elapsed: number): void {
+        const { width, height } = this.layout.computedLayout;
+        const alphaDiff = elapsed / TRANSITION_TIME;
         const glowDiff = alphaDiff * 2;
         
         if (!this._active && this._hover) {
@@ -119,8 +144,6 @@ export class Button extends Container {
             this._activeGraphics.clear();
             drawContainerBackground(this._activeGraphics, this._activeBackground, width, height);
         }
-    
-        this._timestamp += diff;
     }
 
     get text(): string {
@@ -131,9 +154,5 @@ export class Button extends Container {
         this._text.cacheAsBitmap = false;
         this._text.text = text;
         this._text.cacheAsBitmap = true;
-    }
-
-    set onClick(onClick: () => void) {
-        this._onClick = onClick;
     }
 }

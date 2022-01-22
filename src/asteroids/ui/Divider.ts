@@ -2,7 +2,7 @@ import { Container } from "@pixi/display";
 import { ContainerBackgroundShape } from "../layout";
 
 export class Divider extends Container {
-    constructor() {
+    constructor(margin?: number) {
         super();
         this.backgroundStyle = {
             shape: ContainerBackgroundShape.Rectangle,
@@ -11,7 +11,7 @@ export class Divider extends Container {
             }
         };
         this.layout.style({
-            marginVertical: 12,
+            marginVertical: margin ?? 12,
             height: 2,
             width: [100, "%"],
         });

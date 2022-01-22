@@ -13,7 +13,7 @@ export const addVec2 = (a: Vec2, b: Vec2): Vec2 => ({ x: a.x + b.x, y: a.y + b.y
 
 export const subVec2 = (a: Vec2, b: Vec2): Vec2 => ({ x: a.x - b.x, y: a.y - b.y });
 
-export const clamp = (value: number, magnitude: number): number => Math.max(-magnitude, Math.min(magnitude, value));
+export const clamp = (value: number, max: number, min?: number): number => Math.max(min ?? -max, Math.min(max, value));
 
 export type HitArea = Polygon | number;
 

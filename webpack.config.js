@@ -26,6 +26,11 @@ const index = {
         port: 9000,
     },
     plugins: [
+        new CopyPlugin({
+            patterns: [
+                { from: "assets", to: `${dist}/assets` },
+            ],
+        }),
         new webpack.DefinePlugin({
             "process.env.npm_package_version": JSON.stringify(process.env.npm_package_version),
         }),
@@ -52,10 +57,6 @@ const index = {
                     },
                 }, ],
                 exclude: ["/node_modules/"],
-            },
-            {
-                test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
-                type: "asset/resource",
             },
             {
                 test: /\.s[ac]ss$/i,

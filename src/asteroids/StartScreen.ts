@@ -11,12 +11,18 @@ import anime from "animejs";
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { controls } from "./input";
 import { createControlDescription, getControlProps } from "./controlGraphic";
-import { Align, FlexDirection } from "./layout";
+import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
 import { GameEvents } from "./GameEvents";
+import { ButtonType } from "./Theme";
+import { Button, LinearGroup, Text } from "./ui";
+import { Modal } from "./ui/Modal";
+import { VirtualizedList } from "./ui/VirtualizedList";
+import { AboutMeModal } from "./AboutMeModal";
 
 export class StartScreen extends FadeContainer {
     private readonly _state: GameState;
     private readonly _events: EventManager<GameEvents>;
+    private _mapping: InputMapping<typeof controls>;
     private _controlLayoutContainer: Container;
     private _timeline: anime.AnimeTimelineInstance;
     private _controlPointers: HelpPointer[];
@@ -36,17 +42,19 @@ export class StartScreen extends FadeContainer {
         });
         this._state = params.state;
         this._events = params.events;
+        this._mapping = params.inputProvider.mapping;
         this.flexContainer = true;
         // this.debugLayout = true;
         this.layout.style({
+            position: PositionType.Absolute,
             flexDirection: FlexDirection.Column,
             alignItems: Align.Center,
+            paddingTop: 148,
         });
 
         this._controlLayoutContainer = new Container();
         this._controlLayoutContainer.layout.style({
-            marginVertical: 48,
-            // marginBottom: 24,
+            marginVertical: 24,
             originAtCenter: true,
         });
         this.addChild(this._controlLayoutContainer);
@@ -82,21 +90,49 @@ export class StartScreen extends FadeContainer {
         startControl.layout.margin = 24;
         bottomControlsContainer.addChild(startControl);
 
-        // const buttonContainer = new Container();
-        // buttonContainer.flexContainer = true;
-        // buttonContainer.layout.style({
-        //     flexDirection: FlexDirection.Row,
+        // const optionsButton = new Button({
+        //     queue: this.queue,
+        //     type: ButtonType.Secondary,
+        //     text: "Options",
+        //     onClick: () => { },
         // });
 
-        // const optionsButton = new Button(ButtonType.Secondary, "Options", () => undefined);
-        // optionsButton.layout.margin = 12;
-        // buttonContainer.addChild(optionsButton);
+        const aboutButton = new Button({
+            queue: this.queue,
+            type: ButtonType.Secondary,
+            text: "About Me",
+            onClick: () => {
+                const modal = new AboutMeModal({
+                    queue: this.queue,
+                    onClose: () => {
+                        this.fadeIn();
+                        modal.fadeOut(() => {
+                            modal.destroy({ children: true });
+                            this._events.trigger("aboutClosed");
+                        });
+                    },
+                });
+                this.parent.addChild(modal);
+                modal.fadeIn();
+                this.fadeOut();
+                this._events.trigger("aboutOpened");
+            },
+        });
 
-        // const highScoresButton = new Button(ButtonType.Secondary, "High Scores", () => undefined);
-        // highScoresButton.layout.margin = 12;
-        // buttonContainer.addChild(highScoresButton);
+        // const highScoresButton = new Button({
+        //     queue: this.queue,
+        //     type: ButtonType.Secondary,
+        //     text: "High Scores",
+        // });
+        
+        const buttonContainer = new LinearGroup(FlexDirection.Row, 24, [
+            // optionsButton,
+            // highScoresButton,
+            aboutButton,
+        ]);
+        buttonContainer.layout.margin = 12;
 
-        // bottomControlsContainer.addChild(buttonContainer);
+        bottomControlsContainer.addChild(buttonContainer);
         this.addChild(bottomControlsContainer);
 
         bottomControlsContainer.filters = [new AlphaFilter(0)];
@@ -124,24 +160,25 @@ export class StartScreen extends FadeContainer {
                     direction: "alternate",
                 }).add({
                     easing: "linear",
-                    duration: 1200,
+                    duration: 1500,
                     targets: startControl.filters[0],
-                    outerStrength: 2,
+                    outerStrength: 2.5,
                     innerStrength: 2,
                 });
             },
         });
 
-        this.drawControlMapping(1000, params.inputProvider.mapping);
+        this.drawControlMapping(1000);
     }
 
     private onMappingChanged(mapping: InputMapping<typeof controls>) {
-        this.drawControlMapping(0, mapping);
+        this._mapping = mapping;
+        this.drawControlMapping(0);
     }
 
-    private drawControlMapping(delay: number, inputMapping: InputMapping<typeof controls>) {
+    private drawControlMapping(delay: number) {
         for (const pointer of this._controlPointers) {
-            pointer.destroy();
+            pointer.destroy({ children: true });
         }
         this._controlPointers = [];
 
@@ -156,7 +193,7 @@ export class StartScreen extends FadeContainer {
         };
 
         const fireControl = createControlDescription({
-            ...getControlProps("fire", inputMapping)!,
+            ...getControlProps("fire", this._mapping)!,
             ...controlThemeProps,
             beforeLabel: "Fire",
             direction: "vertical",
@@ -176,7 +213,7 @@ export class StartScreen extends FadeContainer {
         }));
 
         const rightControl = createControlDescription({
-            ...getControlProps("turn", inputMapping, 1)!,
+            ...getControlProps("turn", this._mapping, 1)!,
             ...controlThemeProps,
             afterLabel: "Turn Right",
             direction: "horizontal",
@@ -193,7 +230,7 @@ export class StartScreen extends FadeContainer {
         }));
 
         const hyperspaceControl = createControlDescription({
-            ...getControlProps("hyperspace", inputMapping)!,
+            ...getControlProps("hyperspace", this._mapping)!,
             ...controlThemeProps,
             afterLabel: "Hyperspace",
             direction: "horizontal",
@@ -210,7 +247,7 @@ export class StartScreen extends FadeContainer {
         }));
 
         const thrustControl = createControlDescription({
-            ...getControlProps("thrust", inputMapping)!,
+            ...getControlProps("thrust", this._mapping)!,
             ...controlThemeProps,
             afterLabel: "Thrust",
             direction: "vertical",
@@ -230,7 +267,7 @@ export class StartScreen extends FadeContainer {
         }));
 
         const pauseControl = createControlDescription({
-            ...getControlProps("start", inputMapping)!,
+            ...getControlProps("start", this._mapping)!,
             ...controlThemeProps,
             beforeLabel: "Pause",
             direction: "horizontal",
@@ -247,7 +284,7 @@ export class StartScreen extends FadeContainer {
         }));
 
         const leftControl = createControlDescription({
-            ...getControlProps("turn", inputMapping, -1)!,
+            ...getControlProps("turn", this._mapping, -1)!,
             ...controlThemeProps,
             beforeLabel: "Turn Left",
             direction: "horizontal",
@@ -270,7 +307,11 @@ export class StartScreen extends FadeContainer {
         super.tick(timestamp, elapsed);
         this._timeline.tick(timestamp);
     }
-    
+
+    protected override onFadeInStart(): void {
+        this.drawControlMapping(200);
+    }
+
     protected override onFadeOutStart(): void {
         for (const pointer of this._controlPointers) {
             pointer.reverse();

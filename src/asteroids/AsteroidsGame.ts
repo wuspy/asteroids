@@ -1,7 +1,7 @@
 import { Container } from "@pixi/display";
 import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
-import { FadeContainer, initRandom, InputProvider, ScrollInteractionManager } from "./engine";
+import { clamp, FadeContainer, initRandom, InputProvider, ScrollInteractionManager } from "./engine";
 import { LevelIndicator } from "./LevelIndicator";
 import { Asteroid } from "./Asteroid";
 import { ScoreIndicator } from "./ScoreIndicator";
@@ -19,6 +19,8 @@ import { GameOverScreen } from "./GameOverScreen";
 import { Align, JustifyContent, PositionType } from "./layout";
 import { Theme } from "./Theme";
 import Stats from "stats.js";
+import { DashLineShader, SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "./constants";
 
 const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
@@ -61,6 +63,8 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private readonly _stage: Container;
     private readonly _input: InputProvider<typeof controls>;
     private readonly _backgroundContainer: Container;
+    private readonly _cornerBoundsGraphics: Graphics;
+    private readonly _absoluteBoundsGraphics: Graphics;
     private readonly _mainContainer: Container;
     private readonly _hudContainer: Container;
     private readonly _lifeIndicator: LifeIndicator;
@@ -81,6 +85,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private _queuedResizeId?: number;
     private _backgroundAsteroids: Asteroid[];
     private _nextAnimationFrameId?: number;
+    private _aboutOpen: boolean;
 
     // Only used in development mode
     readonly fpsStats!: Stats;
@@ -121,6 +126,8 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             document.body.appendChild(this.statsDiv);
         }
 
+        this._aboutOpen = false;
+
         Renderer.registerPlugin("batch", BatchRenderer);
         Renderer.registerPlugin("interaction", InteractionManager);
         Renderer.registerPlugin("scrollInteraction", ScrollInteractionManager);
@@ -134,8 +141,9 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             forceCanvas: false,
         });
 
+        this._renderer.view.style.position = "absolute";
         this._container.appendChild(this._renderer.view);
-        this._uiQueue = new TickQueue();
+        this._uiQueue = new TickQueue("ui");
 
         this._input = new InputProvider(controls);
         this._input.mapping = wasdMapping;
@@ -143,6 +151,13 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._backgroundContainer = new Container();
         this._backgroundContainer.interactiveChildren = false;
         this._stage.addChild(this._backgroundContainer);
+
+        this._cornerBoundsGraphics = new Graphics();
+        this._cornerBoundsGraphics.shader = new DashLineShader();
+        this._backgroundContainer.addChild(this._cornerBoundsGraphics);
+
+        this._absoluteBoundsGraphics = new Graphics();
+        this._backgroundContainer.addChild(this._absoluteBoundsGraphics);
 
         this._mainContainer = new Container();
         this._mainContainer.filterArea = this._renderer.screen;
@@ -254,6 +269,9 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             this._hudContainer.addChild(this._gameOverScreen);
         });
         this.events.on("startRequested", this, () => {
+            if (this._aboutOpen) {
+                return;
+            }
             if (this._startScreen) {
                 this._startScreen.fadeOut(() => this.start());
             } else if (this._gameOverScreen) {
@@ -262,15 +280,15 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         });
         this.events.on("started", this, () => {
             if (this._startScreen) {
-                this._startScreen.destroy();
+                this._startScreen.destroy({ children: true });
                 this._startScreen = undefined;
             }
             if (this._gameOverScreen) {
-                this._gameOverScreen.destroy();
+                this._gameOverScreen.destroy({ children: true });
                 this._gameOverScreen = undefined;
             }
             if (this._pauseScreen) {
-                this._pauseScreen.destroy();
+                this._pauseScreen.destroy({ children: true });
                 this._pauseScreen = undefined;
             }
         });
@@ -298,12 +316,18 @@ export class AsteroidsGame extends CoreAsteroidsGame {
                 this._pauseScreen = undefined;
             }
         });
-        this.events.on("restartRequested", this, () => {
+        this.events.on("quitRequested", this, () => {
             if (this._pauseScreen) {
-                this._pauseScreen.fadeOut(() => this.restart());
+                this._pauseScreen.fadeOut(() => this.quit());
             }
         });
         this.events.on("themeChanged", this, this.applyTheme);
+        this.events.on("aboutOpened", this, () => {
+            this._aboutOpen = true;
+        });
+        this.events.on("aboutClosed", this, () => {
+            this._aboutOpen = false;
+        });
 
         this._timestamp = 0;
         this._nextAnimationFrameId = window.requestAnimationFrame(this.onAnimationFrame);
@@ -343,12 +367,31 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     }
 
     private restart(): void {
-        this._background.style.opacity = "0";
-        this.gameplayContainer.fadeOut(() => {
-            this.reset(true);
-            this.start();
-            this.gameplayContainer.show();
-        });
+        if (this.state.status !== "init") {
+            this._background.style.opacity = "0";
+            this.gameplayContainer.fadeOut(() => {
+                this.reset(true);
+                this.start();
+                this.gameplayContainer.show();
+            });
+        }
+    }
+
+    private quit(): void {
+        if (this.state.status !== "init") {
+            this._background.style.opacity = "0";
+            this.gameplayContainer.fadeOut(() => {
+                this.reset(true);
+                this.gameplayContainer.show();
+                this._startScreen = new StartScreen({
+                    queue: this._uiQueue,
+                    state: this.state,
+                    events: this.events,
+                    inputProvider: this._input,
+                });
+                this._hudContainer.addChild(this._startScreen);
+            });
+        }
     }
 
     protected override start(): void {
@@ -422,13 +465,36 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     }
 
     private executeResize(): void {
-        this.aspectRatio = this._container.clientWidth / this._container.clientHeight;
-        this._renderer.resize(this._container.clientWidth, this._container.clientHeight);
-        this._stage.scale.set(this._container.clientWidth / this.worldSize.width);
+        const aspectRatio = this._container.clientWidth / this._container.clientHeight;
+        if (process.env.NODE_ENV === "development") {
+            console.log("Aspect ratio changed", aspectRatio);
+        }
+        this.aspectRatio = clamp(aspectRatio, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO);
+        // Scale world based on new screen size and aspect ratio
+        if (aspectRatio > MAX_ASPECT_RATIO) {
+            this._stage.scale.set(this._container.clientHeight / this.worldSize.height);
+            this._renderer.resize(this._container.clientHeight * MAX_ASPECT_RATIO, this._container.clientHeight);
+        } else if (aspectRatio < MIN_ASPECT_RATIO) {
+            this._stage.scale.set(this._container.clientWidth / this.worldSize.width);
+            this._renderer.resize(this._container.clientWidth, this._container.clientWidth / MIN_ASPECT_RATIO);
+        } else {
+            this._renderer.resize(this._container.clientWidth, this._container.clientHeight);
+            this._stage.scale.set(this._container.clientWidth / this.worldSize.width);
+        }
+        // Position view in center of screen
+        this._renderer.view.style.top = `${Math.round((this._container.clientHeight - this._renderer.view.clientHeight) / 2)}px`;
+        this._renderer.view.style.left = `${Math.round((this._container.clientWidth - this._renderer.view.clientWidth) / 2)}px`;
+        // Resize background to view
+        this._background.style.top = this._renderer.view.style.top;
+        this._background.style.left = this._renderer.view.style.left;
+        this._background.style.width = `${this._renderer.view.width}px`;
+        this._background.style.height = `${this._renderer.view.height}px`;
+        // Resize HUD
         this._hudContainer.layout.style({
             width: this.worldSize.width,
             height: this.worldSize.height,
         });
+        // Adjust displacemnt of chromatic abberation
         this._mainAbberationFilter.maxDisplacement = RGB_SPLIT_SEPARATION * this._stage.scale.x;
         // Redistribute background asteroids
         if (this._backgroundAsteroids) {
@@ -436,6 +502,91 @@ export class AsteroidsGame extends CoreAsteroidsGame {
                 asteroid.moveToUnoccupiedPosition(this._backgroundAsteroids);
             }
         }
-        this._queuedResizeId = undefined;
+
+        this.drawBounds(aspectRatio);
+    }
+
+    private drawBounds(aspectRatio: number): void {
+        const cornerExtra = 10;
+        const xCornerMarkingDistance = this.worldSize.width / 7;
+        const yCornerMarkingDistance = this.worldSize.height / 7;
+        const lineWidth = 2 / this._stage.scale.x;
+        const resolution = 10;
+        const { width, height } = this.worldSize;
+        let x, y;
+
+        // Draw bounds markers in each corner
+
+        this._cornerBoundsGraphics.clear();
+        this._cornerBoundsGraphics.lineStyle({
+            width: lineWidth,
+            color: 0xffffff,
+            alpha: 0.1,
+        });
+
+        y = lineWidth / 2;
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, -cornerExtra, y));
+        for (x = 0; x < xCornerMarkingDistance; x += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, width + cornerExtra, y));
+        for (x = width; x > width - xCornerMarkingDistance; x -= resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+
+        y = height - lineWidth / 2;
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, -cornerExtra, y));
+        for (x = 0; x < xCornerMarkingDistance; x += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, width + cornerExtra, y));
+        for (x = width; x > width - xCornerMarkingDistance; x -= resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+
+        x = lineWidth / 2;
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, -cornerExtra));
+        for (y = 0; y < yCornerMarkingDistance; y += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, height + cornerExtra));
+        for (y = height; y > height - yCornerMarkingDistance; y -= resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+
+        x = width - lineWidth / 2;
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, -cornerExtra));
+        for (y = 0; y < yCornerMarkingDistance; y += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, height + cornerExtra));
+        for (y = height; y > height - yCornerMarkingDistance; y -= resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
+        }
+
+        // If the game is letterboxed, draw absolute bounds
+
+        this._absoluteBoundsGraphics.clear();
+        this._absoluteBoundsGraphics.lineStyle({
+            width: lineWidth,
+            color: 0xffffff,
+            alpha: 0.1,
+        });
+
+        if (aspectRatio < MIN_ASPECT_RATIO) {           
+            this._absoluteBoundsGraphics.visible = true;
+            y = lineWidth / 2;
+            this._absoluteBoundsGraphics.moveTo(0, y).lineTo(width, y);        
+            y = height - lineWidth / 2;
+            this._absoluteBoundsGraphics.moveTo(0, y).lineTo(width, y);
+        } else if (aspectRatio > MAX_ASPECT_RATIO) {
+            this._absoluteBoundsGraphics.visible = true;
+            x = lineWidth / 2;
+            this._absoluteBoundsGraphics.moveTo(x, 0).lineTo(x, height);
+            x = this.worldSize.width - lineWidth / 2;
+            this._absoluteBoundsGraphics.moveTo(x, 0).lineTo(x, height);
+        } else {
+            this._absoluteBoundsGraphics.visible = false;
+        }
     }
 }

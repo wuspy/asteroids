@@ -7,9 +7,11 @@ import { UFO } from "./UFO";
 export interface GameEvents {
     reset: () => void;
     startRequested: () => void;
-    restartRequested: () => void;
+    quitRequested: () => void;
     pauseRequested: () => void;
     resumeRequested: () => void;
+    aboutOpened: () => void;
+    aboutClosed: () => void;
     started: () => void;
     paused: () => void;
     resumed: () => void;

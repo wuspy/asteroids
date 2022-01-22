@@ -40,6 +40,13 @@ export const NEXT_LEVEL_DELAY = 0.25;
 export const WORLD_AREA = 1.5;
 
 /**
+ * The min and max screen aspect ratios supported by the game. If the client size is outside
+ * of these bounds it must be letterboxed.
+ */
+export const MAX_ASPECT_RATIO = 2.25
+export const MIN_ASPECT_RATIO = 0.75;
+
+/**
  * How long a hyperspace jump takes. For half this amount, the ship fades out in its current location, and
  * after that it spawns in its new location and fades in. The ship is invulnerable for this entire time.
  */
