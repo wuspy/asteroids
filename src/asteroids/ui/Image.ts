@@ -40,16 +40,6 @@ export class Image extends FadeContainer {
         } else {
             resource.onComplete.add(waitForTexture);
         }
-
-        if (!this._sprite) {
-            this.backgroundStyle = {
-                shape: ContainerBackgroundShape.Rectangle,
-                fill: {
-                    color: 0,
-                    alpha: 0.01,
-                },
-            };
-        }
     }
 
     get tint(): number {
