@@ -24,7 +24,6 @@ interface ContainerPrivate extends Container {
     _backgroundStyle?: ContainerBackground;
     _backgroundWidth: number;
     _backgroundHeight: number;
-    _blurFilter: [BlurFilter];
 }
 
 export const enum ContainerBackgroundShape {
@@ -76,7 +75,6 @@ export const drawContainerBackground = (graphics: Graphics, background: Containe
 const container = Container.prototype as ContainerPrivate;
 
 container._flexContainer = false;
-container._blurFilter = [new BlurFilter()];
 container._backgroundWidth = 0;
 container._backgroundHeight = 0;
 
