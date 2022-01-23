@@ -44,7 +44,12 @@ const index = {
         }),
         ...(mode === "production" ? [
             new HtmlInlineScriptPlugin(),
-            new HtmlInlineCssPlugin(),
+            new HtmlInlineCssPlugin({
+                replace: {
+                    target: "<!-- index.css -->",
+                    removeTarget: true,
+                },
+            }),
         ] : [])
     ],
     module: {
