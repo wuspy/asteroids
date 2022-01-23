@@ -1,8 +1,15 @@
+import { Loader } from "@pixi/loaders";
 import { AsteroidsGame } from "./asteroids/AsteroidsGame";
 import { HeadlessAsteroidsGame } from "./asteroids/HeadlessAsteroidsGame";
 import { initYoga } from "./asteroids/layout";
+import "./asteroids/engine";
 
 window.setTimeout(async () => {
+    await Loader.shared
+        .add("github-64px.webp", "assets/github-64px.webp")
+        .add("linkedin-64px.webp", "assets/linkedin-64px.webp")
+        .promise();
+        
     await initYoga();
 
     document.getElementById("loader")?.remove();

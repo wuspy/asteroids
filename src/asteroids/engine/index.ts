@@ -11,3 +11,4 @@ export * from "./EventManager";
 export * from "./TickableContainer";
 export * from "./FadeContainer";
 export * from "./ScrollInteractionManager";
+export * from "./loaderMixin";

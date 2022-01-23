@@ -11,7 +11,6 @@ export class Image extends FadeContainer {
     constructor(params: {
         queue: TickQueue,
         resource: string,
-        fadeInOnLoad: boolean,
         tint?: number,
     }) {
         const resource = Loader.shared.resources[params.resource];
@@ -29,11 +28,7 @@ export class Image extends FadeContainer {
             if (resource.texture) {
                 if (!this.destroyed) { // In case the container was destroyed before the resource loaded
                     this.addSprite(resource.texture);
-                    if (params.fadeInOnLoad) {
-                        this.fadeIn();
-                    } else {
-                        this.show();
-                    }
+                    this.fadeIn();
                 }
             } else {
                 window.setTimeout(waitForTexture);

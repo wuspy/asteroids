@@ -64,7 +64,6 @@ export class Button extends TickableContainer {
             this._image = new Image({
                 queue: params.queue,
                 resource: params.imageResource,
-                fadeInOnLoad: false,
                 tint: this._theme.textColor,
             });
             this._image.alpha = this._theme.textAlpha;

@@ -58,7 +58,6 @@ export class AboutMeModal extends Modal {
         const avatar = new Image({
             queue: this.queue,
             resource: "me.webp",
-            fadeInOnLoad: true,
         });
         avatar.layout.style({
             width: 144,
@@ -177,7 +176,6 @@ class Cat extends Container {
         const avatar = new Image({
             queue: params.queue,
             resource: params.resource,
-            fadeInOnLoad: true,
         });
         avatar.layout.style({
             width: 144,
