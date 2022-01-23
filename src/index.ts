@@ -5,10 +5,6 @@
  */
 
 const fallbackContent = document.getElementById("fallback-content")!;
-const unsupportedMessage = document.getElementById("unsupported-message")!;
-const branding = document.getElementById("branding")!;
-const loader = document.getElementById("loader-placeholder")!;
-const game = document.getElementById("game")!;
 
 const supportsES6 = () => {
     try {
@@ -29,11 +25,18 @@ const supportsWebgl = () => {
 const supportsWasm = () => typeof WebAssembly === "object" && typeof WebAssembly.instantiate === "function";
 
 if (!supportsES6() || !supportsWebgl() || !supportsWasm()) {
-    fallbackContent.style.visibility = "visible";
+    // By default unsupportedMessage says javascript is disabled, so change it
+    const unsupportedMessage = document.getElementById("unsupported-message")!;
     unsupportedMessage.innerHTML = "This site has some pretty cool stuff on it, but you need to be using a newer web browser to see it. You can check out what my site actually looks like <a href=\"https://github.com/wuspy/asteroids\" target=\"_blank\">here</a>.";
+    // Show fallback content
+    fallbackContent.style.display = "flex";
 } else {
+    const loader = document.getElementById("loader-placeholder")!;
+    const game = document.getElementById("game")!;
+    const branding = document.getElementById("branding")!;
+
     // Don't need this anymore, so might as well not have it cluttering the dom
-    fallbackContent.parentElement!.removeChild(fallbackContent);
+    fallbackContent.parentNode!.removeChild(fallbackContent);
     // Show spinny loader
     loader.id = "loader";
     // Show branding line at bottom of screen

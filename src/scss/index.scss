@@ -75,6 +75,7 @@ svg {
 
 #game {
     @include fixed-fullscreen;
+    pointer-events: none;
 }
 
 #branding {
