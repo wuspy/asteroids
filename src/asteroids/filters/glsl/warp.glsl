@@ -4,7 +4,6 @@ varying vec2 vTextureCoord;
 
 uniform sampler2D uSampler;
 uniform vec2 dimensions;
-uniform vec4 filterArea;
 uniform float warpAmount;
 
 vec2 warp(vec2 pos)

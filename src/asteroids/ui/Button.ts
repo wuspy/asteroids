@@ -107,13 +107,18 @@ export class Button extends TickableContainer {
         this.buttonMode = true;
         this._text.cacheAsBitmap = true;
 
-        this.on("click", () => this.onClick());
         this.on("mouseover", () => { this._hover = true; });
         this.on("mouseout", () => { this._hover = false; });
         this.on("mousedown", () => { this._active = true; });
         this.on("touchstart", () => { this._active = true; });
-        this.on("mouseup", () => { this._active = false; });
-        this.on("touchend", () => { this._active = false; });
+        this.on("mouseup", () => {
+            this._active = false;
+            this.onClick();
+        });
+        this.on("touchend", () => {
+            this._active = false;
+            this.onClick();
+        });
         this.on("mouseupoutside", () => { this._active = false; });
         this.on("touchendoutside", () => { this._active = false; });
     }
