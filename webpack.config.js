@@ -46,7 +46,7 @@ const index = {
             new HtmlInlineScriptPlugin(),
             new HtmlInlineCssPlugin({
                 replace: {
-                    target: "<!-- index.css -->",
+                    target: "<index.scss/>",
                     removeTarget: true,
                 },
             }),
