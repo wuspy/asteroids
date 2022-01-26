@@ -1,4 +1,5 @@
 const path = require("path");
+const del = require("del");
 const webpack = require("webpack");
 const TerserPlugin = require("terser-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -10,25 +11,71 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 const mode = process.env.NODE_ENV === "production" ? "production" : "development";
 const dist = path.resolve(__dirname, "dist");
+const public = path.resolve(__dirname, "dist/public");
+
+del(dist);
+
+const server = {
+    entry: "./src/server/main.ts",
+    target: ["node16", "es2021"],
+    output: {
+        filename: "server.js",
+        path: dist,
+    },
+    plugins: [
+        new CircularDependencyPlugin({
+            exclude: /node_modules/,
+            // add errors to webpack instead of warnings
+            failOnError: true,
+            // allow import cycles that include an asyncronous import,
+            // e.g. via import(/* webpackMode: "weak" */ './file.js')
+            allowAsyncCycles: false,
+            // set the current working directory for displaying module paths
+            cwd: process.cwd(),
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: "src/server/config/", to: `${dist}/config` },
+            ],
+        }),
+    ],
+    module: {
+        rules: [{
+            test: /\.(ts|tsx)$/i,
+            use: [{
+                loader: 'ts-loader',
+                options: {
+                    configFile: "tsconfig.server.json",
+                },
+            }],
+            exclude: ["/node_modules/"],
+        }],
+    },
+    resolve: {
+        extensions: [".tsx", ".ts", ".js", ".json"],
+    },
+    optimization: {
+        minimize: false,
+    },
+};
 
 const index = {
-    entry: ["./src/index.ts", "./src/scss/index.scss"],
+    entry: ["./src/browser/main.ts", "./scss/index.scss"],
     target: ["web", "es5"],
     output: {
-        path: dist,
-        clean: true,
+        path: public,
     },
     devtool: mode === "development" ? "source-map" : undefined,
-    devServer: {
-        static: {
-            directory: dist,
-        },
-        port: 9000,
-    },
+    // devServer: {
+    //     static: {
+    //         directory: public,
+    //     },
+    //     port: 9000,
+    // },
     plugins: [
         new CopyPlugin({
             patterns: [
-                { from: "assets", to: `${dist}/assets` },
+                { from: "assets", to: `${public}/assets` },
             ],
         }),
         new webpack.DefinePlugin({
@@ -38,7 +85,7 @@ const index = {
             filename: "[name].css",
         }),
         new HtmlWebpackPlugin({
-            template: "./src/html/index.html",
+            template: "./html/index.html",
             scriptLoading: "blocking",
             inject: "body",
         }),
@@ -60,7 +107,7 @@ const index = {
                     options: {
                         configFile: "tsconfig.es5.json",
                     },
-                }, ],
+                }],
                 exclude: ["/node_modules/"],
             },
             {
@@ -75,17 +122,19 @@ const index = {
 };
 
 const asteroids = {
-    entry: "./src/asteroids.ts",
+    entry: "./src/browser/asteroids.ts",
     target: ["web", "es6"],
     output: {
         filename: "asteroids.js",
-        path: dist,
+        path: public,
     },
     devtool: mode === "development" ? "source-map" : undefined,
     plugins: [
+        new webpack.DefinePlugin({
+            "process.env.npm_package_version": JSON.stringify(process.env.npm_package_version),
+        }),
         new CircularDependencyPlugin({
             exclude: /node_modules/,
-            include: /src/,
             // add errors to webpack instead of warnings
             failOnError: true,
             // allow import cycles that include an asyncronous import,
@@ -103,7 +152,12 @@ const asteroids = {
     module: {
         rules: [{
                 test: /\.(ts|tsx)$/i,
-                loader: "ts-loader",
+                use: [{
+                    loader: 'ts-loader',
+                    options: {
+                        configFile: "tsconfig.es6.json",
+                    },
+                }],
                 exclude: ["/node_modules/"],
             },
             {
@@ -135,6 +189,7 @@ const asteroids = {
 };
 
 module.exports = [
+    {...server, mode },
     {...index, mode },
     {...asteroids, mode },
 ];

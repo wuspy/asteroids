@@ -1,8 +1,6 @@
 {
     "compilerOptions": {
-        "module": "es6",
         "moduleResolution": "node",
-        "target": "es6",
         "strict": true,
         "allowJs": false,
         "sourceMap": true,
@@ -12,6 +10,10 @@
         "noImplicitOverride": true,
         "forceConsistentCasingInFileNames": true,
         "importHelpers": true,
+        "baseUrl": "src",
+        "paths": {
+            "@common/*": ["common/*"],
+        }
     },
     "exclude": [
         "node_modules"
