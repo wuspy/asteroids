@@ -1,6 +1,6 @@
 import { Container } from "@pixi/display";
 import { Loader } from "@pixi/loaders";
-import { TickQueue } from "../core/engine";
+import { TickQueue } from "@core/engine";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { Image, Button, LinearGroup, Modal, Text, ButtonType, UI_FOREGROUND_COLOR } from "./ui";
 

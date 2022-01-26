@@ -1,20 +1,16 @@
 import { Container } from "@pixi/display";
-import { InputProvider, InputMapping, TickQueue, EventManager } from "../core/engine";
 import { DEG_TO_RAD } from "@pixi/math";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { ShipDisplay } from "./ShipDisplay";
 import { BlurFilter } from "@pixi/filter-blur";
-import { GameState, GameEvents } from "../core";
-import { HelpPointer } from "./ui/HelpPointer";
 import { GlowFilter } from "@pixi/filter-glow";
-import anime from "animejs";
 import { AlphaFilter } from "@pixi/filter-alpha";
-import { controls } from "../core/input";
+import { GameState, GameEvents, controls } from "@core";
+import { InputProvider, InputMapping, TickQueue, EventManager } from "@core/engine";
+import anime from "animejs";
+import { ShipDisplay } from "./ShipDisplay";
 import { createControlDescription, getControlProps } from "./controlGraphic";
-import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
-import { Button, LinearGroup, Text, ButtonType, FadeContainer } from "./ui";
-import { Modal } from "./ui/Modal";
-import { VirtualizedList } from "./ui/VirtualizedList";
+import { Align, FlexDirection, PositionType } from "./layout";
+import { Button, LinearGroup, ButtonType, FadeContainer, HelpPointer } from "./ui";
 import { AboutMeModal } from "./AboutMeModal";
 
 export class StartScreen extends FadeContainer {

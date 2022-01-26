@@ -1,11 +1,11 @@
 import { GlowFilter } from "@pixi/filter-glow";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { TickQueue } from "@core/engine";
 import { Text } from "./Text";
 import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection } from "../layout";
 import { Image } from "./Image";
 import { TickableContainer } from "./TickableContainer";
 import { ButtonTheme, ButtonType, BUTTON_THEMES } from "./theme";
-import { TickQueue } from "../../core/engine";
 
 const TRANSITION_TIME = 0.25;
 

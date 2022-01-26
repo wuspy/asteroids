@@ -1,11 +1,10 @@
 import { Container } from "@pixi/display";
-import { IShipDisplay, Ship } from "../core/Ship";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { BlurFilter } from "@pixi/filter-blur";
+import { Tickable } from "@core/engine";
+import { IShipDisplay, Ship, HYPERSPACE_DELAY } from "@core";
 import { Explosion, ShipSpawnAnimation } from "./animations";
-import { Tickable } from "../core/engine";
-import { HYPERSPACE_DELAY } from "../core/constants";
 
 export class ShipDisplay extends Container implements IShipDisplay, Tickable {
     private readonly _ship: Ship;

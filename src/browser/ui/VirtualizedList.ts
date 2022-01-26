@@ -1,8 +1,8 @@
 import { Container, DisplayObject } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { clamp, TickQueue } from "@core/engine";
 import anime from "animejs";
 import { TickableContainer } from "./TickableContainer";
-import { clamp, TickQueue } from "../../core/engine";
 import { ComputedLayout, ContainerBackgroundShape, FlexDirection, PositionType } from "../layout";
 
 export type ItemRenderer<T> = (item: T) => DisplayObject;

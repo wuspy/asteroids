@@ -1,6 +1,6 @@
-import { random, TickQueue } from "../../core/engine";
+import { GameState } from "@core";
+import { random, TickQueue } from "@core/engine";
 import { Text, TickableContainer } from "../ui";
-import { GameState } from "../../core";
 
 const FONT_SIZE = 28;
 const MAX_DIGITS = 3;

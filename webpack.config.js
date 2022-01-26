@@ -53,6 +53,9 @@ const server = {
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js", ".json"],
+        alias: {
+            "@core": path.resolve(__dirname, "src/core"),
+        },
     },
     optimization: {
         minimize: false,
@@ -169,8 +172,9 @@ const asteroids = {
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
-        // Required for yoga-layout-wasm
         alias: {
+            "@core": path.resolve(__dirname, "src/core"),
+            // path/fs required for yoga-layout-wasm
             path: false,
             fs: false,
         },

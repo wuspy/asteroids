@@ -1,9 +1,9 @@
 import { Container } from "@pixi/display";
 import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
-import { CoreAsteroidsGame, controls, inputLogConfig, wasdMapping, Theme, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "../core";
+import { CoreAsteroidsGame, controls, inputLogConfig, wasdMapping, Theme, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
-import { clamp, initRandom, InputProvider, GameObject, TickQueue, GameLog } from "../core/engine";
+import { clamp, initRandom, InputProvider, GameObject, TickQueue, GameLog } from "@core/engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";

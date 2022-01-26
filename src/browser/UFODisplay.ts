@@ -1,8 +1,8 @@
 import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
-import { IUFODisplay, UFO, UFOType, UFO_SIZES } from "../core";
 import { BlurFilter } from "@pixi/filter-blur";
+import { IUFODisplay, UFO, UFOType, UFO_SIZES } from "@core";
 import { Explosion } from "./animations";
 
 const EXPLOSION_SIZES: Readonly<{ [Key in UFOType]: number }> = {

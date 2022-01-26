@@ -1,7 +1,7 @@
 import config from "./config";
 import express from "express";
 import bodyParser from "body-parser";
-import { UnsavedGame } from "../core/models";
+import { UnsavedGame } from "@core/models";
 import { HeadlessAsteroidsGame } from "./HeadlessAsteroidsGame";
 
 const run = async () => {

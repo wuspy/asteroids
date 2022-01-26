@@ -1,7 +1,7 @@
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { BlurFilter } from "@pixi/filter-blur";
+import { TickQueue } from "@core/engine";
 import anime from "animejs";
-import { TickQueue } from "../../core/engine";
 import { TickableContainer } from "./TickableContainer";
 
 const BLUR = 10;

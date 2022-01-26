@@ -1,7 +1,6 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { PROJECTILE_LIFETIME } from "../core/constants";
-import { Tickable } from "../core/engine";
-import { IProjectileDisplay, Projectile } from "../core/Projectile";
+import { Tickable } from "@core/engine";
+import { IProjectileDisplay, Projectile, PROJECTILE_LIFETIME } from "@core";
 
 const GEOMETRY = (() => {
     const graphics = new Graphics();

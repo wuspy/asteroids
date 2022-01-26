@@ -1,12 +1,10 @@
 import { ISize } from "@pixi/math";
-import { InputState } from "./engine";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
 import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { EventManager } from "./engine/EventManager";
-import { random, TickQueue } from "./engine";
+import { random, TickQueue, EventManager, InputState } from "./engine";
 import { UFO } from "./UFO";
 import { Theme, THEMES } from "./Theme";
 import { controls } from "./input";

@@ -1,8 +1,8 @@
 import { Container, DisplayObject } from "@pixi/display";
+import { TickQueue } from "@core/engine";
 import { Text } from "./Text";
 import { Align, FlexDirection, JustifyContent, PositionType } from "../layout";
 import { MODAL_BACKGROUND, UI_FOREGROUND_COLOR } from "./theme";
-import { TickQueue } from "../../core/engine";
 import { Divider } from "./Divider";
 import { FadeContainer } from "./FadeContainer";
 

@@ -1,5 +1,5 @@
 import { Container, IDestroyOptions } from "@pixi/display";
-import { TickQueue, Tickable } from "../../core/engine";
+import { TickQueue, Tickable } from "@core/engine";
 
 export abstract class TickableContainer extends Container implements Tickable {
     protected readonly queue: TickQueue;

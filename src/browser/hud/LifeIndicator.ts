@@ -1,12 +1,11 @@
 import "@pixi/mixin-cache-as-bitmap";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { TickQueue } from "../../core/engine";
+import { LIVES, GameState } from "@core";
+import { TickQueue } from "@core/engine";
 import { ShipDisplay } from "../ShipDisplay";
-import { LIVES, GameState } from "../../core";
 import { ContainerBackgroundShape, FlexDirection } from "../layout";
 import { PopAnimation } from "../animations";
-import { LinearGroup, TickableContainer } from "../ui";
-import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui/theme";
+import { LinearGroup, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui";
 
 const SIZE = 36;
 

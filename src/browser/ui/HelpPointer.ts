@@ -1,10 +1,10 @@
 import anime from "animejs";
 import { Container } from "@pixi/display";
-import { Vec2 } from "../../core/engine";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { DEG_TO_RAD, PI_2 } from "@pixi/math";
 import { Renderer } from "@pixi/core";
+import { Vec2 } from "@core/engine";
 
 export class HelpPointer extends Container {
     private readonly _timeline: anime.AnimeTimelineInstance;

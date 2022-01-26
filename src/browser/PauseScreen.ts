@@ -1,13 +1,11 @@
 import { Container } from "@pixi/display";
-import { EventManager, InputProvider, TickQueue } from "../core/engine";
 import { GlowFilter } from "@pixi/filter-glow";
+import { EventManager, InputProvider, TickQueue } from "@core/engine";
+import { GameEvents, GameState, controls } from "@core";
 import anime from "animejs";
 import { createControlDescription, getControlProps } from "./controlGraphic";
-import { controls } from "../core/input";
 import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
-import { Button, FadeContainer, Text } from "./ui";
-import { ButtonType, FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
-import { GameEvents, GameState } from "../core";
+import { ButtonType, Button, FadeContainer, Text, FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
 
 export class PauseScreen extends FadeContainer {
     private readonly _events: EventManager<GameEvents>;

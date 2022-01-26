@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "moduleResolution": "node",
+        "target": "es6",
         "strict": true,
         "allowJs": false,
         "sourceMap": true,
@@ -10,9 +11,10 @@
         "noImplicitOverride": true,
         "forceConsistentCasingInFileNames": true,
         "importHelpers": true,
-        "baseUrl": "src",
         "paths": {
-            "@common/*": ["common/*"],
+            "@core": ["./src/core"],
+            "@core/engine": ["./src/core/engine"],
+            "@core/models": ["./src/core/models"],
         }
     },
     "exclude": [

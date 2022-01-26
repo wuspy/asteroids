@@ -2,7 +2,7 @@ import { Container } from "@pixi/display";
 import { BlurFilter } from "@pixi/filter-blur";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
-import { Asteroid, IAsteroidDisplay, ASTEROID_HITAREAS } from "../core";
+import { Asteroid, IAsteroidDisplay, ASTEROID_HITAREAS } from "@core";
 import { Explosion } from "./animations";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];

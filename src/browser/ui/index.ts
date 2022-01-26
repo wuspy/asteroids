@@ -8,4 +8,5 @@ export * from "./LinearGroup";
 export * from "./Text";
 export * from "./Divider";
 export * from "./Modal";
+export * from "./HelpPointer";
 export * from "./theme";

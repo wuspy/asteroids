@@ -1,5 +1,5 @@
-import { CoreAsteroidsGame, inputLogConfig } from "../core";
-import { seedRandom, parseGameLog } from "../core/engine";
+import { CoreAsteroidsGame, inputLogConfig } from "@core";
+import { seedRandom, parseGameLog } from "@core/engine";
 
 export class HeadlessAsteroidsGame extends CoreAsteroidsGame {
     private _log: string;

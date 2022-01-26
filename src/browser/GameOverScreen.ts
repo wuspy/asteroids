@@ -1,6 +1,5 @@
-import { EventManager, InputProvider, TickQueue } from "../core/engine";
-import { GameState, GameEvents } from "../core";
-import { controls } from "../core/input";
+import { EventManager, InputProvider, TickQueue } from "@core/engine";
+import { GameState, GameEvents, controls } from "@core";
 import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
 import { Button, Text, ButtonType, FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, FadeContainer } from "./ui";
 
