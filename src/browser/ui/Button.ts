@@ -21,6 +21,8 @@ export class Button extends TickableContainer {
     private _activeGlowFilter: GlowFilter;
     private _hover: boolean;
     private _active: boolean;
+    private _lastWidth: number;
+    private _lastHeight: number;
 
     onClick: () => void;
 
@@ -102,6 +104,8 @@ export class Button extends TickableContainer {
 
         this._hover = false;
         this._active = false;
+        this._lastWidth = 0;
+        this._lastHeight = 0;
         this._activeGraphics.alpha = 0;
         this._activeGraphics.visible = false;
         this.interactive = true;
@@ -129,25 +133,35 @@ export class Button extends TickableContainer {
         const alphaDiff = elapsed / TRANSITION_TIME;
         const glowDiff = alphaDiff * 2;
 
+        let needsBackgroundRedraw = width !== this._lastWidth || height !== this._lastHeight;
+
         if (!this._active && this._hover) {
             this._glowFilter.outerStrength = Math.min(2, this._glowFilter.outerStrength + glowDiff);
+            needsBackgroundRedraw = true;
         } else if (this._glowFilter.outerStrength) {
             this._glowFilter.outerStrength = Math.max(0, this._glowFilter.outerStrength - glowDiff);
+            needsBackgroundRedraw = true;
         }
 
         if (this._active) {
             this._activeGraphics.alpha = Math.min(1, this._activeGraphics.alpha + alphaDiff);
             this._activeGraphics.visible = true;
+            needsBackgroundRedraw = true;
         } else if (this._activeGraphics.visible) {
             this._activeGraphics.alpha = Math.max(0, this._activeGraphics.alpha - alphaDiff);
             this._activeGraphics.visible = this._activeGraphics.alpha > 0;
+            needsBackgroundRedraw = true;
         }
 
-        this._inactiveGraphics.clear();
-        drawContainerBackground(this._inactiveGraphics, this._inactiveBackground, width, height);
-        if (this._activeGraphics.visible) {
-            this._activeGraphics.clear();
-            drawContainerBackground(this._activeGraphics, this._activeBackground, width, height);
+        if (needsBackgroundRedraw) {
+            this._inactiveGraphics.clear();
+            drawContainerBackground(this._inactiveGraphics, this._inactiveBackground, width, height);
+            if (this._activeGraphics.visible) {
+                this._activeGraphics.clear();
+                drawContainerBackground(this._activeGraphics, this._activeBackground, width, height);
+            }
+            this._lastWidth = width;
+            this._lastHeight = height;
         }
     }
 
