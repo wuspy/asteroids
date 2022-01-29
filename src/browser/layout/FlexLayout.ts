@@ -146,10 +146,12 @@ export default class FlexLayout {
             this._node.removeChild(child._node);
             this._children.splice(i, 1);
             child._parent = undefined;
-        }
-        if (this._children.length === 0) {
-            // This is now a leaf node, so set measureFunc again
-            this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+            if (this._children.length === 0) {
+                // This is now a leaf node, so set measureFunc again
+                this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+            }
+        } else {
+            console.warn("Not a child of this layout:", child);
         }
     }
 
@@ -170,7 +172,7 @@ export default class FlexLayout {
             this._parent.removeChild(this);
         }
         for (const child of this._children) {
-            this.removeChild(child);
+            child._parent = undefined;
         }
         this._node.free();
     }
