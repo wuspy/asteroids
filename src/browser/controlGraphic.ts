@@ -89,7 +89,6 @@ export const createControlDescription = (params: {
     container.layout.alignItems = Align.Center;
     if (params.direction === "horizontal") {
         const margin = Math.round(params.fontSize * 0.5);
-        container.layout.flexDirection = FlexDirection.Row;
         control.layout.style({
             marginLeft: params.beforeLabel ? margin : 0,
             marginRight: params.afterLabel ? margin : 0,

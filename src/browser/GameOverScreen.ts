@@ -22,7 +22,7 @@ export class GameOverScreen extends FadeContainer {
         this.flexContainer = true;
         this.layout.style({
             position: PositionType.Absolute,
-            width: [100, "%"],
+            width: "100%",
             flexDirection: FlexDirection.Column,
             alignItems: Align.Center,
         });

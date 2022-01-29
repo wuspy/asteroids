@@ -1,17 +1,15 @@
 import { DisplayObject } from "@pixi/display";
-import yoga, { getYoga, YogaUnit, YogaNode, YogaEdge, } from "./yoga";
+import yoga, { Value, Node, Layout } from "yoga-layout-wasm";
+import getYoga from "./getYoga";
 
-export type Dimension = number | [number, "%"];
-export type DimensionOrAuto = Dimension | "auto";
-
-export enum FlexDirection {
+export const enum FlexDirection {
     Column = 0,
     ColumnReverse,
     Row,
     RowReverse,
 }
 
-export enum JustifyContent {
+export const enum JustifyContent {
     FlexStart = 0,
     Center,
     FlexEnd,
@@ -20,13 +18,13 @@ export enum JustifyContent {
     SpaceEvenly,
 }
 
-export enum FlexWrap {
+export const enum FlexWrap {
     NoWrap = 0,
     Wrap,
     WrapReverse,
 }
 
-export enum Align {
+export const enum Align {
     Auto = 0,
     FlexStart,
     Center,
@@ -37,51 +35,31 @@ export enum Align {
     SpaceAround,
 }
 
-export enum PositionType {
-    Relative = 0,
+export const enum PositionType {
+    Static = 0,
+    Relative,
     Absolute,
 }
 
-interface YogaValue {
-    readonly unit: YogaUnit | number,
-    readonly value: number,
+export const enum MeasureMode {
+    Undefined = 0,
+    Exactly,
+    AtMost,
 }
 
-/**
- * Converts a Yoga dimension value to our dimension value
- */
-const toDimension = ({ value, unit }: YogaValue): Dimension | undefined => {
-    if (unit === yoga.UNIT_PERCENT) {
-        return value === 0 ? 0 : [value, "%"];
-    } else if (unit === yoga.UNIT_POINT) {
-        return value;
-    } else {
-        return undefined;
-    }
+export const enum Direction {
+    Inherit = 0,
+    LTR,
+    RTL,
 }
 
-const toDimensionOrAuto = (value: YogaValue): DimensionOrAuto | undefined => {
-    if (value.unit === yoga.UNIT_AUTO) {
-        return "auto";
-    } else {
-        return toDimension(value);
-    }
-}
-
-export interface ComputedLayout {
-    readonly top: number;
-    readonly bottom: number;
-    readonly left: number;
-    readonly right: number;
-    readonly width: number;
-    readonly height: number;
-}
+export type ComputedLayout = Layout;
 
 export interface ComputedEdges {
-    readonly top: number;
-    readonly bottom: number;
-    readonly left: number;
-    readonly right: number;
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
 }
 
 export interface FlexLayoutProps {
@@ -94,55 +72,55 @@ export interface FlexLayoutProps {
     flexShrink: number;
     flexWrap: FlexWrap;
     flexDirection: FlexDirection;
-    flexBasis: DimensionOrAuto;
+    flexBasis: Value;
     justifyContent: JustifyContent;
-    marginTop: DimensionOrAuto;
-    marginBottom: DimensionOrAuto;
-    marginLeft: DimensionOrAuto;
-    marginRight: DimensionOrAuto;
-    marginHorizontal: DimensionOrAuto;
-    marginVertical: DimensionOrAuto;
-    margin: DimensionOrAuto;
-    paddingTop: Dimension;
-    paddingBottom: Dimension;
-    paddingLeft: Dimension;
-    paddingRight: Dimension;
-    paddingHorizontal: Dimension;
-    paddingVertical: Dimension;
-    padding: Dimension;
+    marginTop: Value;
+    marginBottom: Value;
+    marginLeft: Value;
+    marginRight: Value;
+    marginHorizontal: Value;
+    marginVertical: Value;
+    margin: Value;
+    paddingTop: Value;
+    paddingBottom: Value;
+    paddingLeft: Value;
+    paddingRight: Value;
+    paddingHorizontal: Value;
+    paddingVertical: Value;
+    padding: Value;
     position: PositionType;
-    top: Dimension | undefined;
-    bottom: Dimension | undefined;
-    left: Dimension | undefined;
-    right: Dimension | undefined;
-    width: DimensionOrAuto;
-    height: DimensionOrAuto;
-    maxWidth: Dimension | undefined;
-    maxHeight: Dimension | undefined;
-    minWidth: Dimension | undefined;
-    minHeight: Dimension | undefined;
+    top: Value;
+    bottom: Value;
+    left: Value;
+    right: Value;
+    width: Value;
+    height: Value;
+    maxWidth: Value;
+    maxHeight: Value;
+    minWidth: Value;
+    minHeight: Value;
     originAtCenter: boolean;
 }
 
 export default class FlexLayout {
-    private readonly _node: YogaNode;
+    private readonly _node: Node;
+    private readonly _displayObject: DisplayObject;
     private _parent?: FlexLayout;
     private _children: FlexLayout[];
-    private _displayObject: DisplayObject;
-    private _width: DimensionOrAuto;
-    private _height: DimensionOrAuto;
-    private _excluded: boolean;
 
+    excluded: boolean;
     originAtCenter: boolean;
 
     constructor(displayObject: DisplayObject) {
+        const yoga = getYoga();
+        const config = yoga.Config.create();
+        config.setUseWebDefaults(true);
+        this._node = yoga.Node.createWithConfig(config);
         this._displayObject = displayObject;
-        this._node = getYoga().Node.create();
         this._children = [];
         this.originAtCenter = false;
-        this._excluded = false;
-        this._width = "auto";
-        this._height = "auto";
+        this.excluded = false;
+        this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
     }
 
     insertChild(child: FlexLayout, index: number): void {
@@ -150,14 +128,8 @@ export default class FlexLayout {
             child._parent.removeChild(child);
         }
         if (this._children.length === 0) {
-            // This is no longer a leaf node, so set yoga width/height auto if needed since
-            // it will no longer be measured
-            if (this._width === "auto") {
-                this._node.setWidthAuto();
-            }
-            if (this._height === "auto") {
-                this._node.setHeightAuto();
-            }
+            // This is no longer a leaf node, so remove measureFunc so yoga doesn't complain
+            this._node.unsetMeasureFunc();
         }
         this._node.insertChild(child._node, index);
         this._children.splice(index, 0, child);
@@ -175,23 +147,31 @@ export default class FlexLayout {
             this._children.splice(i, 1);
             child._parent = undefined;
         }
+        if (this._children.length === 0) {
+            // This is now a leaf node, so set measureFunc again
+            this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+        }
     }
 
     update(): void {
-        this.measure();
+        this.prepareLayout();
         this._node.calculateLayout();
-        this.apply();
+        this.applyLayout();
     }
 
     reset(): void {
         this._node.reset();
         this.originAtCenter = false;
-        this._excluded = false;
-        this._width = "auto";
-        this._height = "auto";
+        this.excluded = false;
     }
 
     destroy(): void {
+        if (this._parent) {
+            this._parent.removeChild(this);
+        }
+        for (const child of this._children) {
+            this.removeChild(child);
+        }
         this._node.free();
     }
 
@@ -201,7 +181,7 @@ export default class FlexLayout {
         }
     }
 
-    get computedLayout(): ComputedLayout {
+    get computedLayout(): Layout {
         return this._node.getComputedLayout();
     }
 
@@ -215,14 +195,6 @@ export default class FlexLayout {
 
     get computedBorder(): ComputedEdges {
         return this.getComputedEdges("Border");
-    }
-
-    get excluded(): boolean {
-        return this._excluded || !this._displayObject.visible;
-    }
-
-    set excluded(excluded: boolean) {
-        this._excluded = excluded;
     }
 
     get alignContent(): Align {
@@ -293,18 +265,12 @@ export default class FlexLayout {
         this._node.setFlexDirection(flexDirection);
     }
 
-    get flexBasis(): DimensionOrAuto {
-        return toDimensionOrAuto(this._node.getFlexBasis() as any) || "auto";
+    get flexBasis(): Value {
+        return this._node.getFlexBasis();
     }
 
-    set flexBasis(flexBasis: DimensionOrAuto) {
-        if (flexBasis === "auto") {
-            this._node.setFlexBasis(NaN);
-        } else if (Array.isArray(flexBasis)) {
-            this._node.setFlexBasis(`${flexBasis[0]}%`);
-        } else {
-            this._node.setFlexBasis(flexBasis);
-        }
+    set flexBasis(flexBasis: Value) {
+        this._node.setFlexBasis(flexBasis);
     }
 
     get justifyContent(): JustifyContent {
@@ -315,92 +281,100 @@ export default class FlexLayout {
         this._node.setJustifyContent(justifyContent);
     }
 
-    get marginTop(): DimensionOrAuto {
-        return toDimensionOrAuto(this._node.getMargin(yoga.EDGE_TOP)) || 0;
+    get direction(): Direction {
+        return this._node.getDirection();
     }
 
-    set marginTop(margin: DimensionOrAuto) {
-        this.setMargin(yoga.EDGE_TOP, margin);
+    set direction(direction: Direction) {
+        this._node.setDirection(direction);
     }
 
-    get marginBottom(): DimensionOrAuto {
-        return toDimensionOrAuto(this._node.getMargin(yoga.EDGE_BOTTOM)) || 0;
+    get marginTop(): Value {
+        return this._node.getMargin(yoga.EDGE_TOP);
     }
 
-    set marginBottom(margin: DimensionOrAuto) {
-        this.setMargin(yoga.EDGE_BOTTOM, margin);
+    set marginTop(margin: Value) {
+        this._node.setMargin(yoga.EDGE_TOP, margin);
     }
 
-    get marginLeft(): DimensionOrAuto {
-        return toDimensionOrAuto(this._node.getMargin(yoga.EDGE_LEFT)) || 0;
+    get marginBottom(): Value {
+        return this._node.getMargin(yoga.EDGE_BOTTOM);
     }
 
-    set marginLeft(margin: DimensionOrAuto) {
-        this.setMargin(yoga.EDGE_LEFT, margin);
+    set marginBottom(margin: Value) {
+        this._node.setMargin(yoga.EDGE_BOTTOM, margin);
     }
 
-    get marginRight(): DimensionOrAuto {
-        return toDimensionOrAuto(this._node.getMargin(yoga.EDGE_RIGHT)) || 0;
+    get marginLeft(): Value {
+        return this._node.getMargin(yoga.EDGE_LEFT);
     }
 
-    set marginRight(margin: DimensionOrAuto) {
-        this.setMargin(yoga.EDGE_RIGHT, margin);
+    set marginLeft(margin: Value) {
+        this._node.setMargin(yoga.EDGE_LEFT, margin);
     }
 
-    set marginVertical(margin: DimensionOrAuto) {
-        this.setMargin(yoga.EDGE_VERTICAL, margin);
+    get marginRight(): Value {
+        return this._node.getMargin(yoga.EDGE_RIGHT);
     }
 
-    set marginHorizontal(margin: DimensionOrAuto) {
-        this.setMargin(yoga.EDGE_HORIZONTAL, margin);
+    set marginRight(margin: Value) {
+        this._node.setMargin(yoga.EDGE_RIGHT, margin);
     }
 
-    set margin(margin: DimensionOrAuto) {
-        this.setMargin(yoga.EDGE_ALL, margin);
+    set marginVertical(margin: Value) {
+        this._node.setMargin(yoga.EDGE_VERTICAL, margin);
     }
 
-    get paddingTop(): Dimension {
-        return toDimension(this._node.getPadding(yoga.EDGE_TOP)) || 0;
+    set marginHorizontal(margin: Value) {
+        this._node.setMargin(yoga.EDGE_HORIZONTAL, margin);
     }
 
-    set paddingTop(padding: Dimension) {
-        this.setPadding(yoga.EDGE_TOP, padding);
+    set margin(margin: Value) {
+        this._node.setMargin(yoga.EDGE_ALL, margin);
     }
 
-    get paddingBottom(): Dimension {
-        return toDimension(this._node.getPadding(yoga.EDGE_BOTTOM)) || 0;
+    get paddingTop(): Value {
+        return this._node.getPadding(yoga.EDGE_TOP);
     }
 
-    set paddingBottom(padding: Dimension) {
-        this.setPadding(yoga.EDGE_BOTTOM, padding);
+    set paddingTop(padding: Value) {
+        this._node.setPadding(yoga.EDGE_TOP, padding);
     }
 
-    get paddingLeft(): Dimension {
-        return toDimension(this._node.getPadding(yoga.EDGE_LEFT)) || 0;
+    get paddingBottom(): Value {
+        return this._node.getPadding(yoga.EDGE_BOTTOM);
     }
 
-    set paddingLeft(padding: Dimension) {
-        this.setPadding(yoga.EDGE_LEFT, padding);
+    set paddingBottom(padding: Value) {
+        this._node.setPadding(yoga.EDGE_BOTTOM, padding);
     }
 
-    get paddingRight(): Dimension {
-        return toDimension(this._node.getPadding(yoga.EDGE_RIGHT)) || 0;
+    get paddingLeft(): Value {
+        return this._node.getPadding(yoga.EDGE_LEFT);
     }
 
-    set paddingRight(padding: Dimension) {
-        this.setPadding(yoga.EDGE_RIGHT, padding);
+    set paddingLeft(padding: Value) {
+        this._node.setPadding(yoga.EDGE_LEFT, padding);
     }
 
-    set paddingVertical(padding: Dimension) {
-        this.setPadding(yoga.EDGE_VERTICAL, padding);
+    get paddingRight(): Value {
+        return this._node.getPadding(yoga.EDGE_RIGHT);
     }
 
-    set paddingHorizontal(padding: Dimension) {
-        this.setPadding(yoga.EDGE_HORIZONTAL, padding);
+    set paddingRight(padding: Value) {
+        this._node.setPadding(yoga.EDGE_RIGHT, padding);
     }
 
-    set padding(padding: Dimension) {
-        this.setPadding(yoga.EDGE_ALL, padding);
+    set paddingVertical(padding: Value) {
+        this._node.setPadding(yoga.EDGE_VERTICAL, padding);
+    }
+
+    set paddingHorizontal(padding: Value) {
+        this._node.setPadding(yoga.EDGE_HORIZONTAL, padding);
+    }
+
+    set padding(padding: Value) {
+        this._node.setPadding(yoga.EDGE_ALL, padding);
     }
 
     get position(): PositionType {
@@ -411,136 +385,120 @@ export default class FlexLayout {
         this._node.setPositionType(position);
     }
 
-    get top(): Dimension | undefined {
-        return toDimension(this._node.getPosition(yoga.EDGE_TOP));
+    get top(): Value {
+        return this._node.getPosition(yoga.EDGE_TOP);
     }
 
-    set top(top: Dimension | undefined) {
-        this.setPosition(yoga.EDGE_TOP, top);
+    set top(top: Value) {
+        this._node.setPosition(yoga.EDGE_TOP, top);
     }
 
-    get left(): Dimension | undefined {
-        return toDimension(this._node.getPosition(yoga.EDGE_LEFT));
+    get left(): Value {
+        return this._node.getPosition(yoga.EDGE_LEFT);
     }
 
-    set left(left: Dimension | undefined) {
-        this.setPosition(yoga.EDGE_LEFT, left);
+    set left(left: Value) {
+        this._node.setPosition(yoga.EDGE_LEFT, left);
     }
 
-    get right(): Dimension | undefined {
-        return toDimension(this._node.getPosition(yoga.EDGE_RIGHT));
+    get right(): Value {
+        return this._node.getPosition(yoga.EDGE_RIGHT);
     }
 
-    set right(right: Dimension | undefined) {
-        this.setPosition(yoga.EDGE_RIGHT, right);
+    set right(right: Value) {
+        this._node.setPosition(yoga.EDGE_RIGHT, right);
     }
 
-    get bottom(): Dimension | undefined {
-        return toDimension(this._node.getPosition(yoga.EDGE_BOTTOM));
+    get bottom(): Value {
+        return this._node.getPosition(yoga.EDGE_BOTTOM);
     }
 
-    set bottom(bottom: Dimension | undefined) {
-        this.setPosition(yoga.EDGE_BOTTOM, bottom);
+    set bottom(bottom: Value) {
+        this._node.setPosition(yoga.EDGE_BOTTOM, bottom);
     }
 
-    get width(): DimensionOrAuto {
-        return this._width;
+    get width(): Value {
+        return this._node.getWidth();
     }
 
-    set width(width: DimensionOrAuto) {
-        this._width = width;
-        this.setDimensionOrAuto("Width", width);
+    set width(width: Value) {
+        this._node.setWidth(width);
     }
 
-    get height(): DimensionOrAuto {
-        return this._height;
+    get height(): Value {
+        return this._node.getHeight();
     }
 
-    set height(height: DimensionOrAuto) {
-        this._height = height;
-        this.setDimensionOrAuto("Height", height);
+    set height(height: Value) {
+        this._node.setHeight(height);
     }
 
-    get maxWidth(): Dimension | undefined {
-        return toDimension(this._node.getMaxWidth());
+    get maxWidth(): Value {
+        return this._node.getMaxWidth();
     }
 
-    set maxWidth(maxWidth: Dimension | undefined) {
-        this.setDimension("MaxWidth", maxWidth);
+    set maxWidth(maxWidth: Value) {
+        this._node.setMaxWidth(maxWidth);
     }
 
-    get maxHeight(): Dimension | undefined {
-        return toDimension(this._node.getMaxHeight());
+    get maxHeight(): Value {
+        return this._node.getMaxHeight();
     }
 
-    set maxHeight(maxHeight: Dimension | undefined) {
-        this.setDimension("MaxHeight", maxHeight);
+    set maxHeight(maxHeight: Value) {
+        this._node.setMaxHeight(maxHeight);
     }
 
-    get minWidth(): Dimension | undefined {
-        return toDimension(this._node.getMinWidth());
+    get minWidth(): Value {
+        return this._node.getMinWidth();
     }
 
-    set minWidth(minWidth: Dimension | undefined) {
-        this.setDimension("MinWidth", minWidth);
+    set minWidth(minWidth: Value) {
+        this._node.setMinHeight(minWidth);
     }
 
-    get minHeight(): Dimension | undefined {
-        return toDimension(this._node.getMinHeight());
+    get minHeight(): Value {
+        return this._node.getMinHeight();
     }
 
-    set minHeight(minHeight: Dimension | undefined) {
-        this.setDimension("MinHeight", minHeight);
+    set minHeight(minHeight: Value) {
+        this._node.setMinHeight(minHeight);
     }
 
-    private measure(): void {
-        if (this.excluded) {
+    private prepareLayout(): void {
+        if (this.excluded || !this._displayObject.visible) {
             this._node.setDisplay(yoga.DISPLAY_NONE);
-            return;
         } else {
             this._node.setDisplay(yoga.DISPLAY_FLEX);
-        }
-        if (this._children.length) {
-            for (const child of this._children) {
-                child.measure();
-            }
-        } else if (this._width === "auto" || this._height === "auto") {
-            if ("width" in this._displayObject && "height" in this._displayObject) {
-                if (this._width === "auto") {
-                    this._node.setWidth((this._displayObject as any).width);
+            if (this._children.length) {
+                for (const child of this._children) {
+                    child.prepareLayout();
                 }
-                if (this._height === "auto") {
-                    this._node.setHeight((this._displayObject as any).height);
-                }
-            } else {
-                const bounds = this._displayObject.getLocalBounds();
-                const scale = this._displayObject.scale;
-                if (this._width === "auto") {
-                    this._node.setWidth(scale.x * bounds.width);
-                }
-                if (this._height === "auto") {
-                    this._node.setHeight(scale.y * bounds.height);
-                }
+            } else if (this._displayObject.isLayoutMeasurementDirty()) {
+                this._node.markDirty();
             }
         }
     }
 
-    private apply(): void {
-        if (this.excluded) {
+    private applyLayout(): void {
+        if (this.excluded || !this._displayObject.visible) {
             return;
         }
-        const layout = this.computedLayout;
-        if (this._parent) {
-            if (this.originAtCenter) {
-                this._displayObject.position.set(layout.left + layout.width / 2, layout.top + layout.height / 2);
-            } else {
-                this._displayObject.position.set(layout.left, layout.top);
+        if (this._node.getHasNewLayout()) {
+            const layout = this.computedLayout;
+            if (this._parent) {
+                if (this.originAtCenter) {
+                    this._displayObject.position.set(layout.left + layout.width / 2, layout.top + layout.height / 2);
+                } else {
+                    this._displayObject.position.set(layout.left, layout.top);
+                }
             }
+            this._displayObject.onLayout(layout);
+            this._node.setHasNewLayout(false);
         }
         for (const child of this._children) {
-            child.apply();
+            child.applyLayout();
         }
-        this._displayObject.onLayout(layout);
     }
 
     private getComputedEdges(type: "Margin" | "Padding" | "Border"): ComputedEdges {
@@ -550,59 +508,5 @@ export default class FlexLayout {
             left: this._node[`getComputed${type}`](yoga.EDGE_LEFT),
             right: this._node[`getComputed${type}`](yoga.EDGE_RIGHT),
         };
-    }
-
-    private setPadding(edge: YogaEdge, value: Dimension) {
-        if (Array.isArray(value)) {
-            if (value[1] === "%") {
-                this._node.setPaddingPercent(edge, value[0]);
-            } else {
-                this._node.setPadding(edge, value[0]);
-            }
-        } else if (value !== undefined) {
-            this._node.setPadding(edge, value);
-        }
-    }
-
-    private setMargin(edge: YogaEdge, value: DimensionOrAuto) {
-        if (value === "auto") {
-            this._node.setMarginAuto(edge);
-        } else if (Array.isArray(value)) {
-            if (value[1] === "%") {
-                this._node.setMarginPercent(edge, value[0]);
-            } else {
-                this._node.setMargin(edge, value[0]);
-            }
-        } else {
-            this._node.setMargin(edge, value);
-        }
-    }
-
-    private setPosition(edge: YogaEdge, value: Dimension | undefined) {
-        if (Array.isArray(value)) {
-            if (value[1] === "%") {
-                this._node.setPositionPercent(edge, value[0]);
-            } else {
-                this._node.setPosition(edge, value[0]);
-            }
-        } else {
-            this._node.setPosition(edge, value ?? NaN);
-        }
-    }
-
-    private setDimensionOrAuto(dimension: "Width" | "Height", value?: DimensionOrAuto) {
-        if (value === "auto" || value === undefined) {
-            this._node[`set${dimension}Auto`]();
-        } else {
-            this.setDimension(dimension, value);
-        }
-    }
-
-    private setDimension(dimension: "Width" | "Height" | "MinWidth" | "MinHeight" | "MaxWidth" | "MaxHeight", value?: Dimension) {
-        if (Array.isArray(value)) {
-            this._node[`set${dimension}Percent`](value[0]);
-        } else {
-            this._node[`set${dimension}`](value ?? NaN);
-        }
     }
 }

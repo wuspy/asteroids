@@ -6,6 +6,12 @@ import { ComputedLayout } from "./FlexLayout";
 declare module "@pixi/display"
 {
     export interface Container {
+        _flexContainer: boolean;
+        _backgroundGraphics?: Graphics;
+        _debugGraphics?: Graphics;
+        _backgroundStyle?: ContainerBackground;
+        _backgroundWidth: number;
+        _backgroundHeight: number;
         set backgroundStyle(background: ContainerBackground | undefined);
         get debugLayout(): boolean;
         set debugLayout(debugLayout: boolean);
@@ -13,15 +19,6 @@ declare module "@pixi/display"
         set flexContainer(flexContainer: boolean);
         get isLayoutRoot(): boolean;
     }
-}
-
-interface ContainerPrivate extends Container {
-    _flexContainer: boolean;
-    _backgroundGraphics?: Graphics;
-    _debugGraphics?: Graphics;
-    _backgroundStyle?: ContainerBackground;
-    _backgroundWidth: number;
-    _backgroundHeight: number;
 }
 
 export const enum ContainerBackgroundShape {
@@ -70,7 +67,7 @@ export const drawContainerBackground = (graphics: Graphics, background: Containe
     }
 };
 
-const container = Container.prototype as ContainerPrivate;
+const container = Container.prototype;
 
 container._flexContainer = false;
 container._backgroundWidth = 0;
@@ -90,10 +87,10 @@ const _super = {
 
 Object.defineProperties(container, {
     flexContainer: {
-        get(this: ContainerPrivate): boolean {
+        get(this: Container): boolean {
             return this._flexContainer;
         },
-        set(this: ContainerPrivate, flexContainer: boolean) {
+        set(this: Container, flexContainer: boolean) {
             if (flexContainer && !this._flexContainer) {
                 // Add all children's layout nodes to our node
                 for (const child of this.children) {
@@ -113,15 +110,15 @@ Object.defineProperties(container, {
         },
     },
     isLayoutRoot: {
-        get(this: ContainerPrivate): boolean {
+        get(this: Container): boolean {
             return this._flexContainer && (!this.parent || !this.parent.flexContainer);
         },
     },
     debugLayout: {
-        get(this: ContainerPrivate): boolean {
+        get(this: Container): boolean {
             return !!this._debugGraphics;
         },
-        set(this: ContainerPrivate, debugLayout: boolean) {
+        set(this: Container, debugLayout: boolean) {
             if (process.env.NODE_ENV === "development") {
                 if (debugLayout && this._flexContainer && !this._debugGraphics) {
                     this._debugGraphics = new Graphics();
@@ -136,10 +133,10 @@ Object.defineProperties(container, {
         },
     },
     backgroundStyle: {
-        get(this: ContainerPrivate): ContainerBackground | undefined {
+        get(this: Container): ContainerBackground | undefined {
             return this._backgroundStyle;
         },
-        set(this: ContainerPrivate, background?: ContainerBackground) {
+        set(this: Container, background?: ContainerBackground) {
             if (background && !this._backgroundGraphics) {
                 this._backgroundGraphics = new Graphics();
                 this._backgroundGraphics.layout.excluded = true;
@@ -155,7 +152,7 @@ Object.defineProperties(container, {
     },
 });
 
-container.addChild = function <T extends DisplayObject[]>(this: ContainerPrivate, ...children: T): T[0] {
+container.addChild = function <T extends DisplayObject[]>(...children: T): T[0] {
     const result = _super.addChild.call(this, ...children);
     // Container calls addChild recursively on every item in children
     if (this._flexContainer && children.length === 1) {
@@ -164,7 +161,7 @@ container.addChild = function <T extends DisplayObject[]>(this: ContainerPrivate
     return result;
 }
 
-container.addChildAt = function <T extends DisplayObject>(this: ContainerPrivate, child: T, index: number): T {
+container.addChildAt = function <T extends DisplayObject>(child: T, index: number): T {
     const result = _super.addChildAt.call(this, child, index) as T;
     if (this._flexContainer) {
         this.layout.insertChild(child.layout, index);
@@ -172,7 +169,7 @@ container.addChildAt = function <T extends DisplayObject>(this: ContainerPrivate
     return result;
 }
 
-container.removeChild = function <T extends DisplayObject[]>(this: ContainerPrivate, ...children: T): T[0] {
+container.removeChild = function <T extends DisplayObject[]>(...children: T): T[0] {
     const result = _super.removeChild.call(this, ...children);
     // Container calls removeChild recursively on every item in children
     if (this._flexContainer && children.length === 1) {
@@ -181,7 +178,7 @@ container.removeChild = function <T extends DisplayObject[]>(this: ContainerPriv
     return result;
 }
 
-container.removeChildAt = function (this: ContainerPrivate, index: number): DisplayObject {
+container.removeChildAt = function (index: number): DisplayObject {
     const result = _super.removeChildAt.call(this, index);
     if (this._flexContainer) {
         this.layout.removeChild(result.layout);
@@ -189,7 +186,7 @@ container.removeChildAt = function (this: ContainerPrivate, index: number): Disp
     return result;
 }
 
-container.swapChildren = function (this: ContainerPrivate, child: DisplayObject, child2: DisplayObject): void {
+container.swapChildren = function (child: DisplayObject, child2: DisplayObject): void {
     _super.swapChildren.call(this, child, child2);
     if (this._flexContainer) {
         this.layout.removeChild(child.layout);
@@ -214,7 +211,7 @@ container.swapChildren = function (this: ContainerPrivate, child: DisplayObject,
     }
 }
 
-container.sortChildren = function (this: ContainerPrivate): void {
+container.sortChildren = function (): void {
     _super.sortChildren.call(this);
     if (this._flexContainer) {
         // Remove and re-add all children in the new order
@@ -227,7 +224,7 @@ container.sortChildren = function (this: ContainerPrivate): void {
     }
 }
 
-container.render = function (this: ContainerPrivate, renderer: Renderer) {
+container.render = function (renderer: Renderer) {
     if (this.isLayoutRoot) {
         this.layout.update();
         this.updateTransform();
@@ -235,7 +232,7 @@ container.render = function (this: ContainerPrivate, renderer: Renderer) {
     _super.render.call(this, renderer);
 }
 
-container.onLayout = function (this: ContainerPrivate, layout: ComputedLayout): void {
+container.onLayout = function (layout: ComputedLayout): void {
     _super.onLayout.call(this, layout);
     const { width, height } = layout;
     if (this._backgroundGraphics && this._backgroundStyle && (width !== this._backgroundWidth || height !== this._backgroundHeight)) {
@@ -266,7 +263,7 @@ container.onLayout = function (this: ContainerPrivate, layout: ComputedLayout): 
         this._debugGraphics.endFill();
 
         for (const child of this.children) {
-            if (child.layout.excluded) {
+            if (child.layout.excluded || !child.visible) {
                 continue;
             }
             const border = child.layout.computedBorder;

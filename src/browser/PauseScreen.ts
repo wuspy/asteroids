@@ -28,7 +28,7 @@ export class PauseScreen extends FadeContainer {
         this.flexContainer = true;
         this.layout.style({
             position: PositionType.Absolute,
-            width: [100, "%"],
+            width: "100%",
             flexDirection: FlexDirection.Column,
             alignItems: Align.Center,
         });
@@ -78,7 +78,6 @@ export class PauseScreen extends FadeContainer {
         const buttonContainer = new Container();
         buttonContainer.flexContainer = true;
         buttonContainer.layout.style({
-            flexDirection: FlexDirection.Row,
             margin: 12,
             marginTop: 24,
         });

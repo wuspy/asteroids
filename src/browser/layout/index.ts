@@ -1,5 +1,4 @@
-export { default as yoga } from "./yoga";
-export * from "./yoga";
+export { initYoga } from "./getYoga";
 
 export { default as FlexLayout } from "./FlexLayout";
 export * from "./FlexLayout";

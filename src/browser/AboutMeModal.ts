@@ -51,8 +51,8 @@ export class AboutMeModal extends Modal {
             lineHeight: 32,
             fontWeight: "bold",
             wordWrap: true,
-            wordWrapWidth: 440,
         });
+        subheader.layout.width = 440;
 
         const avatar = new Image({
             queue: this.queue,
@@ -70,14 +70,13 @@ export class AboutMeModal extends Modal {
         headerContainer.flexContainer = true;
         headerContainer.layout.style({
             flexDirection: FlexDirection.Column,
-            width: [100, "%"],
+            width: "100%",
             marginBottom: 24,
         });
 
         headerContainer.addChild(header);
         headerContainer.addChild(subheader);
         headerContainer.addChild(avatar);
-        // headerContainer.debugLayout = true;
 
         this.addChild(headerContainer);
         // this.addChild(new Divider(24));
@@ -88,14 +87,12 @@ export class AboutMeModal extends Modal {
             fill: UI_FOREGROUND_COLOR,
             wordWrap: true,
         });
-        bio.layout.width = [100, "%"];
 
         this.addChild(bio);
 
         const cats = new Container();
         cats.flexContainer = true;
         cats.layout.style({
-            flexDirection: FlexDirection.Row,
             marginVertical: 32,
             justifyContent: JustifyContent.SpaceAround,
         });
@@ -198,7 +195,6 @@ class Cat extends Container {
             fill: UI_FOREGROUND_COLOR,
             wordWrap: true,
             align: "center",
-            wordWrapWidth: 164,
         });
         subText.alpha = 0.5;
         this.addChild(subText);

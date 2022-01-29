@@ -29,7 +29,6 @@ export class ScoreIndicator extends TickableContainer {
         this.layout.style({
             paddingHorizontal: 12,
             paddingVertical: 8,
-            flexDirection: FlexDirection.Row,
         });
         this.backgroundStyle = {
             shape: ContainerBackgroundShape.Rectangle,

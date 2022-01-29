@@ -59,6 +59,6 @@
         "pg": "^8.7.1",
         "stats.js": "^0.17.0",
         "tslib": "^2.3.1",
-        "yoga-layout-wasm": "^1.9.3-alpha.7"
+        "yoga-layout-wasm": "https://github.com/wuspy/yoga-layout-wasm"
     }
 }

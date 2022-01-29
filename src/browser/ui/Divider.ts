@@ -13,7 +13,7 @@ export class Divider extends Container {
         this.layout.style({
             marginVertical: margin ?? 12,
             height: 2,
-            width: [100, "%"],
+            width: "100%",
         });
     }
 }

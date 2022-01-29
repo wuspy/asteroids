@@ -28,8 +28,7 @@ export class Modal extends FadeContainer {
             const headerContainer = new Container();
             headerContainer.flexContainer = true;
             headerContainer.layout.style({
-                width: [100, "%"],
-                flexDirection: FlexDirection.Row,
+                width: "100%",
                 alignItems: Align.Center,
                 justifyContent: JustifyContent.SpaceBetween,
             });
@@ -40,6 +39,7 @@ export class Modal extends FadeContainer {
             title.cacheAsBitmap = true;
             headerContainer.addChild(title);
             if (params.header.rightContent) {
+                title.layout.marginRight = 12;
                 headerContainer.addChild(params.header.rightContent);
             }
             this.addChild(headerContainer);
