@@ -20,9 +20,9 @@ export interface GameEvents {
     shipCreated: (ship: Ship) => void;
     shipDestroyed: (ship: Ship) => void;
     ufoCreated: (ufo: UFO) => void;
-    ufoDestroyed: (ufo: UFO) => void;
+    ufoDestroyed: (ufo: UFO, scored: boolean) => void;
     asteroidsCreated: (asteroids: Asteroid[]) => void;
-    asteroidDestroyed: (asteroid: Asteroid, willCreateChildren: boolean) => void;
+    asteroidDestroyed: (asteroid: Asteroid, scored: boolean, willCreateChildren: boolean) => void;
     projectileCreated: (projectile: Projectile) => void;
     projectileDestroyed: (projectile: Projectile) => void;
 }

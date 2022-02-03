@@ -9,4 +9,6 @@ export * from "./Text";
 export * from "./Divider";
 export * from "./Modal";
 export * from "./HelpPointer";
+export * from "./VirtualizedList";
+export * from "./TextInput";
 export * from "./theme";

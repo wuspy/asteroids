@@ -30,7 +30,6 @@ export class Projectile extends GameObject<GameState, GameEvents> {
         this._traveled = 0;
         this._from = params.from;
         this._color = params.color;
-        this.events.trigger("projectileCreated", this);
     }
 
     override tick(timestamp: number, elapsed: number): void {

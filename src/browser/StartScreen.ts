@@ -183,7 +183,8 @@ export class StartScreen extends FadeContainer {
         };
         const pointerThemeProps = {
             color: this._state.theme.foregroundColor,
-            alpha: this._state.theme.foregroundAlpha * 0.5,
+            pointerAlpha: 0.5,
+            alpha: this._state.theme.foregroundAlpha,
         };
 
         const fireControl = createControlDescription({

@@ -8,10 +8,9 @@ import { Vec2 } from "@core/engine";
 
 export class HelpPointer extends Container {
     private readonly _timeline: anime.AnimeTimelineInstance;
-    private readonly _graphics: Graphics;
+    private readonly _pointerGraphics: Graphics;
     private readonly _content: Container;
     private readonly _color: number;
-    private readonly _alpha: number;
     private readonly _angle1: number;
     private readonly _angle2: number;
     private readonly _angle1Sin: number;
@@ -28,7 +27,8 @@ export class HelpPointer extends Container {
         position: Vec2,
         content: Container,
         color: number,
-        alpha: number,
+        alpha?: number,
+        pointerAlpha?: number,
         segmentLength: number,
         angle1: number,
         angle2: number,
@@ -39,11 +39,12 @@ export class HelpPointer extends Container {
         this.position.set(params.position.x, params.position.y);
         this._timeline = anime.timeline({ autoplay: false, easing: "linear" });
 
-        this._graphics = new Graphics();
+        this._pointerGraphics = new Graphics();
         this._content = params.content;
         this._color = params.color;
-        this._alpha = params.alpha;
-        this.addChild(this._graphics, this._content);
+        this._pointerGraphics.alpha = params.pointerAlpha ?? 1;
+        this.alpha = params.alpha ?? 1;
+        this.addChild(this._pointerGraphics, this._content);
         this._segmentLength = params.segmentLength;
         this._angle1 = params.angle1 % PI_2;
         this._angle2 = params.angle2 % PI_2;
@@ -81,28 +82,27 @@ export class HelpPointer extends Container {
     override render(renderer: Renderer): void {
         if (!this._timeline.completed) {
             this._timeline.tick(Date.now());
-            this._graphics.clear();
-            this._graphics.lineStyle({
+            this._pointerGraphics.clear();
+            this._pointerGraphics.lineStyle({
                 color: this._color,
-                alpha: this._alpha,
                 width: 2,
                 join: LINE_JOIN.BEVEL,
             });
             const circleAngle = this._angle1 - Math.PI / 2;
-            this._graphics.arc(0, 0, 4, circleAngle, circleAngle + this.circleProgress * PI_2);
+            this._pointerGraphics.arc(0, 0, 4, circleAngle, circleAngle + this.circleProgress * PI_2);
 
             const currentPosition = { x: 4 * this._angle1Sin, y: 4 * -this._angle1Cos };
             if (this.segment1Progress) {
                 const length = this._segmentLength * this.segment1Progress;
                 currentPosition.x += length * this._angle1Sin;
                 currentPosition.y += length * -this._angle1Cos;
-                this._graphics.lineTo(currentPosition.x, currentPosition.y);
+                this._pointerGraphics.lineTo(currentPosition.x, currentPosition.y);
             }
             if (this.segment2Progress) {
                 const length = this._segmentLength * this.segment2Progress;
                 currentPosition.x += length * this._angle2Sin;
                 currentPosition.y += length * -this._angle2Cos;
-                this._graphics.lineTo(currentPosition.x, currentPosition.y);
+                this._pointerGraphics.lineTo(currentPosition.x, currentPosition.y);
             }
             // The content also fades in with segment 2
             this._content.alpha = this.segment2Progress;

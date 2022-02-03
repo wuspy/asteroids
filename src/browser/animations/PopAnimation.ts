@@ -1,17 +1,21 @@
 import { Container } from "@pixi/display";
 import { OneShotAnimation } from "./OneShotAnimation";
 import { TickQueue } from "@core/engine";
+import { Renderer, RenderTexture } from "@pixi/core";
 
 export class PopAnimation extends OneShotAnimation {
+    private _texture?: RenderTexture;
+
     constructor(params: {
         queue: TickQueue,
         target: Container,
         scale: number,
+        duration: number,
     }) {
         super({
             ...params,
             defaultAnimeParams: ({
-                duration: 250,
+                duration: params.duration,
                 easing: "linear",
             })
         });

@@ -57,10 +57,23 @@ export abstract class CoreAsteroidsGame {
                 }
             }
         });
+
         this.events.on("asteroidsCreated", this, (asteroids) => this.addGameObjects("asteroids", ...asteroids));
-        this.events.on("asteroidDestroyed", this, (asteroid) => this.removeGameObject("asteroids", asteroid));
+        this.events.on("asteroidDestroyed", this, (asteroid, scored) => {
+            if (scored) {
+                this.addScore(asteroid.score);
+            }
+            this.removeGameObject("asteroids", asteroid);
+        });
+
         this.events.on("ufoCreated", this, (ufo) => this.addGameObjects("ufos", ufo));
-        this.events.on("ufoDestroyed", this, (ufo) => this.removeGameObject("ufos", ufo));
+        this.events.on("ufoDestroyed", this, (ufo, scored) => {
+            if (scored) {
+                this.addScore(ufo.score);
+            }
+            this.removeGameObject("ufos", ufo);
+        });
+
         this.events.on("projectileCreated", this, (projectile) => this.addGameObjects("projectiles", projectile));
         this.events.on("projectileDestroyed", this, (projectile) => this.removeGameObject("projectiles", projectile));
     }
@@ -205,8 +218,8 @@ export abstract class CoreAsteroidsGame {
         for (let i = 0; i < ufos.length; i++) {
             for (let j = i + 1; j < ufos.length; j++) {
                 if (ufos[i].collidesWith(ufos[j])) {
-                    ufos[i].destroy(true);
-                    ufos[j - 1].destroy(true);
+                    ufos[i].destroy({ explode: true, scored: false });
+                    ufos[j - 1].destroy({ explode: true, scored: false });
                     break;
                 }
             }
@@ -217,8 +230,8 @@ export abstract class CoreAsteroidsGame {
         for (const asteroid of asteroids) {
             for (const ufo of ufos) {
                 if (ufo.collidesWith(asteroid)) {
-                    ufo.destroy(true);
-                    asteroid.destroy(true, true);
+                    ufo.destroy({ explode: true, scored: false });
+                    asteroid.destroy({ explode: true, scored: false, createChildren: true });
                     break;
                 }
             }
@@ -230,10 +243,10 @@ export abstract class CoreAsteroidsGame {
             for (const projectile of projectiles) {
                 if (projectile.from !== ufo && projectile.collidesWith(ufo)) {
                     projectile.destroy();
-                    ufo.destroy(true);
-                    if (projectile.from === ship && this.state.status !== "finished") {
-                        this.addScore(ufo.score);
-                    }
+                    ufo.destroy({
+                        explode: true,
+                        scored: projectile.from === ship && this.state.status !== "finished",
+                    });
                     break;
                 }
             }
@@ -244,11 +257,12 @@ export abstract class CoreAsteroidsGame {
         for (const asteroid of asteroids) {
             for (const projectile of projectiles) {
                 if (projectile.collidesWith(asteroid)) {
-                    asteroid.destroy(true, true);
+                    asteroid.destroy({
+                        explode: true,
+                        scored: projectile.from === ship && this.state.status !== "finished",
+                        createChildren: true,
+                    });
                     projectile.destroy();
-                    if (projectile.from === ship && this.state.status !== "finished") {
-                        this.addScore(asteroid.score);
-                    }
                     break;
                 }
             }
@@ -269,13 +283,14 @@ export abstract class CoreAsteroidsGame {
                 .map(([type, chance]) => [type, currentChance += chance * 100])
                 // Find the first type that is >= the generated percent
                 .find(([, chance]) => chance >= randomPercent)![0] as UFOType;
-            new UFO({
+
+            this.events.trigger("ufoCreated", new UFO({
                 state: this.state,
                 events: this.events,
                 queue: this.queue,
                 worldSize: this.worldSize,
                 type,
-            });
+            }));
             this.setNextUFOSpawn();
         }
 
@@ -326,7 +341,7 @@ export abstract class CoreAsteroidsGame {
     }
 
     private spawnShip(invulnerable: boolean): void {
-        new Ship({
+        this.events.trigger("shipCreated", new Ship({
             state: this.state,
             queue: this.queue,
             events: this.events,
@@ -336,7 +351,7 @@ export abstract class CoreAsteroidsGame {
                 x: this.worldSize.width / 2,
                 y: this.worldSize.height / 2,
             },
-        });
+        }));
     }
 
     private setNextUFOSpawn(): void {
@@ -358,24 +373,22 @@ export abstract class CoreAsteroidsGame {
         if (ship && !ship.invulnerable) {
             for (const ufo of ufos) {
                 if (ship.collidesWith(ufo)) {
-                    ufo.destroy(true);
-                    ship.destroy(true);
-                    this.addScore(ufo.score);
+                    ufo.destroy({ explode: true, scored: true });
+                    ship.destroy({ explode: true });
                     return;
                 }
             }
             for (const asteroid of asteroids) {
                 if (ship.collidesWith(asteroid)) {
-                    asteroid.destroy(true, true);
-                    ship.destroy(true);
-                    this.addScore(asteroid.score);
+                    asteroid.destroy({ explode: true, scored: true, createChildren: true });
+                    ship.destroy({ explode: true });
                     return;
                 }
             }
             for (const projectile of projectiles) {
                 if (projectile.from !== ship && ship.collidesWith(projectile)) {
                     projectile.destroy();
-                    ship.destroy(true);
+                    ship.destroy({ explode: true });
                     return;
                 }
             }

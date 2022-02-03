@@ -81,14 +81,18 @@ export class Asteroid extends GameObject<GameState, GameEvents> {
         this.position.copyFrom(position);
     }
 
-    override destroy(explode = false, createChildren = false): void {
-        if (explode && this.display) {
+    override destroy(options?: {
+        explode: boolean,
+        scored: boolean,
+        createChildren: boolean,
+    }): void {
+        if (!!options?.explode && this.display) {
             this.display.createExplosion();
         }
         super.destroy();
         const generation = this._generation + 1;
-        createChildren &&= generation < ASTEROID_GENERATION_COUNT;
-        this.events.trigger("asteroidDestroyed", this, createChildren);
+        const createChildren = !!options?.createChildren && generation < ASTEROID_GENERATION_COUNT;
+        this.events.trigger("asteroidDestroyed", this, !!options?.scored, createChildren);
 
         if (createChildren) {
             let lastAngle = -15;

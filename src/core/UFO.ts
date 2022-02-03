@@ -32,7 +32,6 @@ export class UFO extends GameObject<GameState, GameEvents> {
 
         this.setNextFireTime();
         this.setNextYShift();
-        this.events.trigger("ufoCreated", this);
     }
 
     override tick(timestamp: number, elapsed: number): void {
@@ -59,7 +58,7 @@ export class UFO extends GameObject<GameState, GameEvents> {
         if ((this._direction === 1 && this.position.x > this.worldSize.width + this.boundingBox.width / 2)
             || (this._direction === -1 && this.position.x < -this.boundingBox.width / 2)
         ) {
-            this.destroy(false);
+            this.destroy();
         } else if (timestamp >= this._nextFireTime) {
             this.fire();
             this.setNextFireTime();
@@ -107,7 +106,7 @@ export class UFO extends GameObject<GameState, GameEvents> {
             }
         }
 
-        new Projectile({
+        this.events.trigger("projectileCreated", new Projectile({
             state: this.state,
             events: this.events,
             queue: this.queue,
@@ -117,7 +116,7 @@ export class UFO extends GameObject<GameState, GameEvents> {
             speed: UFO_PROJECTILE_SPEEDS[this._type],
             from: this,
             color: this.state.theme.ufoColor,
-        });
+        }));
     }
 
     private setNextFireTime(): void {
@@ -128,12 +127,15 @@ export class UFO extends GameObject<GameState, GameEvents> {
         this._nextYShift = this.state.timestamp + random(UFO_SHIFT_INTERVALS[this._type][0] * 1000, UFO_SHIFT_INTERVALS[this._type][1] * 1000, true);
     }
 
-    override destroy(explode = false): void {
-        if (explode && this.display) {
+    override destroy(options?: {
+        explode: boolean,
+        scored: boolean,
+    }): void {
+        if (!!options?.explode && this.display) {
             this.display.createExplosion();
         }
         super.destroy();
-        this.events.trigger("ufoDestroyed", this);
+        this.events.trigger("ufoDestroyed", this, !!options?.scored);
     }
 
     get score(): number {

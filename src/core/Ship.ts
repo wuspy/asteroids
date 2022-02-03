@@ -51,8 +51,6 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
         this._lastHyperspaceTime = 0;
         this.rotationAmount = 0;
         this.invulnerable = params.invulnerable;
-
-        this.events.trigger("shipCreated", this);
     }
 
     override tick(timestamp: number, elapsed: number): void {
@@ -81,8 +79,10 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
         super.tick(timestamp, elapsed);
     }
 
-    override destroy(explode = false): void {
-        if (explode && this.display) {
+    override destroy(options?: {
+        explode: boolean,
+    }): void {
+        if (!!options?.explode && this.display) {
             this.display.createExplosion();
         }
         super.destroy();
@@ -90,7 +90,7 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
     }
 
     fire(): void {
-        new Projectile({
+        this.events.trigger("projectileCreated", new Projectile({
             events: this.events,
             state: this.state,
             queue: this.queue,
@@ -101,7 +101,7 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
             speed: Math.max(SHIP_PROJECTILE_SPEED, SHIP_PROJECTILE_SPEED + this.speedAtRotation / 2),
             from: this,
             color: this.state.theme.foregroundColor,
-        });
+        }));
         // Add recoil
         if (this.speedAtRotation > -MAX_SPEED) {
             this.velocity.x -= RECOIL * Math.sin(this.rotation);

@@ -77,6 +77,11 @@ class LifeAnimation extends PopAnimation {
         const target = ShipDisplay.createModel(UI_FOREGROUND_COLOR, 3, SIZE);
         target.cacheAsBitmap = true;
         target.alpha = 0.8;
-        super({ queue, target, scale: 3 });
+        super({
+            queue,
+            target,
+            scale: 3,
+            duration: 250,
+        });
     }
 }

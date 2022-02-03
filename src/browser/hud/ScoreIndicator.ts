@@ -93,6 +93,7 @@ class ScoreAnimation extends PopAnimation {
             queue: params.queue,
             target: text,
             scale: 2,
+            duration: 250,
         });
     }
 }

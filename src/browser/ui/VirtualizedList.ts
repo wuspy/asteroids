@@ -5,7 +5,7 @@ import anime from "animejs";
 import { TickableContainer } from "./TickableContainer";
 import { ComputedLayout, ContainerBackgroundShape, FlexDirection, PositionType } from "../layout";
 
-export type ItemRenderer<T> = (item: T) => DisplayObject;
+export type ItemRenderer<T> = (item: T, index: number) => DisplayObject;
 
 export class VirtualizedList<T> extends TickableContainer {
     private readonly _itemContainer: Container;
@@ -45,7 +45,6 @@ export class VirtualizedList<T> extends TickableContainer {
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
         });
         this.addChild(this._itemContainer);
 
@@ -63,9 +62,9 @@ export class VirtualizedList<T> extends TickableContainer {
             },
         };
         // We need a mask, otherwise pixi will render anything we draw, anywhere, regardless of layout bounds
-        const mask = this._itemContainer.mask = new Graphics();
+        const mask = this.mask = new Graphics();
         mask.layout.excluded = true;
-        this._itemContainer.addChild(mask);
+        this.addChild(mask);
     }
 
     scrollToIndex(index: number) {
@@ -96,9 +95,11 @@ export class VirtualizedList<T> extends TickableContainer {
     override onLayout(layout: ComputedLayout): void {
         super.onLayout(layout);
         if (layout.height !== this._currentHeight) {
-            const mask = this._itemContainer.mask as Graphics;
+            const mask = this.mask as Graphics;
             mask.clear();
+            mask.beginFill(0xffffff);
             mask.drawRect(0, 0, layout.width, layout.height);
+            mask.endFill();
             this._scrollToPosition(this._currentPos, layout.height);
             this._currentHeight = layout.height;
         }
@@ -113,22 +114,19 @@ export class VirtualizedList<T> extends TickableContainer {
         const [ firstIndex, lastIndex ] = this.getPositionItemRange(pos, height);
         const [ currentFirstIndex, currentLastIndex ] = this.getPositionItemRange(this._currentPos, this._currentHeight);
         // Cull existing items that have moved out of bounds
-        for (let i = currentFirstIndex; i <= currentLastIndex; i++) {
+        for (let i = currentFirstIndex; i <= currentLastIndex; ++i) {
             if (i in this._renderedItems && (i < firstIndex || i > lastIndex)) {
                 this._renderedItems[i].destroy({ children: true });
                 delete this._renderedItems[i];
             }
         }
         // Add new items if needed and adjust item positions
-        const offset = -(pos % this._itemHeight);
-        for (let i = firstIndex; i <= lastIndex; i++) {
-            const renderedItem = this.getRenderedItem(i);
-            renderedItem.layout.top = offset;
-            if (i < currentFirstIndex) {
-                this._itemContainer.addChildAt(renderedItem, i - firstIndex);
-            } else if (i > currentLastIndex) {
-                this._itemContainer.addChild(renderedItem);
-            }
+        this._itemContainer.layout.top = -(pos % this._itemHeight);
+        for (let i = firstIndex; i < currentFirstIndex; ++i) {
+            this._itemContainer.addChildAt(this.getRenderedItem(i), i - firstIndex);
+        }
+        for (let i = currentLastIndex + 1; i <= lastIndex; ++i) {
+            this._itemContainer.addChild(this.getRenderedItem(i));
         }
 
         this._currentPos = pos;
@@ -148,6 +146,6 @@ export class VirtualizedList<T> extends TickableContainer {
     private getRenderedItem(index: number): DisplayObject {
         return index in this._renderedItems
             ? this._renderedItems[index]
-            : this._renderedItems[index] = this._itemRenderer(this._items[index]);
+            : this._renderedItems[index] = this._itemRenderer(this._items[index], index);
     }
 }
