@@ -8,10 +8,6 @@ export class Text extends PixiText {
         super(text, { ...style, fontFamily: FONT_FAMILY });
     }
 
-    override isLayoutMeasurementDirty(): boolean {
-        return this.dirty || this.localStyleID !== this._style.styleID;
-    }
-
     override onLayoutMeasure(
         width: number,
         widthMeasureMode: MeasureMode,
