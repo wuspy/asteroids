@@ -97,7 +97,7 @@ export class PauseScreen extends FadeContainer {
 
         this.addChild(buttonContainer);
 
-        this.fadeIn(() => {
+        this.fadeIn().then(() => {
             this._timeline = anime.timeline({
                 autoplay: false,
                 loop: true,

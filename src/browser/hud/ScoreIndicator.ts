@@ -1,7 +1,7 @@
 import { GameState } from "@core";
 import { TickQueue } from "@core/engine";
 import { Text, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui";
-import { ContainerBackgroundShape, FlexDirection } from "../layout";
+import { ContainerBackgroundShape } from "../layout";
 import { PopAnimation } from "../animations";
 
 const MAX_DIGITS = 7;

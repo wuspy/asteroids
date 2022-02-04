@@ -7,6 +7,7 @@ import { clamp, initRandom, InputProvider, GameObject, TickQueue, GameLog } from
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
+import { settings as pixiSettings } from "@pixi/settings";
 import { PauseScreen } from "./PauseScreen";
 import { GameOverScreen } from "./GameOverScreen";
 import { Align, JustifyContent, PositionType } from "./layout";
@@ -21,6 +22,7 @@ import { UFODisplay } from "./UFODisplay";
 
 const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
+const MAX_DEVICE_PIXEL_RATIO = 2;
 
 const ENABLE_LOGGING = true;
 
@@ -125,10 +127,13 @@ export class AsteroidsGame extends CoreAsteroidsGame {
 
         this._aboutOpen = false;
 
+        pixiSettings.RESOLUTION
+            = pixiSettings.FILTER_RESOLUTION
+            = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
+
         Renderer.registerPlugin("batch", BatchRenderer);
         Renderer.registerPlugin("interaction", InteractionManager);
         Renderer.registerPlugin("scrollInteraction", ScrollInteractionManager);
-        this._stage = new Container();
         this._renderer = autoDetectRenderer({
             width: this._container.clientWidth,
             height: this._container.clientHeight,
@@ -138,12 +143,20 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             forceCanvas: false,
         });
 
+        if (pixiSettings.RESOLUTION !== 1) {
+            this._renderer.view.style.transform
+                = this._background.style.transform
+                = `scale(${1 / pixiSettings.RESOLUTION})`;
+        }
+
         this._renderer.view.style.position = "absolute";
         this._container.appendChild(this._renderer.view);
         this._uiQueue = new TickQueue("ui");
 
         this._input = new InputProvider(controls);
         this._input.mapping = wasdMapping;
+
+        this._stage = new Container();
 
         this._backgroundContainer = new Container();
         this._backgroundContainer.interactiveChildren = false;
@@ -293,9 +306,9 @@ export class AsteroidsGame extends CoreAsteroidsGame {
                 return;
             }
             if (this._startScreen) {
-                this._startScreen.fadeOut(() => this.start());
+                this._startScreen.fadeOut().then(() => this.start());
             } else if (this._gameOverScreen) {
-                this._gameOverScreen.fadeOut(() => this.restart());
+                this._gameOverScreen.fadeOut().then(() => this.restart());
             }
         });
         this.events.on("started", this, () => {
@@ -327,7 +340,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         });
         this.events.on("resumeRequested", this, () => {
             if (this._pauseScreen) {
-                this._pauseScreen.fadeOut(() => this.resume());
+                this._pauseScreen.fadeOut().then(() => this.resume());
             }
         });
         this.events.on("resumed", this, () => {
@@ -338,7 +351,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         });
         this.events.on("quitRequested", this, () => {
             if (this._pauseScreen) {
-                this._pauseScreen.fadeOut(() => this.quit());
+                this._pauseScreen.fadeOut().then(() => this.quit());
             }
         });
         this.events.on("themeChanged", this, this.applyTheme);
@@ -389,7 +402,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private restart(): void {
         if (this.state.status !== "init") {
             this._background.style.opacity = "0";
-            this._gameplayContainer.fadeOut(() => {
+            this._gameplayContainer.fadeOut().then(() => {
                 this.reset(true);
                 this.start();
                 this._gameplayContainer.show();
@@ -400,7 +413,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private quit(): void {
         if (this.state.status !== "init") {
             this._background.style.opacity = "0";
-            this._gameplayContainer.fadeOut(() => {
+            this._gameplayContainer.fadeOut().then(() => {
                 this.reset(true);
                 this._gameplayContainer.show();
                 this._startScreen = new StartScreen({

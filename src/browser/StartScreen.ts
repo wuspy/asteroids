@@ -100,7 +100,7 @@ export class StartScreen extends FadeContainer {
                     queue: this.queue,
                     onClose: () => {
                         this.fadeIn();
-                        modal.fadeOut(() => {
+                        modal.fadeOut().then(() => {
                             modal.destroy({ children: true });
                             this._events.trigger("aboutClosed");
                         });

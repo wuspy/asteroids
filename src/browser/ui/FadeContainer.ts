@@ -1,5 +1,5 @@
 import { AlphaFilter } from "@pixi/filter-alpha";
-import { BlurFilter } from "@pixi/filter-blur";
+import { KawaseBlurFilter } from "@pixi/filter-kawase-blur";
 import { TickQueue } from "@core/engine";
 import anime from "animejs";
 import { TickableContainer } from "./TickableContainer";
@@ -8,7 +8,7 @@ const BLUR = 10;
 
 export class FadeContainer extends TickableContainer {
     private readonly _fadeAlphaFilter: AlphaFilter;
-    private readonly _fadeBlurFilter: BlurFilter;
+    private readonly _fadeBlurFilter: KawaseBlurFilter;
     private _fadeTimeline?: anime.AnimeInstance;
     fadeInDuration: number;
     fadeOutDuration: number;
@@ -29,7 +29,7 @@ export class FadeContainer extends TickableContainer {
         super(params.queue, params.queuePriority);
         this.filters = [
             this._fadeAlphaFilter = new AlphaFilter(),
-            this._fadeBlurFilter = new BlurFilter(),
+            this._fadeBlurFilter = new KawaseBlurFilter(),
         ];
         this.fadeInDuration = params.fadeInDuration;
         this.fadeOutDuration = params.fadeOutDuration;
@@ -57,61 +57,61 @@ export class FadeContainer extends TickableContainer {
         }
     }
 
-    fadeIn(complete?: () => void): void {
-        if (!this._fadingIn) {
-            this.onFadeInStart();
-            this.visible = true;
-            this._fadingIn = true;
-            this._fadingOut = false;
-            this._fadeAlphaFilter.enabled = true;
-            this._fadeBlurFilter.enabled = true;
-            this._fadeTimeline = anime.timeline({
-                autoplay: false,
-                easing: "linear",
-                duration: this.fadeInDuration,
-                complete: () => {
-                    this.show();
-                    if (complete) {
-                        complete();
-                    }
-                },
-            }).add({
-                targets: this._fadeAlphaFilter,
-                alpha: 1,
-            }).add({
-                targets: this._fadeBlurFilter,
-                blur: 0,
-            }, 0);
-        }
+    fadeIn(): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this._fadingIn) {
+                this.onFadeInStart();
+                this.visible = true;
+                this._fadingIn = true;
+                this._fadingOut = false;
+                this._fadeAlphaFilter.enabled = true;
+                this._fadeBlurFilter.enabled = true;
+                this._fadeTimeline = anime.timeline({
+                    autoplay: false,
+                    easing: "linear",
+                    duration: this.fadeInDuration,
+                    complete: () => {
+                        this.show();
+                        resolve();
+                    },
+                }).add({
+                    targets: this._fadeAlphaFilter,
+                    alpha: 1,
+                }).add({
+                    targets: this._fadeBlurFilter,
+                    blur: 0,
+                }, 0);
+            }
+        });
     }
 
-    fadeOut(complete?: () => void): void {
-        if (!this._fadingOut) {
-            this.onFadeOutStart();
-            this.interactiveChildren = false;
-            this._fadeAlphaFilter.enabled = true;
-            this._fadeBlurFilter.enabled = true;
-            this._fadingIn = false;
-            this._fadingOut = true;
-            this._fadeTimeline = anime.timeline({
-                autoplay: false,
-                duration: this.fadeOutDuration,
-                endDelay: this.fadeOutExtraDelay,
-                easing: "linear",
-                complete: () => {
-                    this.hide();
-                    if (complete) {
-                        complete();
-                    }
-                },
-            }).add({
-                targets: this._fadeAlphaFilter,
-                alpha: 0,
-            }).add({
-                targets: this._fadeBlurFilter,
-                blur: BLUR,
-            }, 0);
-        }
+    fadeOut(): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this._fadingOut) {
+                this.onFadeOutStart();
+                this.interactiveChildren = false;
+                this._fadeAlphaFilter.enabled = true;
+                this._fadeBlurFilter.enabled = true;
+                this._fadingIn = false;
+                this._fadingOut = true;
+                this._fadeTimeline = anime.timeline({
+                    autoplay: false,
+                    duration: this.fadeOutDuration,
+                    endDelay: this.fadeOutExtraDelay,
+                    easing: "linear",
+                    complete: () => {
+                        this.hide();
+                        resolve();
+                    },
+                }).add({
+                    targets: this._fadeAlphaFilter,
+                    alpha: 0,
+                }).add({
+                    targets: this._fadeBlurFilter,
+                    blur: BLUR,
+                }, 0);
+            }
+        });
     }
 
     tick(timestamp: number, elapsed: number): void {
