@@ -4,7 +4,7 @@ import { TickQueue } from "@core/engine";
 import anime from "animejs";
 import { TickableContainer } from "./TickableContainer";
 
-const BLUR = 10;
+const BLUR = 8;
 
 export class FadeContainer extends TickableContainer {
     private readonly _fadeAlphaFilter: AlphaFilter;
