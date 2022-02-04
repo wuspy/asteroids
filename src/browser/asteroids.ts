@@ -12,7 +12,8 @@ import "./layout";
 
     const yogaTask = initYoga();
 
-    await loaderTask, yogaTask;
+    await loaderTask;
+    await yogaTask;
 
     document.getElementById("loader")?.remove();
 
