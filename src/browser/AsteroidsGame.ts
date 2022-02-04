@@ -7,7 +7,6 @@ import { clamp, initRandom, InputProvider, GameObject, TickQueue, GameLog } from
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
-import { settings as pixiSettings } from "@pixi/settings";
 import { PauseScreen } from "./PauseScreen";
 import { GameOverScreen } from "./GameOverScreen";
 import { Align, JustifyContent, PositionType } from "./layout";
@@ -75,6 +74,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private readonly _mainAbberationFilter: ChromaticAbberationFilter;
     private readonly _background: HTMLElement;
     private readonly _gameplayContainer: FadeContainer;
+    private readonly _dpr: number;
     private _randomSeed?: string;
     private _startScreen?: StartScreen;
     private _pauseScreen?: PauseScreen;
@@ -127,10 +127,6 @@ export class AsteroidsGame extends CoreAsteroidsGame {
 
         this._aboutOpen = false;
 
-        pixiSettings.RESOLUTION
-            = pixiSettings.FILTER_RESOLUTION
-            = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
-
         Renderer.registerPlugin("batch", BatchRenderer);
         Renderer.registerPlugin("interaction", InteractionManager);
         Renderer.registerPlugin("scrollInteraction", ScrollInteractionManager);
@@ -143,10 +139,9 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             forceCanvas: false,
         });
 
-        if (pixiSettings.RESOLUTION !== 1) {
-            this._renderer.view.style.transform
-                = this._background.style.transform
-                = `scale(${1 / pixiSettings.RESOLUTION})`;
+        this._dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
+        if (this._dpr !== 1) {
+            this._renderer.view.style.transform = this._background.style.transform = `scale(${1 / this._dpr})`;
         }
 
         this._renderer.view.style.position = "absolute";
@@ -196,7 +191,6 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             alignItems: Align.Center,
             justifyContent: JustifyContent.Center,
         });
-        // this._hudContainer.debugLayout = true;
         this._mainContainer.addChild(this._hudContainer);
 
         if (process.env.NODE_ENV === "development") {
@@ -498,21 +492,25 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     }
 
     private executeResize(): void {
-        const aspectRatio = this._container.clientWidth / this._container.clientHeight;
+        const [nativeWidth, nativeHeight] = [
+            this._container.clientWidth * this._dpr,
+            this._container.clientHeight * this._dpr,
+        ];
+        const aspectRatio = nativeWidth / nativeHeight;
         if (process.env.NODE_ENV === "development") {
             console.log("Aspect ratio changed", aspectRatio);
         }
         this.aspectRatio = clamp(aspectRatio, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO);
         // Scale world based on new screen size and aspect ratio
         if (aspectRatio > MAX_ASPECT_RATIO) {
-            this._stage.scale.set(this._container.clientHeight / this.worldSize.height);
-            this._renderer.resize(this._container.clientHeight * MAX_ASPECT_RATIO, this._container.clientHeight);
+            this._stage.scale.set(nativeHeight / this.worldSize.height);
+            this._renderer.resize(nativeHeight * MAX_ASPECT_RATIO, nativeHeight);
         } else if (aspectRatio < MIN_ASPECT_RATIO) {
-            this._stage.scale.set(this._container.clientWidth / this.worldSize.width);
-            this._renderer.resize(this._container.clientWidth, this._container.clientWidth / MIN_ASPECT_RATIO);
+            this._stage.scale.set(nativeWidth / this.worldSize.width);
+            this._renderer.resize(nativeWidth, nativeWidth / MIN_ASPECT_RATIO);
         } else {
-            this._renderer.resize(this._container.clientWidth, this._container.clientHeight);
-            this._stage.scale.set(this._container.clientWidth / this.worldSize.width);
+            this._renderer.resize(nativeWidth, nativeHeight);
+            this._stage.scale.set(nativeWidth / this.worldSize.width);
         }
         // Position view in center of screen
         this._renderer.view.style.top = `${Math.round((this._container.clientHeight - this._renderer.view.clientHeight) / 2)}px`;
