@@ -3,9 +3,10 @@ import { BlurFilter } from "@pixi/filter-blur";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { Asteroid, IAsteroidDisplay, ASTEROID_HITAREAS } from "@core";
-import { Explosion } from "./animations";
+import { Explosion, PopAnimation } from "./animations";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
+const GENERATION_SPAWN_SIZES: readonly number[] = [1, 1.75, 2.25];
 const GENERATION_EXPLOSION_SIZES: readonly number[] = [250, 200, 150];
 
 const GEOMETRIES = ASTEROID_HITAREAS.map((generations) => generations.map((polygon, generation) => {
@@ -35,6 +36,8 @@ export class AsteroidDisplay extends Container implements IAsteroidDisplay {
         const blur = sprite.clone();
         blur.filters = [new BlurFilter()];
         this.addChild(blur, sprite);
+
+        this.createSpawnAnimation();
     }
 
     createExplosion(): void {
@@ -48,6 +51,20 @@ export class AsteroidDisplay extends Container implements IAsteroidDisplay {
             explosion.position.copyFrom(this.position);
             this.parent.addChild(explosion);
         }
+    }
+
+    createSpawnAnimation(): void {
+        const sprite = new Graphics(GEOMETRIES[this._asteroid.model][this._asteroid.generation]);
+        sprite.tint = this._asteroid.state.theme.foregroundColor;
+        sprite.filters = [new BlurFilter(12)];
+
+        const animation = new PopAnimation({
+            queue: this._asteroid.queue,
+            target: sprite,
+            scale: GENERATION_SPAWN_SIZES[this._asteroid.generation],
+            duration: 250,
+        });
+        this.addChild(animation);
     }
 
     override destroy(): void {
