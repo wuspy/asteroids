@@ -69,11 +69,11 @@ const BUTTON_ACTIVE_THEME = {
 export const BUTTON_THEMES: { [Key in ButtonType]: ButtonTheme } = {
     [ButtonType.Primary]: {
         textColor: UI_FOREGROUND_COLOR,
-        textAlpha: 0.8,
+        textAlpha: 1,
         inactive: {
-            glow: 0x6fae3c,
+            glow: 0x86eb3b,
             fill: {
-                color: 0x6fae3c,
+                color: 0x86eb3b,
                 alpha: 0.8,
             },
             stroke: {
@@ -103,11 +103,11 @@ export const BUTTON_THEMES: { [Key in ButtonType]: ButtonTheme } = {
     },
     [ButtonType.Danger]: {
         textColor: UI_FOREGROUND_COLOR,
-        textAlpha: 0.8,
+        textAlpha: 1,
         inactive: {
-            glow: 0xae523b,
+            glow: 0xfd5f3a,
             fill: {
-                color: 0xae523b,
+                color: 0xfd5f3a,
                 alpha: 0.8,
             },
             stroke: {

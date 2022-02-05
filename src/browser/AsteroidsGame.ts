@@ -339,7 +339,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         });
         this.events.on("resumed", this, () => {
             if (this._pauseScreen) {
-                this._pauseScreen.destroy();
+                this._pauseScreen.destroy({ children: true });
                 this._pauseScreen = undefined;
             }
         });

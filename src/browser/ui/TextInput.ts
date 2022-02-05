@@ -175,7 +175,6 @@ export class TextInput extends Container {
         };
         this._domInput.layout.width = "100%";
         this._domInput.respectAlphaFilter = true;
-        console.log(this._domInput._element.maxLength);
         this.addChild(this._domInput);
     }
 

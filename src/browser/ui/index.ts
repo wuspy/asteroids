@@ -11,4 +11,6 @@ export * from "./Modal";
 export * from "./HelpPointer";
 export * from "./VirtualizedList";
 export * from "./TextInput";
+export * from "./RevealText";
+export * from "./ScoreText";
 export * from "./theme";

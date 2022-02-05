@@ -20,7 +20,7 @@ export class Image extends FadeContainer {
             fadeInDuration: 200,
             fadeOutDuration: 200,
             initiallyVisible: resource.isComplete && !!resource.texture,
-            makeInvisible: false,
+            keepVisible: true,
         });
 
         this._tint = params.tint ?? 0xffffff;

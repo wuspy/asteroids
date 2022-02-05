@@ -13,7 +13,7 @@ export class FadeContainer extends TickableContainer {
     fadeInDuration: number;
     fadeOutDuration: number;
     fadeOutExtraDelay: number;
-    makeInvisible: boolean;
+    keepVisible: boolean;
     private _fadingIn: boolean;
     private _fadingOut: boolean;
 
@@ -24,7 +24,7 @@ export class FadeContainer extends TickableContainer {
         fadeInDuration: number,
         fadeOutDuration: number,
         fadeOutExtraDelay?: number,
-        makeInvisible?: boolean,
+        keepVisible?: boolean,
     }) {
         super(params.queue, params.queuePriority);
         this.filters = [
@@ -34,7 +34,7 @@ export class FadeContainer extends TickableContainer {
         this.fadeInDuration = params.fadeInDuration;
         this.fadeOutDuration = params.fadeOutDuration;
         this.fadeOutExtraDelay = params.fadeOutExtraDelay || 0;
-        this.makeInvisible = params.makeInvisible ?? true;
+        this.keepVisible = params.keepVisible ?? false;
         this._fadingIn = this._fadingOut = false;
         if (params.initiallyVisible) {
             this._show();
@@ -71,6 +71,7 @@ export class FadeContainer extends TickableContainer {
                     easing: "linear",
                     duration: this.fadeInDuration,
                     complete: () => {
+                        this._fadingIn = false;
                         this.show();
                         resolve();
                     },
@@ -85,7 +86,7 @@ export class FadeContainer extends TickableContainer {
         });
     }
 
-    fadeOut(): Promise<void> {
+    fadeOut(amount = 1): Promise<void> {
         return new Promise((resolve) => {
             if (!this._fadingOut) {
                 this.onFadeOutStart();
@@ -100,15 +101,18 @@ export class FadeContainer extends TickableContainer {
                     endDelay: this.fadeOutExtraDelay,
                     easing: "linear",
                     complete: () => {
-                        this.hide();
+                        this._fadingOut = false;
+                        if (amount === 1) {
+                            this.hide();
+                        }
                         resolve();
                     },
                 }).add({
                     targets: this._fadeAlphaFilter,
-                    alpha: 0,
+                    alpha: 1 - amount,
                 }).add({
                     targets: this._fadeBlurFilter,
-                    blur: BLUR,
+                    blur: BLUR * amount,
                 }, 0);
             }
         });
@@ -124,7 +128,6 @@ export class FadeContainer extends TickableContainer {
     protected onHidden(): void { }
 
     private _show(): void {
-        this._fadingOut = this._fadingIn = false;
         this._fadeTimeline = undefined;
         this._fadeAlphaFilter.enabled = false;
         this._fadeBlurFilter.enabled = false;
@@ -135,14 +138,13 @@ export class FadeContainer extends TickableContainer {
     }
 
     private _hide(): void {
-        this._fadingOut = this._fadingIn = false;
         this._fadeTimeline = undefined;
         this._fadeAlphaFilter.enabled = false;
         this._fadeBlurFilter.enabled = false;
         this._fadeAlphaFilter.alpha = 0;
         this._fadeBlurFilter.blur = BLUR;
         this.interactiveChildren = false;
-        if (this.makeInvisible) {
+        if (!this.keepVisible) {
             this.visible = false;
         }
     }

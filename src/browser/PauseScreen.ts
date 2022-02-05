@@ -1,11 +1,11 @@
-import { Container } from "@pixi/display";
 import { GlowFilter } from "@pixi/filter-glow";
 import { EventManager, InputProvider, TickQueue } from "@core/engine";
 import { GameEvents, GameState, controls } from "@core";
 import anime from "animejs";
 import { createControlDescription, getControlProps } from "./controlGraphic";
 import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
-import { ButtonType, Button, FadeContainer, Text, FONT_FAMILY, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
+import { ButtonType, Button, FadeContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, LinearGroup, MODAL_BACKGROUND, RevealText } from "./ui";
+import { ChromaticAbberationFilter } from "./filters";
 
 export class PauseScreen extends FadeContainer {
     private readonly _events: EventManager<GameEvents>;
@@ -40,15 +40,25 @@ export class PauseScreen extends FadeContainer {
             },
         };
 
-        const title = new Text("PAUSED", {
-            fontFamily: FONT_FAMILY,
-            fontSize: 64,
-            fill: UI_FOREGROUND_COLOR,
+        const title = new RevealText({
+            queue: this.queue,
+            text: " PAUSED ",
+            duration: 500,
+            textStyle: {
+                fontSize: 64,
+                fill: UI_FOREGROUND_COLOR,
+            }
         });
-        title.cacheAsBitmap = true;
+        title.filters = [
+            new ChromaticAbberationFilter(1, 2),
+            new GlowFilter({
+                outerStrength: 1,
+                distance: 24,
+            }),
+        ];
         title.layout.style({
             margin: 24,
-            marginBottom: 12
+            marginBottom: 18
         });
         this.addChild(title);
 
@@ -75,27 +85,20 @@ export class PauseScreen extends FadeContainer {
         startControl.buttonMode = true;
         startControl.on("click", () => this._events.trigger("resumeRequested"));
 
-        const buttonContainer = new Container();
-        buttonContainer.flexContainer = true;
-        buttonContainer.layout.style({
-            margin: 12,
-            marginTop: 24,
+        const buttons = new LinearGroup(FlexDirection.Row, 24, [
+            new Button({
+                queue: this.queue,
+                type: ButtonType.Danger,
+                text: "Quit",
+                onClick: () => this._events.trigger("quitRequested"),
+            }),
+        ]);
+        buttons.layout.style({
+            margin: 24,
+            marginTop: 36,
         });
 
-        const newGameButton = new Button({
-            queue: this.queue,
-            type: ButtonType.Danger,
-            text: "Quit",
-            onClick: () => this._events.trigger("quitRequested"),
-        });
-        newGameButton.layout.margin = 12;
-        buttonContainer.addChild(newGameButton);
-
-        // const optionsButton = new Button(ButtonType.Secondary, "Options", () => undefined);
-        // optionsButton.layout.margin = 12;
-        // buttonContainer.addChild(optionsButton);
-
-        this.addChild(buttonContainer);
+        this.addChild(buttons);
 
         this.fadeIn().then(() => {
             this._timeline = anime.timeline({

@@ -1,19 +1,13 @@
 import { GameState } from "@core";
 import { TickQueue } from "@core/engine";
-import { Text, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui";
+import { ScoreText, Text, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui";
 import { ContainerBackgroundShape } from "../layout";
 import { PopAnimation } from "../animations";
-
-const MAX_DIGITS = 7;
-const TEXT_STYLE = {
-    fontSize: 48,
-    fill: UI_FOREGROUND_COLOR,
-};
+import { ITextStyle, TextStyle } from "@pixi/text";
 
 export class ScoreIndicator extends TickableContainer {
     private readonly _state: GameState;
-    private readonly _zeroText: Text;
-    private readonly _scoreText: Text;
+    private readonly _text: ScoreText;
     private _lastScore: number;
 
     constructor(params: {
@@ -40,38 +34,27 @@ export class ScoreIndicator extends TickableContainer {
                 smooth: true,
             },
         };
-        this._zeroText = new Text(Array(MAX_DIGITS - 1).fill("0").join(""), TEXT_STYLE);
-        this._zeroText.alpha = 0.25;
-        this._scoreText = new Text("0", TEXT_STYLE);
 
-        this.addChild(this._zeroText);
-        this.addChild(this._scoreText);
-        this._zeroText.cacheAsBitmap = true;
-        this._scoreText.cacheAsBitmap = true;
+        this._text = new ScoreText(this._state.score, 0.25, {
+            fontSize: 48,
+            fill: UI_FOREGROUND_COLOR,
+        });
+
+        this.addChild(this._text);
     }
 
     tick(): void {
         if (this._lastScore !== this._state.score) {
-            const score = this._state.score.toFixed();
-            this._scoreText.cacheAsBitmap = false;
-            this._scoreText.text = score;
-            this._scoreText.cacheAsBitmap = true;
-            if (this._lastScore.toFixed().length !== score.length) {
-                this._zeroText.cacheAsBitmap = false;
-                this._zeroText.text = Array(MAX_DIGITS - score.length).fill("0").join("");
-                this._zeroText.cacheAsBitmap = true;
-                // The reason we need to update the layout manually here is so we can position the animation
-                // since the number of digits, and therefore the score position, has changed
-                this.layout.update();
-            }
+            this._text.score = this._state.score;
             const animation = new ScoreAnimation({
                 queue: this.queue,
                 score: this._state.score,
+                textStyle: this._text.scoreText.style,
             });
             animation.layout.excluded = true;
             animation.position.set(
-                this._scoreText.x + this._scoreText.width / 2,
-                this._scoreText.y + this._scoreText.height / 2,
+                this._text.scoreText.x + this._text.scoreText.width / 2,
+                this._text.scoreText.y + this._text.scoreText.height / 2,
             );
             this.addChild(animation);
             this._lastScore = this._state.score;
@@ -83,8 +66,9 @@ class ScoreAnimation extends PopAnimation {
     constructor(params: {
         queue: TickQueue,
         score: number,
+        textStyle: TextStyle | Partial<ITextStyle>
     }) {
-        const text = new Text(params.score.toFixed(), TEXT_STYLE);
+        const text = new Text(params.score.toFixed(), params.textStyle);
         text.anchor.set(0.5);
         text.alpha = 0.8;
         text.cacheAsBitmap = true;
