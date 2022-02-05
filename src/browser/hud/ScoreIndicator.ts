@@ -53,8 +53,8 @@ export class ScoreIndicator extends TickableContainer {
             });
             animation.layout.excluded = true;
             animation.position.set(
-                this._text.scoreText.x + this._text.scoreText.width / 2,
-                this._text.scoreText.y + this._text.scoreText.height / 2,
+                this._text.x + this._text.scoreText.x + this._text.scoreText.width / 2,
+                this._text.y + this._text.scoreText.y + this._text.scoreText.height / 2,
             );
             this.addChild(animation);
             this._lastScore = this._state.score;

@@ -83,7 +83,7 @@ export class GameOverScreen extends FadeContainer {
         const buttons = new LinearGroup(FlexDirection.Row, 24, [
             new Button({
                 queue: this.queue,
-                type: ButtonType.Secondary,
+                type: ButtonType.Primary,
                 text: "New Game",
                 onClick: () => this._events.trigger("startRequested")
             }),
