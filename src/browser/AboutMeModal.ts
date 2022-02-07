@@ -1,34 +1,24 @@
 import { Container } from "@pixi/display";
 import { Loader } from "@pixi/loaders";
-import { TickQueue } from "@core/engine";
+import { TickQueue, EventManager } from "@core/engine";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
-import { Image, Button, LinearGroup, Modal, Text, ButtonType, UI_FOREGROUND_COLOR } from "./ui";
+import { Image, Button, LinearGroup, Modal, Text, ButtonType, UI_FOREGROUND_COLOR, TextInput } from "./ui";
+import { UIEvents } from "./UIEvents";
 
 export class AboutMeModal extends Modal {
     constructor(params: {
         queue: TickQueue,
-        onClose: () => void
+        events: EventManager<UIEvents>
     }) {
         super({ queue: params.queue });
-        if (!Loader.shared.resources["github-64px.webp"]) {
-            Loader.shared.add("github-64px.webp", "assets/github-64px.webp");
-        }
-        if (!Loader.shared.resources["linkedin-64px.webp"]) {
-            Loader.shared.add("linkedin-64px.webp", "assets/linkedin-64px.webp");
-        }
-        if (!Loader.shared.resources["me.webp"]) {
-            Loader.shared.add("me.webp", "assets/me.webp");
-        }
-        if (!Loader.shared.resources["booties.webp"]) {
-            Loader.shared.add("booties.webp", "assets/booties.webp");
-        }
-        if (!Loader.shared.resources["stormy.webp"]) {
-            Loader.shared.add("stormy.webp", "assets/stormy.webp");
-        }
-        if (!Loader.shared.resources["gk.webp"]) {
-            Loader.shared.add("gk.webp", "assets/gk.webp");
-        }
-        Loader.shared.load();
+        Loader.shared
+            .add("github-64px.webp", "assets/github-64px.webp")
+            .add("linkedin-64px.webp", "assets/linkedin-64px.webp")
+            .add("me.webp", "assets/me.webp")
+            .add("booties.webp", "assets/booties.webp")
+            .add("stormy.webp", "assets/stormy.webp")
+            .add("gk.webp", "assets/gk.webp")
+            .load();
 
         const header = new Text("Hi!👋I'm Jacob.", {
             fontSize: 50,
@@ -137,7 +127,7 @@ export class AboutMeModal extends Modal {
                 queue: this.queue,
                 type: ButtonType.Secondary,
                 text: "Back to Game",
-                onClick: params.onClose,
+                onClick: () => params.events.trigger("closeAbout"),
             }),
         ]);
         buttons.layout.alignSelf = Align.Center;

@@ -1,21 +1,21 @@
 import { GlowFilter } from "@pixi/filter-glow";
 import { EventManager, InputProvider, TickQueue } from "@core/engine";
-import { GameEvents, GameState, controls } from "@core";
+import { GameState, controls } from "@core";
 import anime from "animejs";
-import { createControlDescription, getControlProps } from "./controlGraphic";
 import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
-import { ButtonType, Button, FadeContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, LinearGroup, MODAL_BACKGROUND, RevealText } from "./ui";
+import { ButtonType, Button, FadeContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, LinearGroup, RevealText, ControlDescription, ControlGraphic } from "./ui";
 import { ChromaticAbberationFilter } from "./filters";
+import { UIEvents } from "./UIEvents";
 
 export class PauseScreen extends FadeContainer {
-    private readonly _events: EventManager<GameEvents>;
+    private readonly _events: EventManager<UIEvents>;
     private readonly _startGlowFilter: GlowFilter;
     private _timeline?: anime.AnimeTimelineInstance;
 
     constructor(params: {
         queue: TickQueue,
         state: GameState,
-        events: EventManager<GameEvents>,
+        events: EventManager<UIEvents>,
         inputProvider: InputProvider<typeof controls>,
     }) {
         super({
@@ -62,8 +62,8 @@ export class PauseScreen extends FadeContainer {
         });
         this.addChild(title);
 
-        const startControl = createControlDescription({
-            ...getControlProps("start", params.inputProvider.mapping)!,
+        const startControl = new ControlDescription({
+            ...ControlGraphic.getParamsFromMapping("start", params.inputProvider.mapping)!,
             foreground: UI_BACKGROUND_COLOR,
             background: UI_FOREGROUND_COLOR,
             fontSize: 32,
@@ -83,14 +83,14 @@ export class PauseScreen extends FadeContainer {
         ];
         startControl.interactive = true;
         startControl.buttonMode = true;
-        startControl.on("click", () => this._events.trigger("resumeRequested"));
+        startControl.on("click", () => this._events.trigger("resume"));
 
         const buttons = new LinearGroup(FlexDirection.Row, 24, [
             new Button({
                 queue: this.queue,
                 type: ButtonType.Danger,
                 text: "Quit",
-                onClick: () => this._events.trigger("quitRequested"),
+                onClick: () => this._events.trigger("quit"),
             }),
         ]);
         buttons.layout.style({

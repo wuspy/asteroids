@@ -19,7 +19,7 @@ import { scalePolygon } from "./engine";
     projectile: 3,
 } as const;
 
-export const LIVES = 5;
+export const LIVES = 2;
 /**
  * After the score increases by this amount, an extra life will be given. Zero to disable.
  */

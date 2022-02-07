@@ -9,14 +9,12 @@ export class Projectile extends GameObject<GameState, GameEvents> {
     override display?: IProjectileDisplay;
     private _traveled: number;
     private _from: Readonly<GameObject<any, any>>;
-    private _color: number;
 
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         position: Vec2,
         from: Readonly<GameObject<any, any>>,
         speed: number,
         rotation: number,
-        color: number,
     }) {
         super({
             ...params,
@@ -29,7 +27,6 @@ export class Projectile extends GameObject<GameState, GameEvents> {
         });
         this._traveled = 0;
         this._from = params.from;
-        this._color = params.color;
     }
 
     override tick(timestamp: number, elapsed: number): void {
@@ -51,9 +48,5 @@ export class Projectile extends GameObject<GameState, GameEvents> {
 
     get traveled(): number {
         return this._traveled;
-    }
-
-    get color(): number {
-        return this._color;
     }
 }

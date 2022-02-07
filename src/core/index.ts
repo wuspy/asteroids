@@ -5,6 +5,5 @@ export * from "./Ship";
 export * from "./Asteroid";
 export * from "./UFO";
 export * from "./constants";
-export * from "./CoreAsteroidsGame";
-export * from "./Theme";
+export * from "./AsteroidsGame";
 export * from "./input";

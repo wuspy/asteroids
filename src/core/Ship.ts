@@ -100,7 +100,6 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
             // Give projectiles a little boost if we're moving in the same direction
             speed: Math.max(SHIP_PROJECTILE_SPEED, SHIP_PROJECTILE_SPEED + this.speedAtRotation / 2),
             from: this,
-            color: this.state.theme.foregroundColor,
         }));
         // Add recoil
         if (this.speedAtRotation > -MAX_SPEED) {

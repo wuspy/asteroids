@@ -46,6 +46,9 @@ export class ScoreIndicator extends TickableContainer {
     tick(): void {
         if (this._lastScore !== this._state.score) {
             this._text.score = this._state.score;
+            // The reason we need to update the layout manually here is so we can position the animation
+            // in case the number of digits, and therefore the score position, has changed
+            this.layout.update();
             const animation = new ScoreAnimation({
                 queue: this.queue,
                 score: this._state.score,
@@ -53,8 +56,8 @@ export class ScoreIndicator extends TickableContainer {
             });
             animation.layout.excluded = true;
             animation.position.set(
-                this._text.scoreText.x + this._text.scoreText.width / 2,
-                this._text.scoreText.y + this._text.scoreText.height / 2,
+                this._text.x + this._text.scoreText.x + this._text.scoreText.width / 2,
+                this._text.y + this._text.scoreText.y + this._text.scoreText.height / 2,
             );
             this.addChild(animation);
             this._lastScore = this._state.score;

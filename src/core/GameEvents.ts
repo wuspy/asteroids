@@ -1,22 +1,15 @@
 import { Asteroid } from "./Asteroid";
 import { Projectile } from "./Projectile";
 import { Ship } from "./Ship";
-import { Theme } from "./Theme";
 import { UFO } from "./UFO";
 
 export interface GameEvents {
     reset: () => void;
-    startRequested: () => void;
-    quitRequested: () => void;
-    pauseRequested: () => void;
-    resumeRequested: () => void;
-    aboutOpened: () => void;
-    aboutClosed: () => void;
+    beforeStart: () => void;
     started: () => void;
     paused: () => void;
     resumed: () => void;
     finished: () => void;
-    themeChanged: (theme: Theme) => void;
     shipCreated: (ship: Ship) => void;
     shipDestroyed: (ship: Ship) => void;
     ufoCreated: (ufo: UFO) => void;

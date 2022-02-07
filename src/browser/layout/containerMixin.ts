@@ -26,7 +26,7 @@ export const enum ContainerBackgroundShape {
     Ellipse,
 }
 
-export type ContainerBackground = ((graphics: Graphics, width: number, height: number) => void) | {
+export interface ContainerBackground {
     shape: ContainerBackgroundShape,
     fill?: IFillStyleOptions,
     stroke?: ILineStyleOptions;
@@ -35,35 +35,31 @@ export type ContainerBackground = ((graphics: Graphics, width: number, height: n
 }
 
 export const drawContainerBackground = (graphics: Graphics, background: ContainerBackground, width: number, height: number) => {
-    if (typeof (background) === "function") {
-        background(graphics, width, height);
-    } else {
-        const cacheAsBitmap = background.cacheAsBitmap && "cacheAsBitmap" in graphics;
-        if (cacheAsBitmap) {
-            (graphics as any).cacheAsBitmap = false;
+    const cacheAsBitmap = background.cacheAsBitmap && "cacheAsBitmap" in graphics;
+    if (cacheAsBitmap) {
+        (graphics as any).cacheAsBitmap = false;
+    }
+    const { shape, fill, stroke, cornerRadius } = background;
+    if (fill) {
+        graphics.beginTextureFill(fill);
+    }
+    if (stroke) {
+        graphics.lineStyle(stroke);
+    }
+    if (shape === ContainerBackgroundShape.Rectangle) {
+        if (cornerRadius) {
+            graphics.drawRoundedRect(0, 0, width, height, cornerRadius);
+        } else {
+            graphics.drawRect(0, 0, width, height);
         }
-        const { shape, fill, stroke, cornerRadius } = background;
-        if (fill) {
-            graphics.beginTextureFill(fill);
-        }
-        if (stroke) {
-            graphics.lineStyle(stroke);
-        }
-        if (shape === ContainerBackgroundShape.Rectangle) {
-            if (cornerRadius) {
-                graphics.drawRoundedRect(0, 0, width, height, cornerRadius);
-            } else {
-                graphics.drawRect(0, 0, width, height);
-            }
-        } else if (shape === ContainerBackgroundShape.Ellipse) {
-            graphics.drawEllipse(width / 2, height / 2, width / 2, height / 2);
-        }
-        if (fill) {
-            graphics.endFill();
-        }
-        if (cacheAsBitmap) {
-            (graphics as any).cacheAsBitmap = true;
-        }
+    } else if (shape === ContainerBackgroundShape.Ellipse) {
+        graphics.drawEllipse(width / 2, height / 2, width / 2, height / 2);
+    }
+    if (fill) {
+        graphics.endFill();
+    }
+    if (cacheAsBitmap) {
+        (graphics as any).cacheAsBitmap = true;
     }
 };
 

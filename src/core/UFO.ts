@@ -115,7 +115,6 @@ export class UFO extends GameObject<GameState, GameEvents> {
             rotation: angle,
             speed: UFO_PROJECTILE_SPEEDS[this._type],
             from: this,
-            color: this.state.theme.ufoColor,
         }));
     }
 

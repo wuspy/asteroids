@@ -11,6 +11,7 @@ $active-shadow: 0 0 18px #feff35;
     background: $background;
     box-shadow: $shadow;
     text-decoration: none;
+    text-align: center;
     padding: 12px;
     // Transform effect looks jittery in IE. Probably related to being in a flexbox.
     // transform: rotate3d(.5, -0.6, 0, 15deg) rotate(1deg);

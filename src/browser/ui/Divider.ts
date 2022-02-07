@@ -1,5 +1,6 @@
 import { Container } from "@pixi/display";
 import { ContainerBackgroundShape } from "../layout";
+import { UI_DIVIDER_COLOR } from "./theme";
 
 export class Divider extends Container {
     constructor(margin?: number) {
@@ -7,7 +8,7 @@ export class Divider extends Container {
         this.backgroundStyle = {
             shape: ContainerBackgroundShape.Rectangle,
             fill: {
-                color: 0x606060,
+                color: UI_DIVIDER_COLOR,
             }
         };
         this.layout.style({

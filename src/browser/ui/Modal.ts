@@ -32,10 +32,7 @@ export class Modal extends FadeContainer {
                 alignItems: Align.Center,
                 justifyContent: JustifyContent.SpaceBetween,
             });
-            const title = new Text(params.header.title, {
-                fontSize: 32,
-                fill: UI_FOREGROUND_COLOR,
-            });
+            const title = new Text(params.header.title, { fontSize: 32 });
             title.cacheAsBitmap = true;
             headerContainer.addChild(title);
             if (params.header.rightContent) {

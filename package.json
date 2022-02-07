@@ -1,14 +1,13 @@
 {
     "name": "website",
     "author": "Jacob Jordan",
-    "version": "1.0.100",
+    "version": "1.0.104",
     "license": "MIT",
     "devDependencies": {
         "@types/animejs": "^3.1.4",
         "@types/config": "^0.0.41",
-        "@types/pg": "^8.6.4",
+        "@types/node": "^16.11.22",
         "@types/stats.js": "^0.17.0",
-        "@types/webfontloader": "^1.6.34",
         "@typescript-eslint/eslint-plugin": "^5.5.0",
         "@typescript-eslint/parser": "^5.5.0",
         "@webpack-cli/generators": "^2.4.1",
@@ -33,10 +32,11 @@
     },
     "scripts": {
         "lint": "eslint src --ext .ts",
-        "build": "webpack --mode=production --node-env=production",
         "watch": "webpack --watch",
+        "build": "webpack --mode=production --node-env=production",
         "build:dev": "webpack --mode=development",
-        "build:prod": "webpack --mode=production --node-env=production"
+        "server": "cd dist && NODE_ENV=production node server.js && cd ..",
+        "server:dev": "cd dist && NODE_ENV=development nodemon --signal SIGTERM server.js && cd .."
     },
     "dependencies": {
         "@pixi/constants": "^6.2.2",
@@ -57,6 +57,7 @@
         "animejs": "^3.2.1",
         "config": "^3.3.7",
         "express": "^4.17.2",
+        "knex": "^0.95.15",
         "pg": "^8.7.1",
         "stats.js": "^0.17.0",
         "tslib": "^2.3.1",

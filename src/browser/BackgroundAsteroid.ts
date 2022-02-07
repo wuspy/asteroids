@@ -3,6 +3,7 @@ import { LINE_JOIN } from "@pixi/graphics";
 import { ISize, Rectangle } from "@pixi/math";
 import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, getPolygonBoundingBox, random, scalePolygon, TickQueue, Vec2 } from "@core/engine";
 import { ASTEROID_GENERATION_COUNT, ASTEROID_HITAREAS, GameState, GameEvents, generateAsteroidAngle } from "@core";
+import { GameTheme } from "./GameTheme";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
 
@@ -38,10 +39,11 @@ export class BackgroundAsteroid extends GameObject<GameState, GameEvents> {
     private _generation: number;
 
     private constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
-        obstacles: GameObject<any, any>[],
-        velocity: Vec2,
-        model: number,
-        generation: number,
+        theme: GameTheme;
+        obstacles: GameObject<any, any>[];
+        velocity: Vec2;
+        model: number;
+        generation: number;
     }) {
         super({
             ...params,
@@ -55,8 +57,8 @@ export class BackgroundAsteroid extends GameObject<GameState, GameEvents> {
 
         this.moveToUnoccupiedPosition(params.obstacles);
         this.display = new Graphics(GEOMETRIES[this._model][this._generation]);
-        this.display.alpha = this.state.theme.backgroundAsteroidAlpha;
-        this.display.tint = this.state.theme.backgroundAsteroidColor;
+        this.display.alpha = params.theme.backgroundAlpha;
+        this.display.tint = params.theme.backgroundColor;
         this.display.position.copyFrom(this.position);
         this.display.rotation = this.rotation;
     }
@@ -74,6 +76,7 @@ export class BackgroundAsteroid extends GameObject<GameState, GameEvents> {
 
     static create(params: {
         count: number,
+        theme: GameTheme;
         queue: TickQueue,
         events: EventManager<GameEvents>,
         state: GameState,

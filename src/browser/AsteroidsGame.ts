@@ -1,9 +1,9 @@
 import { Container } from "@pixi/display";
 import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
-import { CoreAsteroidsGame, controls, inputLogConfig, wasdMapping, Theme, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
+import { AsteroidsGame as CoreAsteroidsGame, controls, inputLogConfig, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
-import { clamp, initRandom, InputProvider, GameObject, TickQueue, GameLog } from "@core/engine";
+import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, GameLog, random, EventManager } from "@core/engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
@@ -18,12 +18,17 @@ import { ShipDisplay } from "./ShipDisplay";
 import { ProjectileDisplay } from "./ProjectileDisplay";
 import { AsteroidDisplay } from "./AsteroidDisplay";
 import { UFODisplay } from "./UFODisplay";
+import { GameTheme, GAME_THEMES } from "./GameTheme";
+import { GameTokenResponse } from "@core/api";
+import { getGameToken } from "./api";
+import { UIEvents } from "./UIEvents";
+import { AboutMeModal } from "./AboutMeModal";
+import { SaveScoreModal } from "./SaveScoreModal";
+import { LeaderboardModal } from "./LeaderboardModal";
 
 const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
 const MAX_DEVICE_PIXEL_RATIO = 2;
-
-const ENABLE_LOGGING = true;
 
 declare global {
     interface Window {
@@ -47,15 +52,15 @@ if (process.env.NODE_ENV === "development") {
             window.asteroidsInstance.hitAreaDebugContainer.visible = false;
         },
         kill: () => {
-            if (window.asteroidsInstance.state.ship) {
-                window.asteroidsInstance.state.lives = 1;
-                window.asteroidsInstance.state.ship.destroy();
+            if (window.asteroidsInstance.game.state.ship) {
+                window.asteroidsInstance.game.state.lives = 1;
+                window.asteroidsInstance.game.state.ship.destroy();
             }
         },
     };
 }
 
-export class AsteroidsGame extends CoreAsteroidsGame {
+export class AsteroidsGame {
     private readonly _container: HTMLElement;
     private readonly _renderer: AbstractRenderer;
     private readonly _stage: Container;
@@ -69,22 +74,29 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     private readonly _scoreIndicator: ScoreIndicator;
     private readonly _levelIndicator: LevelIndicator;
     private readonly _uiQueue: TickQueue;
+    private readonly _uiEvents: EventManager<UIEvents>;
     private readonly _mainAlphaFilter: AlphaFilter;
     private readonly _mainWarpFilter: WarpFilter;
     private readonly _mainAbberationFilter: ChromaticAbberationFilter;
     private readonly _background: HTMLElement;
     private readonly _gameplayContainer: FadeContainer;
     private readonly _dpr: number;
-    private _randomSeed?: string;
+    private readonly _apiRoot?: string;
+    readonly game: CoreAsteroidsGame;
+    private _theme!: GameTheme;
+    private _token?: GameTokenResponse;
+    private _nextToken?: GameTokenResponse;
     private _startScreen?: StartScreen;
     private _pauseScreen?: PauseScreen;
+    private _aboutModal?: AboutMeModal;
+    private _saveScoreModal?: SaveScoreModal;
+    private _leaderboardModal?: LeaderboardModal;
     private _gameOverScreen?: GameOverScreen;
     private _logger?: GameLog<typeof controls>;
     private _timestamp: number;
     private _queuedResizeId?: number;
     private _backgroundAsteroids: BackgroundAsteroid[];
     private _nextAnimationFrameId?: number;
-    private _aboutOpen: boolean;
 
     // Only used in development mode
     readonly fpsStats!: Stats;
@@ -92,8 +104,11 @@ export class AsteroidsGame extends CoreAsteroidsGame {
     readonly statsDiv!: HTMLElement;
     readonly hitAreaDebugContainer!: HitAreaDebugContainer;
 
-    constructor(params: { containerId: string, backgroundId: string }) {
-        super();
+    constructor(params: {
+        containerId: string;
+        backgroundId: string;
+        apiRoot?: string;
+    }) {
         this._container = document.getElementById(params.containerId)!;
         if (!this._container) {
             throw new Error(`#${params.containerId} does not exist`);
@@ -102,6 +117,11 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         if (!this._background) {
             throw new Error(`#${params.backgroundId} does not exist`);
         }
+
+        this.game = new CoreAsteroidsGame();
+
+        this._apiRoot = params.apiRoot;
+        this.fetchNextGameToken();
 
         if (process.env.NODE_ENV === "development") {
             window.asteroidsInstance = this;
@@ -125,8 +145,6 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             document.body.appendChild(this.statsDiv);
         }
 
-        this._aboutOpen = false;
-
         Renderer.registerPlugin("batch", BatchRenderer);
         Renderer.registerPlugin("interaction", InteractionManager);
         Renderer.registerPlugin("scrollInteraction", ScrollInteractionManager);
@@ -146,7 +164,9 @@ export class AsteroidsGame extends CoreAsteroidsGame {
 
         this._renderer.view.style.position = "absolute";
         this._container.appendChild(this._renderer.view);
+
         this._uiQueue = new TickQueue("ui");
+        this._uiEvents = new EventManager();
 
         this._input = new InputProvider(controls);
         this._input.mapping = wasdMapping;
@@ -171,10 +191,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._mainContainer.filters = [
             this._mainAbberationFilter = new ChromaticAbberationFilter(RGB_SPLIT_SEPARATION, 0.75),
             this._mainWarpFilter = new WarpFilter(WARP_STRENGTH),
-            this._mainAlphaFilter = new AlphaFilter(),
         ];
-
-        this.applyTheme(this.state.theme);
 
         this._gameplayContainer = new FadeContainer({
             queue: this._uiQueue,
@@ -182,6 +199,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             fadeOutDuration: 500,
             fadeOutExtraDelay: 500,
         });
+        this._gameplayContainer.filters!.push(this._mainAlphaFilter = new AlphaFilter());
         this._gameplayContainer.interactiveChildren = false;
         this._mainContainer.addChild(this._gameplayContainer);
 
@@ -199,12 +217,13 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             this._mainContainer.addChild(this.hitAreaDebugContainer);
         }
 
+        this.applyTheme(this.getRandomTheme());
         this.executeResize();
         window.addEventListener("resize", this.queueResize);
         document.addEventListener("visibilitychange", this.onVisibilityChange);
 
         this._scoreIndicator = new ScoreIndicator({
-            state: this.state,
+            state: this.game.state,
             queue: this._uiQueue,
         });
         this._scoreIndicator.layout.style({
@@ -216,7 +235,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._hudContainer.addChild(this._scoreIndicator);
 
         this._lifeIndicator = new LifeIndicator({
-            state: this.state,
+            state: this.game.state,
             queue: this._uiQueue,
         });
         this._lifeIndicator.layout.style({
@@ -229,7 +248,8 @@ export class AsteroidsGame extends CoreAsteroidsGame {
 
         this._levelIndicator = new LevelIndicator({
             queue: this._uiQueue,
-            state: this.state,
+            theme: this._theme,
+            state: this.game.state,
         });
         this._levelIndicator.layout.style({
             marginVertical: 12,
@@ -239,36 +259,31 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         });
         this._hudContainer.addChild(this._levelIndicator);
 
-        this._startScreen = new StartScreen({
-            queue: this._uiQueue,
-            state: this.state,
-            events: this.events,
-            inputProvider: this._input,
-        });
-        this._hudContainer.addChild(this._startScreen);
+        this.showStartScreen();
 
         this._backgroundAsteroids = BackgroundAsteroid.create({
             count: 20,
             queue: this._uiQueue,
-            events: this.events,
-            state: this.state,
-            worldSize: this.worldSize,
+            theme: this._theme,
+            events: this.game.events,
+            state: this.game.state,
+            worldSize: this.game.worldSize,
         });
         this._backgroundAsteroids.forEach((asteroid) => this._backgroundContainer.addChild(asteroid.display));
 
-        this.events.on("shipCreated", this, (ship) =>
-            this._gameplayContainer.addChild(new ShipDisplay(ship))
+        this.game.events.on("shipCreated", this, (ship) =>
+            this._gameplayContainer.addChild(new ShipDisplay(ship, this._theme))
         );
-        this.events.on("asteroidsCreated", this, (asteroids) => asteroids.forEach((asteroid) =>
-            this._gameplayContainer.addChild(new AsteroidDisplay(asteroid))
+        this.game.events.on("asteroidsCreated", this, (asteroids) => asteroids.forEach((asteroid) =>
+            this._gameplayContainer.addChild(new AsteroidDisplay(asteroid, this._theme))
         ));
-        this.events.on("projectileCreated", this, (projectile) =>
-            this._gameplayContainer.addChild(new ProjectileDisplay(projectile))
+        this.game.events.on("projectileCreated", this, (projectile) =>
+            this._gameplayContainer.addChild(new ProjectileDisplay(projectile, this._theme))
         );
-        this.events.on("ufoCreated", this, (ufo) =>
-            this._gameplayContainer.addChild(new UFODisplay(ufo))
+        this.game.events.on("ufoCreated", this, (ufo) =>
+            this._gameplayContainer.addChild(new UFODisplay(ufo, this._theme))
         );
-        this.events.on("reset", this, () => {
+        this.game.events.on("beforeStart", this, () => {
             // Remove anything that may be remaining in the gameplay container (animations, etc)
             for (let i = this._gameplayContainer.children.length - 1; i >= 0; i--) {
                 this._gameplayContainer.children[i].destroy();
@@ -280,32 +295,44 @@ export class AsteroidsGame extends CoreAsteroidsGame {
                 }
             }
 
-            this._randomSeed = initRandom();
-            if (ENABLE_LOGGING) {
-                this._logger = new GameLog(this.worldSize, inputLogConfig);
+            if (this._nextToken) {
+                try {
+                    seedRandom(this._nextToken.randomSeed);
+                    this._logger = new GameLog(this.game.worldSize, inputLogConfig);
+                    this._token = this._nextToken;
+                    this._nextToken = undefined;
+                } catch (e) {
+                    initRandom();
+                    this._nextToken = this._token = undefined;
+                }
+            } else {
+                initRandom();
+                this._token = undefined;
             }
+            this.fetchNextGameToken();
+            this._gameplayContainer.show();
         });
-        this.events.on("finished", this, () => {
+        this.game.events.on("finished", this, () => {
             this._logger?.flush();
             this._gameOverScreen = new GameOverScreen({
                 queue: this._uiQueue,
-                events: this.events,
-                state: this.state,
-                inputProvider: this._input,
+                events: this._uiEvents,
+                state: this.game.state,
+                enableSave: !!this._token && !!this._logger && !!this._apiRoot,
             });
             this._hudContainer.addChild(this._gameOverScreen);
         });
-        this.events.on("startRequested", this, () => {
-            if (this._aboutOpen) {
+        this._uiEvents.on("start", this, () => {
+            if (this._aboutModal) {
                 return;
             }
             if (this._startScreen) {
-                this._startScreen.fadeOut().then(() => this.start());
+                this._startScreen.fadeOut().then(() => this.game.start());
             } else if (this._gameOverScreen) {
-                this._gameOverScreen.fadeOut().then(() => this.restart());
+                this._gameOverScreen.fadeOut().then(() => this.quit());
             }
         });
-        this.events.on("started", this, () => {
+        this.game.events.on("started", this, () => {
             if (this._startScreen) {
                 this._startScreen.destroy({ children: true });
                 this._startScreen = undefined;
@@ -319,49 +346,126 @@ export class AsteroidsGame extends CoreAsteroidsGame {
                 this._pauseScreen = undefined;
             }
         });
-        this.events.on("pauseRequested", this, this.pause);
-        this.events.on("paused", this, () => {
+        this._uiEvents.on("pause", this, () => this.game.pause());
+        this.game.events.on("paused", this, () => {
             if (!this._pauseScreen) {
                 this._pauseScreen = new PauseScreen({
                     queue: this._uiQueue,
-                    events: this.events,
-                    state: this.state,
+                    events: this._uiEvents,
+                    state: this.game.state,
                     inputProvider: this._input,
                 });
                 this._hudContainer.addChild(this._pauseScreen);
                 this._pauseScreen.fadeIn();
             }
         });
-        this.events.on("resumeRequested", this, () => {
+        this._uiEvents.on("resume", this, () => {
             if (this._pauseScreen) {
-                this._pauseScreen.fadeOut().then(() => this.resume());
+                this._pauseScreen.fadeOut().then(() => this.game.resume());
             }
         });
-        this.events.on("resumed", this, () => {
+        this.game.events.on("resumed", this, () => {
             if (this._pauseScreen) {
                 this._pauseScreen.destroy({ children: true });
                 this._pauseScreen = undefined;
             }
         });
-        this.events.on("quitRequested", this, () => {
+        this._uiEvents.on("quit", this, () => {
             if (this._pauseScreen) {
                 this._pauseScreen.fadeOut().then(() => this.quit());
             }
+            if (this._gameOverScreen) {
+                this.quit();
+                this._gameOverScreen.fadeOut();
+            }
         });
-        this.events.on("themeChanged", this, this.applyTheme);
-        this.events.on("aboutOpened", this, () => {
-            this._aboutOpen = true;
+        this._uiEvents.on("openAbout", this, () => {
+            if (!this._aboutModal) {
+                this._aboutModal = new AboutMeModal({
+                    queue: this._uiQueue,
+                    events: this._uiEvents,
+                });
+                this._hudContainer.addChild(this._aboutModal);
+                this._aboutModal.fadeIn();
+                this._gameOverScreen && this._gameOverScreen.fadeOut(0.6);
+                this._pauseScreen && this._pauseScreen.fadeOut(0.6);
+                this._startScreen && this._startScreen.fadeOut();
+            }
         });
-        this.events.on("aboutClosed", this, () => {
-            this._aboutOpen = false;
+        this._uiEvents.on("closeAbout", this, () => {
+            if (this._aboutModal) {
+                const modal = this._aboutModal;
+                this._aboutModal = undefined;
+                modal.fadeOut().then(() => {
+                    modal.destroy({ children: true });
+                });
+                this._gameOverScreen && this._gameOverScreen.fadeIn();
+                this._startScreen && this._startScreen.fadeIn();
+                this._pauseScreen && this._pauseScreen.fadeIn();
+            }
+        });
+        this._uiEvents.on("openSaveScore", this, () => {
+            if (this._token && this._logger && this._apiRoot && !this._saveScoreModal) {
+                this._saveScoreModal = new SaveScoreModal({
+                    queue: this._uiQueue,
+                    events: this._uiEvents,
+                    token: this._token,
+                    apiRoot: this._apiRoot,
+                    log: this._logger.log,
+                    state: this.game.state,
+                });
+                this._hudContainer.addChild(this._saveScoreModal);
+                this._saveScoreModal.fadeIn();
+                this._gameOverScreen && this._gameOverScreen.fadeOut(0.6);
+            }
+        });
+        this._uiEvents.on("closeSaveScore", this, (saved) => {
+            if (this._saveScoreModal) {
+                const modal = this._saveScoreModal;
+                this._saveScoreModal = undefined;
+                modal.fadeOut().then(() => {
+                    modal.destroy({ children: true });
+                });
+                if (this._gameOverScreen) {
+                    this._gameOverScreen.fadeIn();
+                    if (saved) {
+                        this._gameOverScreen.onSaved();
+                    }
+                }
+            }
+        });
+        this._uiEvents.on("openLeaderboard", this, () => {
+            if (this._token && this._logger && this._apiRoot && !this._leaderboardModal) {
+                this._leaderboardModal = new LeaderboardModal({
+                    queue: this._uiQueue,
+                    events: this._uiEvents,
+                });
+                this._hudContainer.addChild(this._leaderboardModal);
+                this._leaderboardModal.fadeIn();
+                this._gameOverScreen && this._gameOverScreen.fadeOut(0.6);
+                this._pauseScreen && this._pauseScreen.fadeOut(0.6);
+                this._startScreen && this._startScreen.fadeOut();
+            }
+        });
+        this._uiEvents.on("closeLeaderboard", this, () => {
+            if (this._leaderboardModal) {
+                const modal = this._leaderboardModal;
+                this._leaderboardModal = undefined;
+                modal.fadeOut().then(() => {
+                    modal.destroy({ children: true });
+                });
+                this._gameOverScreen && this._gameOverScreen.fadeIn();
+                this._startScreen && this._startScreen.fadeIn();
+                this._pauseScreen && this._pauseScreen.fadeIn();
+            }
         });
 
         this._timestamp = 0;
         this._nextAnimationFrameId = window.requestAnimationFrame(this.onAnimationFrame);
     }
 
-    override destroy(): void {
-        super.destroy();
+    destroy(): void {
+        this.game.destroy();
         if (this._nextAnimationFrameId) {
             window.cancelAnimationFrame(this._nextAnimationFrameId);
             this._nextAnimationFrameId = undefined;
@@ -376,15 +480,25 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._renderer.destroy(true);
     }
 
-    get log(): string | undefined {
-        return this._logger?.log;
+    private fetchNextGameToken(): void {
+        if (this._apiRoot) {
+            getGameToken(this._apiRoot).then((response) => {
+                if (response.ok) {
+                    this._nextToken = response.data;
+                }
+                if (this._startScreen) {
+                    this._startScreen.showLeaderboard = response.ok;
+                }
+            });
+        }
     }
 
-    get randomSeed(): string | undefined {
-        return this._randomSeed;
+    private getRandomTheme(): GameTheme {
+        return GAME_THEMES[random(0, GAME_THEMES.length - 1, false)];
     }
 
-    private applyTheme(theme: Theme): void {
+    private applyTheme(theme: GameTheme): void {
+        this._theme = theme;
         document.getElementById("background")!.style.background = theme.background;
         document.getElementById("background")!.style.opacity = "1";
         this._mainAlphaFilter.alpha = theme.foregroundAlpha;
@@ -393,37 +507,27 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         }
     }
 
-    private restart(): void {
-        if (this.state.status !== "init") {
-            this._background.style.opacity = "0";
-            this._gameplayContainer.fadeOut().then(() => {
-                this.reset(true);
-                this.start();
-                this._gameplayContainer.show();
-            });
-        }
+    private showStartScreen(): void {
+        this._startScreen = new StartScreen({
+            queue: this._uiQueue,
+            theme: this._theme,
+            state: this.game.state,
+            events: this._uiEvents,
+            inputProvider: this._input,
+        });
+        this._startScreen.showLeaderboard = !!this._nextToken;
+        this._hudContainer.addChild(this._startScreen);
     }
 
     private quit(): void {
-        if (this.state.status !== "init") {
+        if (this.game.state.status !== "init") {
             this._background.style.opacity = "0";
             this._gameplayContainer.fadeOut().then(() => {
-                this.reset(true);
-                this._gameplayContainer.show();
-                this._startScreen = new StartScreen({
-                    queue: this._uiQueue,
-                    state: this.state,
-                    events: this.events,
-                    inputProvider: this._input,
-                });
-                this._hudContainer.addChild(this._startScreen);
+                this.game.reset();
+                this.applyTheme(this.getRandomTheme());
+                this.showStartScreen();
             });
         }
-    }
-
-    protected override start(): void {
-        this._gameplayContainer.show();
-        super.start();
     }
 
     private onAnimationFrame = (timestamp: number): void => {
@@ -435,33 +539,36 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         let input = this._input.poll();
 
         if (input.start) {
-            if (this.state.status === "running") {
-                this.events.trigger("pauseRequested");
-            } else if (this.state.status === "init") {
-                this.events.trigger("startRequested");
-            } else if (this.state.status === "paused") {
-                this.events.trigger("resumeRequested");
+            if (this.game.state.status === "running") {
+                this._uiEvents.trigger("pause");
+            } else if (this.game.state.status === "init") {
+                this._uiEvents.trigger("start");
+            } else if (this.game.state.status === "paused") {
+                this._uiEvents.trigger("resume");
             }
         }
 
-        if (this._logger && this.state.status === "running") {
-            [elapsed, input] = this._logger.logFrame(elapsed, input, this.worldSize);
+        if (this._logger && this.game.state.status === "running") {
+            [elapsed, input] = this._logger.logFrame(elapsed, input, this.game.worldSize);
         }
 
         elapsed /= 1000;
         this._timestamp = timestamp;
 
-        super.tick(elapsed, input);
+        this.game.tick(elapsed, input);
         this._uiQueue.tick(this._timestamp, elapsed);
 
         // Debug options
 
         if (process.env.NODE_ENV === "development") {
             if (this.hitAreaDebugContainer.visible) {
-                this.hitAreaDebugContainer.visible = true;
-                const objects: GameObject<any, any>[] = [...this.state.projectiles, ...this.state.asteroids, ...this.state.ufos];
-                if (this.state.ship) {
-                    objects.push(this.state.ship);
+                const objects: GameObject<any, any>[] = [
+                    ...this.game.state.projectiles,
+                    ...this.game.state.asteroids,
+                    ...this.game.state.ufos
+                ];
+                if (this.game.state.ship) {
+                    objects.push(this.game.state.ship);
                 }
                 this.hitAreaDebugContainer.objects = objects;
             }
@@ -487,7 +594,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
 
     private onVisibilityChange = (): void => {
         if (document.hidden) {
-            this.events.trigger("pauseRequested");
+            this._uiEvents.trigger("pause");
         }
     }
 
@@ -500,17 +607,17 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         if (process.env.NODE_ENV === "development") {
             console.log("Aspect ratio changed", aspectRatio);
         }
-        this.aspectRatio = clamp(aspectRatio, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO);
+        this.game.aspectRatio = clamp(aspectRatio, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO);
         // Scale world based on new screen size and aspect ratio
         if (aspectRatio > MAX_ASPECT_RATIO) {
-            this._stage.scale.set(nativeHeight / this.worldSize.height);
+            this._stage.scale.set(nativeHeight / this.game.worldSize.height);
             this._renderer.resize(nativeHeight * MAX_ASPECT_RATIO, nativeHeight);
         } else if (aspectRatio < MIN_ASPECT_RATIO) {
-            this._stage.scale.set(nativeWidth / this.worldSize.width);
+            this._stage.scale.set(nativeWidth / this.game.worldSize.width);
             this._renderer.resize(nativeWidth, nativeWidth / MIN_ASPECT_RATIO);
         } else {
             this._renderer.resize(nativeWidth, nativeHeight);
-            this._stage.scale.set(nativeWidth / this.worldSize.width);
+            this._stage.scale.set(nativeWidth / this.game.worldSize.width);
         }
         // Position view in center of screen
         this._renderer.view.style.top = `${Math.round((this._container.clientHeight - this._renderer.view.clientHeight) / 2)}px`;
@@ -522,8 +629,8 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._background.style.height = `${this._renderer.view.height}px`;
         // Resize HUD
         this._hudContainer.layout.style({
-            width: this.worldSize.width,
-            height: this.worldSize.height,
+            width: this.game.worldSize.width,
+            height: this.game.worldSize.height,
         });
         // Adjust displacemnt of chromatic abberation
         this._mainAbberationFilter.maxDisplacement = RGB_SPLIT_SEPARATION * this._stage.scale.x;
@@ -537,84 +644,73 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this.drawBounds(aspectRatio);
     }
 
-    private drawBounds(aspectRatio: number): void {
-        const cornerExtra = 10;
-        const xCornerMarkingDistance = this.worldSize.width / 7;
-        const yCornerMarkingDistance = this.worldSize.height / 7;
-        const lineWidth = 2 / this._stage.scale.x;
+    private drawCornerBound(hy: number, hx1: number, hx2: number, vx: number, vy1: number, vy2: number): void {
+        const { worldSize } = this.game;
         const resolution = 10;
-        const { width, height } = this.worldSize;
-        let x, y;
 
-        // Draw bounds markers in each corner
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(worldSize, hx1, hy));
+        for (let hx = hx1 + resolution; hx < hx2 - 1; hx += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, hx, hy));
+        }
+        this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, hx2, hy));
+
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(worldSize, vx, vy1));
+        for (let vy = vy1 + resolution; vy < vy2 - 1; vy += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, vx, vy));
+        }
+        this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, vx, vy2));
+    }
+
+    private drawCornerBounds(lineWidth: number): void {
+        const extra = 10;
+        const xLength = this.game.worldSize.width / 7;
+        const yLength = this.game.worldSize.height / 7;
+        const { width, height } = this.game.worldSize;
+        const halfLineWidth = lineWidth / 2;
 
         this._cornerBoundsGraphics.clear();
         this._cornerBoundsGraphics.lineStyle({
             width: lineWidth,
-            color: 0xffffff,
-            alpha: 0.1,
+            color: this._theme.backgroundColor,
+            alpha: this._theme.backgroundAlpha * 2,
         });
 
-        y = lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, -cornerExtra, y));
-        for (x = 0; x < xCornerMarkingDistance; x += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, width + cornerExtra, y));
-        for (x = width; x > width - xCornerMarkingDistance; x -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
+        // Top left
+        this.drawCornerBound(halfLineWidth, -extra, xLength, halfLineWidth, -extra, yLength);
+        // Top Right
+        this.drawCornerBound(halfLineWidth, width - xLength, width + extra, width - halfLineWidth, -extra, yLength);
+        // Bottom left
+        this.drawCornerBound(height - halfLineWidth, -extra, xLength, halfLineWidth, height - yLength, height + extra);
+        // Bottom right
+        this.drawCornerBound(height - halfLineWidth, width - xLength, width + extra, width - halfLineWidth, height - yLength, height + extra);
+    }
 
-        y = height - lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, -cornerExtra, y));
-        for (x = 0; x < xCornerMarkingDistance; x += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, width + cornerExtra, y));
-        for (x = width; x > width - xCornerMarkingDistance; x -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
+    private drawBounds(aspectRatio: number): void {
+        const lineWidth = 2 / this._stage.scale.x;
+        const { width, height } = this.game.worldSize;
 
-        x = lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, -cornerExtra));
-        for (y = 0; y < yCornerMarkingDistance; y += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, height + cornerExtra));
-        for (y = height; y > height - yCornerMarkingDistance; y -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-
-        x = width - lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, -cornerExtra));
-        for (y = 0; y < yCornerMarkingDistance; y += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, height + cornerExtra));
-        for (y = height; y > height - yCornerMarkingDistance; y -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
+        this.drawCornerBounds(lineWidth);
 
         // If the game is letterboxed, draw absolute bounds
 
         this._absoluteBoundsGraphics.clear();
         this._absoluteBoundsGraphics.lineStyle({
             width: lineWidth,
-            color: 0xffffff,
-            alpha: 0.1,
+            color: this._theme.backgroundColor,
+            alpha: this._theme.backgroundAlpha * 2,
         });
 
         if (aspectRatio < MIN_ASPECT_RATIO) {
             this._absoluteBoundsGraphics.visible = true;
-            y = lineWidth / 2;
+            let y = lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(0, y).lineTo(width, y);
             y = height - lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(0, y).lineTo(width, y);
         } else if (aspectRatio > MAX_ASPECT_RATIO) {
             this._absoluteBoundsGraphics.visible = true;
-            x = lineWidth / 2;
+            let x = lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(x, 0).lineTo(x, height);
-            x = this.worldSize.width - lineWidth / 2;
+            x = width - lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(x, 0).lineTo(x, height);
         } else {
             this._absoluteBoundsGraphics.visible = false;

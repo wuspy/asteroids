@@ -5,23 +5,26 @@ import { BlurFilter } from "@pixi/filter-blur";
 import { Tickable } from "@core/engine";
 import { IShipDisplay, Ship, HYPERSPACE_DELAY } from "@core";
 import { Explosion, ShipSpawnAnimation } from "./animations";
+import { GameTheme } from "./GameTheme";
 
 export class ShipDisplay extends Container implements IShipDisplay, Tickable {
     private readonly _ship: Ship;
+    private readonly _theme: GameTheme;
     private readonly _shipGraphics: Graphics;
     private readonly _fireGraphics: Graphics;
     private readonly _shipShadow: Graphics;
     private readonly _fireShadow: Graphics;
     private _lastFireAnimation: number;
 
-    constructor(ship: Ship) {
+    constructor(ship: Ship, theme: GameTheme) {
         super();
         ship.display = this;
         this._ship = ship;
+        this._theme = theme;
         this.position.copyFrom(ship.position);
         this.rotation = ship.rotation;
 
-        this._shipGraphics = ShipDisplay.createModel(ship.state.theme.foregroundColor);
+        this._shipGraphics = ShipDisplay.createModel(theme.foregroundColor);
         this._fireGraphics = ShipDisplay.createFireModel();
         this._lastFireAnimation = 0;
 
@@ -112,7 +115,7 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
 
     createSpawnAnimation(): void {
         this.addChild(new ShipSpawnAnimation({
-            color: this._ship.state.theme.foregroundColor,
+            color: this._theme.foregroundColor,
             diameter: 50,
             queue: this._ship.queue,
         }));
@@ -123,7 +126,7 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
             queue: this._ship.queue,
             diameter: 250,
             maxDuration: 3000,
-            color: this._ship.state.theme.foregroundColor,
+            color: this._theme.foregroundColor,
         });
         explosion.position.copyFrom(this.position);
         explosion.rotation = this.rotation;

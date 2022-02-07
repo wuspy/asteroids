@@ -1,8 +1,9 @@
-export interface Game {
-    gameId: number,
-    username: string,
+export interface GameResponse {
+    id: number,
+    playerName: string,
     score: number,
     level: number,
+    duration: number,
     shotsFired: number,
     largeUfosDestroyed: number,
     smallUfosDestroyed: number,
@@ -10,5 +11,5 @@ export interface Game {
     randomSeed: string,
     log: string,
     version: string,
-    timestamp: string,
+    timeAdded: string,
 }

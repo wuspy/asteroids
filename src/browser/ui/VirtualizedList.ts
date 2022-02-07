@@ -10,8 +10,8 @@ export type ItemRenderer<T> = (item: T, index: number) => DisplayObject;
 export class VirtualizedList<T> extends TickableContainer {
     private readonly _itemContainer: Container;
     private readonly _itemRenderer: ItemRenderer<T>;
-    private readonly _renderedItems: { [Key in number]: DisplayObject };
-    private readonly _items: T[];
+    private _renderedItems: { [Key in number]: DisplayObject };
+    private _items: readonly T[];
     private readonly _itemHeight: number;
     // private readonly _edgeFadeFilter: EdgeFadeFilter;
     private _timeline?: anime.AnimeInstance;
@@ -21,7 +21,7 @@ export class VirtualizedList<T> extends TickableContainer {
 
     constructor(params: {
         queue: TickQueue,
-        items: T[],
+        items: readonly T[],
         itemRenderer: ItemRenderer<T>,
         itemHeight: number,
     }) {
@@ -65,6 +65,22 @@ export class VirtualizedList<T> extends TickableContainer {
         const mask = this.mask = new Graphics();
         mask.layout.excluded = true;
         this.addChild(mask);
+    }
+
+    get items(): readonly T[] {
+        return this._items;
+    }
+
+    set items(items: readonly T[]) {
+        this._items = items;
+        for (const item of Object.values(this._renderedItems)) {
+            item.destroy({ children: true });
+        }
+        this._renderedItems = {};
+        // Hack to force a redraw of all items
+        const height = this._currentHeight;
+        this._currentHeight = NaN;
+        this._scrollToPosition(this._currentPos, height);
     }
 
     scrollToIndex(index: number) {

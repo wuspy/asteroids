@@ -21,16 +21,21 @@ export type ApiResponse<T> = {
     reason: any,
 };
 
-export const fetch = async <T>(url: string, config: RequestInit): Promise<ApiResponse<T>> => {
+export const fetch = async <T>(url: string, init: RequestInit & { timeout?: number }): Promise<ApiResponse<T>> => {
     try {
+        const controller = new AbortController();
+        const id = window.setTimeout(() => controller.abort(), init.timeout || 60000);
         const response = await window.fetch(url, {
             credentials: "same-origin",
             headers: {
                 "Content-type": "application/json",
                 "accept": "application/json",
             },
-            ...config
+            ...init,
+            signal: controller.signal
         });
+        clearTimeout(id);
+
         if (response.ok) {
             const json = await response.json();
             if (typeof json === "object" && typeof json.ok === "boolean") {
@@ -69,8 +74,8 @@ export const fetch = async <T>(url: string, config: RequestInit): Promise<ApiRes
     }
 }
 
-export const get = async <T>(url: string): Promise<ApiResponse<T>> =>
-    fetch(url, { method: "GET" });
+export const get = async <T>(url: string, timeout?: number): Promise<ApiResponse<T>> =>
+    fetch(url, { method: "GET", timeout });
 
-export const post = async <T>(url: string, body: object = {}): Promise<ApiResponse<T>> =>
-    fetch(url, { method: "POST", body: JSON.stringify(body) });
+export const post = async <T>(url: string, body: object = {}, timeout?: number): Promise<ApiResponse<T>> =>
+    fetch(url, { method: "POST", body: JSON.stringify(body), timeout });

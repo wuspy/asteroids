@@ -14,3 +14,6 @@ export * from "./TextInput";
 export * from "./RevealText";
 export * from "./ScoreText";
 export * from "./theme";
+export * from "./LoadingAnimation";
+export * from "./ControlGraphic";
+export * from "./ControlDescription";

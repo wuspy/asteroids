@@ -1,6 +1,7 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Tickable } from "@core/engine";
-import { IProjectileDisplay, Projectile, PROJECTILE_LIFETIME } from "@core";
+import { IProjectileDisplay, Projectile, PROJECTILE_LIFETIME, UFO } from "@core";
+import { GameTheme } from "./GameTheme";
 
 const GEOMETRY = (() => {
     const graphics = new Graphics();
@@ -11,19 +12,40 @@ const GEOMETRY = (() => {
 })();
 
 export class ProjectileDisplay extends Graphics implements IProjectileDisplay, Tickable {
+    // private readonly _timeline: anime.AnimeTimelineInstance;
     private readonly _projectile: Projectile;
 
-    constructor(projectile: Projectile) {
+    constructor(projectile: Projectile, theme: GameTheme) {
         super(GEOMETRY);
         projectile.display = this;
         this._projectile = projectile;
         this._projectile.queue.add(100, this);
-        this.tint = this._projectile.color;
+        this.tint = projectile.from instanceof UFO ? theme.ufoColor : theme.foregroundColor;
         this.position.copyFrom(projectile.position);
         this.rotation = projectile.rotation;
+
+        // TODO keep this or not?
+        // this.filters = [
+        //     new GlowFilter({
+        //         outerStrength: 2,
+        //         distance: 10,
+        //         color: this._projectile.color,
+        //     })
+        // ];
+        // this._timeline = anime.timeline({
+        //     autoplay: false,
+        //     loop: true,
+        //     direction: "alternate",
+        // }).add({
+        //     targets: this.filters![0],
+        //     outerStrength: 6,
+        //     duration: 50,
+        //     easing: "linear",
+        // });
     }
 
     tick(timestamp: number, elapsed: number): void {
+        // this._timeline.tick(timestamp);
         this.alpha = Math.min(1, (PROJECTILE_LIFETIME - this._projectile.traveled) / (PROJECTILE_LIFETIME * 0.2));
     }
 

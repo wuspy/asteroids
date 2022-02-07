@@ -1,23 +1,23 @@
-export interface Theme {
+export interface GameTheme {
     background: string;
+    backgroundColor: number;
+    backgroundAlpha: number;
     foregroundColor: number;
     foregroundContrastColor: number
     foregroundAlpha: number;
     ufoColor: number;
-    backgroundAsteroidColor: number;
-    backgroundAsteroidAlpha: number;
 }
 
 const DEFAULTS = {
+    backgroundColor: 0xffffff,
+    backgroundAlpha: 0.05,
     foregroundColor: 0xffffff,
     foregroundContrastColor: 0x000000,
     foregroundAlpha: 0.9,
     ufoColor: 0xffff00,
-    backgroundAsteroidColor: 0xffffff,
-    backgroundAsteroidAlpha: 0.05,
 } as const;
 
-export const THEMES: readonly Theme[] = [
+export const GAME_THEMES: readonly GameTheme[] = [
     {
         ...DEFAULTS,
         background: "linear-gradient(90deg, #00394c, #006a54)",
