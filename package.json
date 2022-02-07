@@ -1,7 +1,7 @@
 {
     "name": "website",
     "author": "Jacob Jordan",
-    "version": "1.0.104",
+    "version": "1.0.105",
     "license": "MIT",
     "devDependencies": {
         "@types/animejs": "^3.1.4",
