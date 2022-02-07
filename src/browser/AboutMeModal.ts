@@ -3,6 +3,7 @@ import { Loader } from "@pixi/loaders";
 import { TickQueue } from "@core/engine";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { Image, Button, LinearGroup, Modal, Text, ButtonType, UI_FOREGROUND_COLOR } from "./ui";
+import { ITextStyle } from "@pixi/text";
 
 export class AboutMeModal extends Modal {
     constructor(params: {
@@ -30,29 +31,35 @@ export class AboutMeModal extends Modal {
         }
         Loader.shared.load();
 
-        const header = new Text("Hi!👋I'm Jacob.", {
+        const header = new Container();
+        header.flexContainer = true;
+        const headerTextStyle: Partial<ITextStyle> = {
             fontSize: 50,
             lineHeight: 60,
             fill: UI_FOREGROUND_COLOR,
             fontWeight: "bold",
-        });
+        };
+        header.addChild(new Text("Hi!", headerTextStyle));
+        const emoji = new Text("👋", headerTextStyle);
+        emoji.layout.marginHorizontal = 10;
+        header.addChild(emoji);
+        header.addChild(new Text("I'm Jacob.", headerTextStyle));
         this.layout.style({
             padding: 24,
-            width: 660,
+            width: 700,
         });
         header.layout.style({
             marginTop: 4,
             marginBottom: 12,
         });
 
-        const subheader = new Text("Thanks for checking out my site and my little game :)", {
+        const subheader = new Text("Thanks for checking out my\nsite and my little game :)", {
             fontSize: 28,
             fill: UI_FOREGROUND_COLOR,
             lineHeight: 32,
             fontWeight: "bold",
             wordWrap: true,
         });
-        subheader.layout.width = 440;
 
         const avatar = new Image({
             queue: this.queue,
@@ -100,19 +107,19 @@ export class AboutMeModal extends Modal {
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "Stormy",
-            subCaption: "a very fitting name but he's very sweet",
+            subCaption: "a very fitting name\nbut he's very sweet",
             resource: "stormy.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "Booties",
-            subCaption: "cause her feet look like little booties",
+            subCaption: "cause her feet look\nlike little booties",
             resource: "booties.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "G.K.",
-            subCaption: "it stands for gray kitty don't judge me",
+            subCaption: "it stands for gray\nkitty don't judge me",
             resource: "gk.webp",
         }));
 

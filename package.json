@@ -36,7 +36,8 @@
         "build": "webpack --mode=production --node-env=production",
         "watch": "webpack --watch",
         "build:dev": "webpack --mode=development",
-        "build:prod": "webpack --mode=production --node-env=production"
+        "build:prod": "webpack --mode=production --node-env=production",
+        "server:dev": "cd dist && NODE_ENV=development nodemon server.js"
     },
     "dependencies": {
         "@pixi/constants": "^6.2.2",

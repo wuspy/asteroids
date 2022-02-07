@@ -23,7 +23,7 @@ const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
 const MAX_DEVICE_PIXEL_RATIO = 2;
 
-const ENABLE_LOGGING = true;
+const ENABLE_LOGGING = false;
 
 declare global {
     interface Window {
@@ -302,7 +302,7 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             if (this._startScreen) {
                 this._startScreen.fadeOut().then(() => this.start());
             } else if (this._gameOverScreen) {
-                this._gameOverScreen.fadeOut().then(() => this.restart());
+                this._gameOverScreen.fadeOut().then(() => this.quit());
             }
         });
         this.events.on("started", this, () => {
@@ -390,17 +390,6 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this._mainAlphaFilter.alpha = theme.foregroundAlpha;
         if (process.env.NODE_ENV === "development") {
             console.log("Applied theme", theme);
-        }
-    }
-
-    private restart(): void {
-        if (this.state.status !== "init") {
-            this._background.style.opacity = "0";
-            this._gameplayContainer.fadeOut().then(() => {
-                this.reset(true);
-                this.start();
-                this._gameplayContainer.show();
-            });
         }
     }
 
