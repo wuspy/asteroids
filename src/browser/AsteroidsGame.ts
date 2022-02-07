@@ -526,16 +526,29 @@ export class AsteroidsGame extends CoreAsteroidsGame {
         this.drawBounds(aspectRatio);
     }
 
-    private drawBounds(aspectRatio: number): void {
-        const cornerExtra = 10;
-        const xCornerMarkingDistance = this.worldSize.width / 7;
-        const yCornerMarkingDistance = this.worldSize.height / 7;
-        const lineWidth = 2 / this._stage.scale.x;
+    private drawCornerBound(hy: number, hx1: number, hx2: number, vx: number, vy1: number, vy2: number): void {
+        const { worldSize } = this;
         const resolution = 10;
-        const { width, height } = this.worldSize;
-        let x, y;
 
-        // Draw bounds markers in each corner
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(worldSize, hx1, hy));
+        for (let hx = hx1 + resolution; hx < hx2 - 1; hx += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, hx, hy));
+        }
+        this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, hx2, hy));
+
+        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(worldSize, vx, vy1));
+        for (let vy = vy1 + resolution; vy < vy2 - 1; vy += resolution) {
+            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, vx, vy));
+        }
+        this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(worldSize, vx, vy2));
+    }
+
+    private drawCornerBounds(lineWidth: number): void {
+        const extra = 10;
+        const xLength = this.worldSize.width / 7;
+        const yLength = this.worldSize.height / 7;
+        const { width, height } = this.worldSize;
+        const halfLineWidth = lineWidth / 2;
 
         this._cornerBoundsGraphics.clear();
         this._cornerBoundsGraphics.lineStyle({
@@ -544,45 +557,21 @@ export class AsteroidsGame extends CoreAsteroidsGame {
             alpha: 0.1,
         });
 
-        y = lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, -cornerExtra, y));
-        for (x = 0; x < xCornerMarkingDistance; x += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, width + cornerExtra, y));
-        for (x = width; x > width - xCornerMarkingDistance; x -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
+        // Top left
+        this.drawCornerBound(halfLineWidth, -extra, xLength, halfLineWidth, -extra, yLength);
+        // Top Right
+        this.drawCornerBound(halfLineWidth, width - xLength, width + extra, width - halfLineWidth, -extra, yLength);
+        // Bottom left
+        this.drawCornerBound(height - halfLineWidth, -extra, xLength, halfLineWidth, height - yLength, height + extra);
+        // Bottom right
+        this.drawCornerBound(height - halfLineWidth, width - xLength, width + extra, width - halfLineWidth, height - yLength, height + extra);
+    }
 
-        y = height - lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, -cornerExtra, y));
-        for (x = 0; x < xCornerMarkingDistance; x += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, width + cornerExtra, y));
-        for (x = width; x > width - xCornerMarkingDistance; x -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
+    private drawBounds(aspectRatio: number): void {
+        const lineWidth = 2 / this._stage.scale.x;
+        const { width, height } = this.worldSize;
 
-        x = lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, -cornerExtra));
-        for (y = 0; y < yCornerMarkingDistance; y += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, height + cornerExtra));
-        for (y = height; y > height - yCornerMarkingDistance; y -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-
-        x = width - lineWidth / 2;
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, -cornerExtra));
-        for (y = 0; y < yCornerMarkingDistance; y += resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
-        this._cornerBoundsGraphics.moveTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, height + cornerExtra));
-        for (y = height; y > height - yCornerMarkingDistance; y -= resolution) {
-            this._cornerBoundsGraphics.lineTo(...this._mainWarpFilter.getDisplacement(this.worldSize, x, y));
-        }
+        this.drawCornerBounds(lineWidth);
 
         // If the game is letterboxed, draw absolute bounds
 
@@ -595,15 +584,15 @@ export class AsteroidsGame extends CoreAsteroidsGame {
 
         if (aspectRatio < MIN_ASPECT_RATIO) {
             this._absoluteBoundsGraphics.visible = true;
-            y = lineWidth / 2;
+            let y = lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(0, y).lineTo(width, y);
             y = height - lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(0, y).lineTo(width, y);
         } else if (aspectRatio > MAX_ASPECT_RATIO) {
             this._absoluteBoundsGraphics.visible = true;
-            x = lineWidth / 2;
+            let x = lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(x, 0).lineTo(x, height);
-            x = this.worldSize.width - lineWidth / 2;
+            x = width - lineWidth / 2;
             this._absoluteBoundsGraphics.moveTo(x, 0).lineTo(x, height);
         } else {
             this._absoluteBoundsGraphics.visible = false;
