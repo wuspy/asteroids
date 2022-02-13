@@ -6,16 +6,15 @@ import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { random, TickQueue, EventManager, InputState } from "./engine";
 import { UFO } from "./UFO";
-import { Theme, THEMES } from "./Theme";
 import { controls } from "./input";
 
 const WORLD_AREA_PX = WORLD_AREA * 1000000;
 
-export abstract class CoreAsteroidsGame {
+export class AsteroidsGame {
     readonly state: GameState;
     readonly events: EventManager<GameEvents>;
     readonly worldSize: ISize;
-    readonly queue: TickQueue;
+    private readonly queue: TickQueue;
     private _nextLevelCountdown: number;
     private _respawnCountdown: number;
     private _nextUFOSpawn: number;
@@ -24,7 +23,7 @@ export abstract class CoreAsteroidsGame {
         this.worldSize = { width: 0, height: 0 };
         this.aspectRatio = 1;
         this.events = new EventManager();
-        this.queue = new TickQueue("game");
+        this.queue = new TickQueue();
 
         this.state = {
             level: 1,
@@ -32,7 +31,6 @@ export abstract class CoreAsteroidsGame {
             lives: LIVES,
             status: "init",
             timestamp: 0,
-            theme: this.getRandomTheme(),
             asteroids: [],
             projectiles: [],
             ufos: [],
@@ -59,7 +57,7 @@ export abstract class CoreAsteroidsGame {
         });
 
         this.events.on("asteroidsCreated", this, (asteroids) => this.addGameObjects("asteroids", ...asteroids));
-        this.events.on("asteroidDestroyed", this, (asteroid, scored) => {
+        this.events.on("asteroidDestroyed", this, (asteroid, hit, scored) => {
             if (scored) {
                 this.addScore(asteroid.score);
             }
@@ -67,7 +65,7 @@ export abstract class CoreAsteroidsGame {
         });
 
         this.events.on("ufoCreated", this, (ufo) => this.addGameObjects("ufos", ufo));
-        this.events.on("ufoDestroyed", this, (ufo, scored) => {
+        this.events.on("ufoDestroyed", this, (ufo, hit, scored) => {
             if (scored) {
                 this.addScore(ufo.score);
             }
@@ -78,21 +76,17 @@ export abstract class CoreAsteroidsGame {
         this.events.on("projectileDestroyed", this, (projectile) => this.removeGameObject("projectiles", projectile));
     }
 
-    protected destroy(): void {
-        this.reset(false);
+    destroy(): void {
+        this.reset();
+        this.queue.clear();
         this.events.offThis(this);
     }
 
-    protected getRandomTheme(): Theme {
-        return THEMES[random(0, THEMES.length - 1, false)];
-    }
-
-    protected start(): void {
+    start(): void {
         if (this.state.status !== "init") {
             return;
         }
-        this.reset(false);
-
+        this.events.trigger("beforeStart");
         this.spawnShip(false);
         this.setNextUFOSpawn();
         Asteroid.createInitial({
@@ -105,18 +99,18 @@ export abstract class CoreAsteroidsGame {
         this.events.trigger("started");
     }
 
-    protected reset(newTheme: boolean): void {
+    reset(): void {
         if (this.state.ship) {
-            this.state.ship.destroy();
+            this.state.ship.destroy({ hit: false });
         }
         for (let i = this.state.projectiles.length - 1; i >= 0; i--) {
-            this.state.projectiles[i].destroy();
+            this.state.projectiles[i].destroy({ hit: false });
         }
         for (let i = this.state.asteroids.length - 1; i >= 0; i--) {
-            this.state.asteroids[i].destroy();
+            this.state.asteroids[i].destroy({ hit: false, scored: false, createChildren: false });
         }
         for (let i = this.state.ufos.length - 1; i >= 0; i--) {
-            this.state.ufos[i].destroy();
+            this.state.ufos[i].destroy({ hit: false, scored: false });
         }
 
         if (process.env.NODE_ENV === "development") {
@@ -142,40 +136,17 @@ export abstract class CoreAsteroidsGame {
         this.state.timestamp = 0;
         this.state.status = "init";
 
-        if (newTheme) {
-            let theme;
-            do {
-                theme = this.getRandomTheme();
-            } while (theme === this.state.theme);
-            this.state.theme = theme;
-            this.events.trigger("themeChanged", theme);
-        }
-
         this._respawnCountdown = 0;
         this._nextLevelCountdown = 0;
         this._nextUFOSpawn = 0;
         this.events.trigger("reset");
     }
 
-    protected resume(): void {
-        if (this.state.status === "paused") {
-            this.state.status = "running";
-            this.events.trigger("resumed");
-        }
-    }
-
-    protected pause(): void {
-        if (this.state.status === "running") {
-            this.state.status = "paused";
-            this.events.trigger("paused");
-        }
-    }
-
-    protected get aspectRatio(): number {
+    get aspectRatio(): number {
         return this.worldSize.width / this.worldSize.height;
     }
 
-    protected set aspectRatio(aspectRatio: number) {
+    set aspectRatio(aspectRatio: number) {
         if (aspectRatio > MAX_ASPECT_RATIO || aspectRatio < MIN_ASPECT_RATIO) {
             throw new Error(`Aspect ratio ${aspectRatio} must be between ${MIN_ASPECT_RATIO} and ${MAX_ASPECT_RATIO}`);
         }
@@ -183,14 +154,15 @@ export abstract class CoreAsteroidsGame {
         this.worldSize.height = Math.floor(WORLD_AREA_PX / this.worldSize.width);
     }
 
-    protected tick(elapsed: number, input: InputState<typeof controls>): void {
+    tick(elapsed: number, input: InputState<typeof controls>): void {
         const { ship, asteroids, projectiles, ufos } = this.state;
 
-        if (this.state.status === "paused" || this.state.status === "init") {
+        if (this.state.status === "init" || this.state.status === "destroyed") {
             return;
         }
 
-        this.state.timestamp += elapsed * 1000;
+        this.state.timestamp += elapsed;
+        elapsed /= 1000;
 
         // Handle user input
 
@@ -218,8 +190,8 @@ export abstract class CoreAsteroidsGame {
         for (let i = 0; i < ufos.length; i++) {
             for (let j = i + 1; j < ufos.length; j++) {
                 if (ufos[i].collidesWith(ufos[j])) {
-                    ufos[i].destroy({ explode: true, scored: false });
-                    ufos[j - 1].destroy({ explode: true, scored: false });
+                    ufos[i].destroy({ hit: true, scored: false });
+                    ufos[j - 1].destroy({ hit: true, scored: false });
                     break;
                 }
             }
@@ -230,8 +202,8 @@ export abstract class CoreAsteroidsGame {
         for (const asteroid of asteroids) {
             for (const ufo of ufos) {
                 if (ufo.collidesWith(asteroid)) {
-                    ufo.destroy({ explode: true, scored: false });
-                    asteroid.destroy({ explode: true, scored: false, createChildren: true });
+                    ufo.destroy({ hit: true, scored: false });
+                    asteroid.destroy({ hit: true, scored: false, createChildren: true });
                     break;
                 }
             }
@@ -242,9 +214,9 @@ export abstract class CoreAsteroidsGame {
         for (const ufo of ufos) {
             for (const projectile of projectiles) {
                 if (projectile.from !== ufo && projectile.collidesWith(ufo)) {
-                    projectile.destroy();
+                    projectile.destroy({ hit: true });
                     ufo.destroy({
-                        explode: true,
+                        hit: true,
                         scored: projectile.from === ship && this.state.status !== "finished",
                     });
                     break;
@@ -258,11 +230,11 @@ export abstract class CoreAsteroidsGame {
             for (const projectile of projectiles) {
                 if (projectile.collidesWith(asteroid)) {
                     asteroid.destroy({
-                        explode: true,
+                        hit: true,
                         scored: projectile.from === ship && this.state.status !== "finished",
                         createChildren: true,
                     });
-                    projectile.destroy();
+                    projectile.destroy({ hit: true });
                     break;
                 }
             }
@@ -373,22 +345,22 @@ export abstract class CoreAsteroidsGame {
         if (ship && !ship.invulnerable) {
             for (const ufo of ufos) {
                 if (ship.collidesWith(ufo)) {
-                    ufo.destroy({ explode: true, scored: true });
-                    ship.destroy({ explode: true });
+                    ufo.destroy({ hit: true, scored: true });
+                    ship.destroy({ hit: true });
                     return;
                 }
             }
             for (const asteroid of asteroids) {
                 if (ship.collidesWith(asteroid)) {
-                    asteroid.destroy({ explode: true, scored: true, createChildren: true });
-                    ship.destroy({ explode: true });
+                    asteroid.destroy({ hit: true, scored: true, createChildren: true });
+                    ship.destroy({ hit: true });
                     return;
                 }
             }
             for (const projectile of projectiles) {
                 if (projectile.from !== ship && ship.collidesWith(projectile)) {
-                    projectile.destroy();
-                    ship.destroy({ explode: true });
+                    projectile.destroy({ hit: true });
+                    ship.destroy({ hit: true });
                     return;
                 }
             }

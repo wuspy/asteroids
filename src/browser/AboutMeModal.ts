@@ -1,58 +1,54 @@
 import { Container } from "@pixi/display";
 import { Loader } from "@pixi/loaders";
-import { TickQueue } from "@core/engine";
+import { ITextStyle } from "@pixi/text";
+import { TickQueue, EventManager } from "@core/engine";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { Image, Button, LinearGroup, Modal, Text, ButtonType, UI_FOREGROUND_COLOR } from "./ui";
+import { UIEvents } from "./UIEvents";
 
 export class AboutMeModal extends Modal {
     constructor(params: {
         queue: TickQueue,
-        onClose: () => void
+        events: EventManager<UIEvents>
     }) {
         super({ queue: params.queue });
-        if (!Loader.shared.resources["github-64px.webp"]) {
-            Loader.shared.add("github-64px.webp", "assets/github-64px.webp");
-        }
-        if (!Loader.shared.resources["linkedin-64px.webp"]) {
-            Loader.shared.add("linkedin-64px.webp", "assets/linkedin-64px.webp");
-        }
-        if (!Loader.shared.resources["me.webp"]) {
-            Loader.shared.add("me.webp", "assets/me.webp");
-        }
-        if (!Loader.shared.resources["booties.webp"]) {
-            Loader.shared.add("booties.webp", "assets/booties.webp");
-        }
-        if (!Loader.shared.resources["stormy.webp"]) {
-            Loader.shared.add("stormy.webp", "assets/stormy.webp");
-        }
-        if (!Loader.shared.resources["gk.webp"]) {
-            Loader.shared.add("gk.webp", "assets/gk.webp");
-        }
-        Loader.shared.load();
+        Loader.shared
+            .add("github-64px.webp", "assets/github-64px.webp")
+            .add("linkedin-64px.webp", "assets/linkedin-64px.webp")
+            .add("me.webp", "assets/me.webp")
+            .add("booties.webp", "assets/booties.webp")
+            .add("stormy.webp", "assets/stormy.webp")
+            .add("gk.webp", "assets/gk.webp")
+            .load();
 
-        const header = new Text("Hi!👋I'm Jacob.", {
+        const header = new Container();
+        header.flexContainer = true;
+        const headerTextStyle: Partial<ITextStyle> = {
             fontSize: 50,
             lineHeight: 60,
             fill: UI_FOREGROUND_COLOR,
             fontWeight: "bold",
-        });
+        };
+        header.addChild(new Text("Hi!", headerTextStyle));
+        const emoji = new Text("👋", headerTextStyle);
+        emoji.layout.marginHorizontal = 10;
+        header.addChild(emoji);
+        header.addChild(new Text("I'm Jacob.", headerTextStyle));
         this.layout.style({
             padding: 24,
-            width: 660,
+            width: 700,
         });
         header.layout.style({
             marginTop: 4,
             marginBottom: 12,
         });
 
-        const subheader = new Text("Thanks for checking out my site and my little game :)", {
+        const subheader = new Text("Thanks for checking out my\nsite and my little game :)", {
             fontSize: 28,
             fill: UI_FOREGROUND_COLOR,
             lineHeight: 32,
             fontWeight: "bold",
-            wordWrap: true,
         });
-        subheader.layout.width = 440;
 
         const avatar = new Image({
             queue: this.queue,
@@ -100,19 +96,19 @@ export class AboutMeModal extends Modal {
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "Stormy",
-            subCaption: "a very fitting name but he's very sweet",
+            subCaption: "a very fitting name\nbut he's very sweet",
             resource: "stormy.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "Booties",
-            subCaption: "cause her feet look like little booties",
+            subCaption: "cause her feet look\nlike little booties",
             resource: "booties.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "G.K.",
-            subCaption: "it stands for gray kitty don't judge me",
+            subCaption: "it stands for gray\nkitty don't judge me",
             resource: "gk.webp",
         }));
 
@@ -137,7 +133,7 @@ export class AboutMeModal extends Modal {
                 queue: this.queue,
                 type: ButtonType.Secondary,
                 text: "Back to Game",
-                onClick: params.onClose,
+                onClick: () => params.events.trigger("closeAbout"),
             }),
         ]);
         buttons.layout.alignSelf = Align.Center;

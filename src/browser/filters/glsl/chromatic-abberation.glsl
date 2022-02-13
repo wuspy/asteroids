@@ -1,9 +1,9 @@
 precision mediump float;
 
 varying vec2 vTextureCoord;
+uniform vec4 inputSize;
 
 uniform sampler2D uSampler;
-uniform vec4 filterArea;
 uniform float maxDisplacement;
 uniform float exponent;
 uniform bool swap;
@@ -11,19 +11,13 @@ uniform bool swap;
 // Maps relative (0-1) coordinates to pixel coordinates
 vec2 mapCoord(vec2 coord)
 {
-    coord *= filterArea.xy;
-    coord += filterArea.zw;
-
-    return coord;
+    return coord *= inputSize.xy;
 }
 
 // Maps pixel coordinates to relative (0-1) coordinates
 vec2 unmapCoord(vec2 coord)
 {
-    coord -= filterArea.zw;
-    coord /= filterArea.xy;
-
-    return coord;
+    return coord /= inputSize.xy;
 }
 
 void main(void)

@@ -19,12 +19,15 @@ import { DynamicGameObject, random, CoreGameObjectParams, Vec2, IGameObjectDispl
 import { IPointData, DEG_TO_RAD } from "@pixi/math";
 import { Projectile } from "./Projectile";
 
-export interface IShipDisplay extends IGameObjectDisplay {
-    createSpawnAnimation(): void;
-    createExplosion(): void;
+export interface ShipDestroyOptions {
+    hit: boolean;
 }
 
-export class Ship extends DynamicGameObject<GameState, GameEvents> {
+export interface IShipDisplay extends IGameObjectDisplay<ShipDestroyOptions> {
+    onHyperspace(): void;
+}
+
+export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameEvents> {
     override display?: IShipDisplay;
     accelerationAmount: number;
     rotationAmount: number;
@@ -63,7 +66,7 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
                     random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2, true),
                     random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2, true),
                 );
-                this.display?.createSpawnAnimation();
+                this.display?.onHyperspace();
             }
             this._hyperspaceCountdown = Math.max(0, this._hyperspaceCountdown - elapsed);
         }
@@ -79,14 +82,9 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
         super.tick(timestamp, elapsed);
     }
 
-    override destroy(options?: {
-        explode: boolean,
-    }): void {
-        if (!!options?.explode && this.display) {
-            this.display.createExplosion();
-        }
-        super.destroy();
-        this.events.trigger("shipDestroyed", this);
+    override destroy(options: ShipDestroyOptions): void {
+        super.destroy(options);
+        this.events.trigger("shipDestroyed", this, options.hit);
     }
 
     fire(): void {
@@ -100,7 +98,6 @@ export class Ship extends DynamicGameObject<GameState, GameEvents> {
             // Give projectiles a little boost if we're moving in the same direction
             speed: Math.max(SHIP_PROJECTILE_SPEED, SHIP_PROJECTILE_SPEED + this.speedAtRotation / 2),
             from: this,
-            color: this.state.theme.foregroundColor,
         }));
         // Add recoil
         if (this.speedAtRotation > -MAX_SPEED) {

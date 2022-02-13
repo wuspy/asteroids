@@ -5,11 +5,14 @@ import { GameEvents } from "./GameEvents";
 import { atan2, calculateVelocityToIntercept, CoreGameObjectParams, GameObject, IGameObjectDisplay, random, WrapMode } from "./engine";
 import { Projectile } from "./Projectile";
 
-export interface IUFODisplay extends IGameObjectDisplay {
-    createExplosion(): void;
+export interface UFODestroyOptions {
+    hit: boolean;
+    scored: boolean;
 }
 
-export class UFO extends GameObject<GameState, GameEvents> {
+export type IUFODisplay = IGameObjectDisplay<UFODestroyOptions>;
+
+export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
     override display?: IUFODisplay;
     private _type: UFOType;
     private _nextFireTime!: number;
@@ -58,7 +61,7 @@ export class UFO extends GameObject<GameState, GameEvents> {
         if ((this._direction === 1 && this.position.x > this.worldSize.width + this.boundingBox.width / 2)
             || (this._direction === -1 && this.position.x < -this.boundingBox.width / 2)
         ) {
-            this.destroy();
+            this.destroy({ hit: false, scored: false });
         } else if (timestamp >= this._nextFireTime) {
             this.fire();
             this.setNextFireTime();
@@ -115,7 +118,6 @@ export class UFO extends GameObject<GameState, GameEvents> {
             rotation: angle,
             speed: UFO_PROJECTILE_SPEEDS[this._type],
             from: this,
-            color: this.state.theme.ufoColor,
         }));
     }
 
@@ -127,15 +129,9 @@ export class UFO extends GameObject<GameState, GameEvents> {
         this._nextYShift = this.state.timestamp + random(UFO_SHIFT_INTERVALS[this._type][0] * 1000, UFO_SHIFT_INTERVALS[this._type][1] * 1000, true);
     }
 
-    override destroy(options?: {
-        explode: boolean,
-        scored: boolean,
-    }): void {
-        if (!!options?.explode && this.display) {
-            this.display.createExplosion();
-        }
-        super.destroy();
-        this.events.trigger("ufoDestroyed", this, !!options?.scored);
+    override destroy(options: UFODestroyOptions): void {
+        super.destroy(options);
+        this.events.trigger("ufoDestroyed", this, !!options?.hit, !!options?.scored);
     }
 
     get score(): number {

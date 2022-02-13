@@ -2,11 +2,14 @@ import { Container, DisplayObject } from "@pixi/display";
 import { TickQueue } from "@core/engine";
 import { Text } from "./Text";
 import { Align, FlexDirection, JustifyContent, PositionType } from "../layout";
-import { MODAL_BACKGROUND, UI_FOREGROUND_COLOR } from "./theme";
+import { MODAL_BACKGROUND } from "./theme";
 import { Divider } from "./Divider";
 import { FadeContainer } from "./FadeContainer";
+import { DividerDirection } from ".";
 
 export class Modal extends FadeContainer {
+    static readonly MARGIN = 16;
+
     public constructor(params: {
         queue: TickQueue,
         header?: {title: string, rightContent?: DisplayObject},
@@ -21,7 +24,7 @@ export class Modal extends FadeContainer {
         this.layout.style({
             position: PositionType.Absolute,
             flexDirection: FlexDirection.Column,
-            padding: 12,
+            padding: Modal.MARGIN,
         });
 
         if (params.header) {
@@ -32,18 +35,15 @@ export class Modal extends FadeContainer {
                 alignItems: Align.Center,
                 justifyContent: JustifyContent.SpaceBetween,
             });
-            const title = new Text(params.header.title, {
-                fontSize: 32,
-                fill: UI_FOREGROUND_COLOR,
-            });
+            const title = new Text(params.header.title, { fontSize: 32 });
             title.cacheAsBitmap = true;
             headerContainer.addChild(title);
             if (params.header.rightContent) {
-                title.layout.marginRight = 12;
+                title.layout.marginRight = Modal.MARGIN;
                 headerContainer.addChild(params.header.rightContent);
             }
             this.addChild(headerContainer);
-            this.addChild(new Divider());
+            this.addChild(new Divider(DividerDirection.Horizontal, Modal.MARGIN));
         }
     }
 }

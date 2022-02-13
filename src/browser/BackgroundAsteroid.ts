@@ -1,12 +1,13 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { ISize, Rectangle } from "@pixi/math";
-import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, getPolygonBoundingBox, random, scalePolygon, TickQueue, Vec2 } from "@core/engine";
+import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, random, TickQueue, Vec2 } from "@core/engine";
 import { ASTEROID_GENERATION_COUNT, ASTEROID_HITAREAS, GameState, GameEvents, generateAsteroidAngle } from "@core";
+import { GameTheme } from "./GameTheme";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
 
-const BACKGROUND_POLYGONS = ASTEROID_HITAREAS.map((generation) => generation.map((polygon) => scalePolygon(polygon, 0.6)));
+const BACKGROUND_POLYGONS = ASTEROID_HITAREAS.map((generation) => generation.map((polygon) => polygon.clone().scale(0.6)));
 
 // Since background asteroids are never used for hit detection, don't bother adding the overhead
 // of giving them polygon hitareas. Just give them point hitareas with a radius that will produce
@@ -16,7 +17,7 @@ const BACKGROUND_POLYGONS = ASTEROID_HITAREAS.map((generation) => generation.map
 // they actually are, to make them wrap the screen consistently so they don't begin to overlap
 // as the game progresses.
 const HITAREAS = BACKGROUND_POLYGONS.map((generations) => {
-    const boundingBox = getPolygonBoundingBox(generations[0]);
+    const boundingBox = generations[0].getBoundingBox();
     return Math.max(boundingBox.width, boundingBox.height) / 2;
 });
 
@@ -32,16 +33,17 @@ const GEOMETRIES = BACKGROUND_POLYGONS.map((generations) => generations.map((pol
     return graphics.geometry;
 }));
 
-export class BackgroundAsteroid extends GameObject<GameState, GameEvents> {
-    override readonly display: Graphics;
+export class BackgroundAsteroid extends GameObject<GameState, undefined, GameEvents> {
+    override readonly display: Graphics & { gameObjectDestroyed(): void };
     private _model: number;
     private _generation: number;
 
     private constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
-        obstacles: GameObject<any, any>[],
-        velocity: Vec2,
-        model: number,
-        generation: number,
+        theme: GameTheme;
+        obstacles: GameObject[];
+        velocity: Vec2;
+        model: number;
+        generation: number;
     }) {
         super({
             ...params,
@@ -54,14 +56,18 @@ export class BackgroundAsteroid extends GameObject<GameState, GameEvents> {
         this._generation = params.generation;
 
         this.moveToUnoccupiedPosition(params.obstacles);
+        // @ts-expect-error
         this.display = new Graphics(GEOMETRIES[this._model][this._generation]);
-        this.display.alpha = this.state.theme.backgroundAsteroidAlpha;
-        this.display.tint = this.state.theme.backgroundAsteroidColor;
+        this.display.gameObjectDestroyed = function () {
+            this.destroy({ children: true });
+        };
+        this.display.alpha = params.theme.backgroundAlpha;
+        this.display.tint = params.theme.backgroundColor;
         this.display.position.copyFrom(this.position);
         this.display.rotation = this.rotation;
     }
 
-    moveToUnoccupiedPosition(obstacles: GameObject<any, any>[]): void {
+    moveToUnoccupiedPosition(obstacles: GameObject[]): void {
         const boundingBox = this.boundingBox;
         const position = findUnoccupiedPosition({
             bounds: new Rectangle(0, 0, this.worldSize.width, this.worldSize.height),
@@ -74,6 +80,7 @@ export class BackgroundAsteroid extends GameObject<GameState, GameEvents> {
 
     static create(params: {
         count: number,
+        theme: GameTheme;
         queue: TickQueue,
         events: EventManager<GameEvents>,
         state: GameState,

@@ -3,20 +3,22 @@ import { CoreGameObjectParams, GameObject, IGameObjectDisplay, Vec2 } from "./en
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
 
-export type IProjectileDisplay = IGameObjectDisplay;
+export interface ProjectileDestroyOptions {
+    hit: boolean;
+}
 
-export class Projectile extends GameObject<GameState, GameEvents> {
+export type IProjectileDisplay = IGameObjectDisplay<ProjectileDestroyOptions>;
+
+export class Projectile extends GameObject<GameState, ProjectileDestroyOptions, GameEvents> {
     override display?: IProjectileDisplay;
     private _traveled: number;
-    private _from: Readonly<GameObject<any, any>>;
-    private _color: number;
+    private _from: GameObject;
 
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         position: Vec2,
-        from: Readonly<GameObject<any, any>>,
+        from: GameObject,
         speed: number,
         rotation: number,
-        color: number,
     }) {
         super({
             ...params,
@@ -29,20 +31,19 @@ export class Projectile extends GameObject<GameState, GameEvents> {
         });
         this._traveled = 0;
         this._from = params.from;
-        this._color = params.color;
     }
 
     override tick(timestamp: number, elapsed: number): void {
         super.tick(timestamp, elapsed);
         this._traveled += Math.abs(Math.sqrt((this.velocity.x * elapsed) ** 2 + (this.velocity.y * elapsed) ** 2));
         if (this._traveled >= PROJECTILE_LIFETIME) {
-            this.destroy();
+            this.destroy({ hit: false });
         }
     }
 
-    override destroy(): void {
-        super.destroy();
-        this.events.trigger("projectileDestroyed", this);
+    override destroy(options: ProjectileDestroyOptions): void {
+        super.destroy(options);
+        this.events.trigger("projectileDestroyed", this, options.hit);
     }
 
     get from(): Readonly<GameObject<any, any>> {
@@ -51,9 +52,5 @@ export class Projectile extends GameObject<GameState, GameEvents> {
 
     get traveled(): number {
         return this._traveled;
-    }
-
-    get color(): number {
-        return this._color;
     }
 }

@@ -2,7 +2,6 @@ import { Loader } from "@pixi/loaders";
 import { AsteroidsGame } from "./AsteroidsGame";
 import { initYoga } from "./layout";
 import "./loaderMixin";
-import "./layout";
 
 (async () => {
     const loaderTask = Loader.shared
@@ -20,6 +19,10 @@ import "./layout";
     // In a timeout because removing the loader at the same time as initializing the game causes
     // stuttering on firefox
     window.setTimeout(() => {
-        new AsteroidsGame({ containerId: "game", backgroundId: "background" });
+        new AsteroidsGame({
+            containerId: "game",
+            backgroundId: "background",
+            apiRoot: "/api",
+        });
     });
 })();

@@ -14,7 +14,7 @@
         "paths": {
             "@core": ["./src/core"],
             "@core/engine": ["./src/core/engine"],
-            "@core/models": ["./src/core/models"],
+            "@core/api": ["./src/core/api"],
         }
     },
     "exclude": [

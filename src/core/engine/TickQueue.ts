@@ -5,10 +5,8 @@ export interface Tickable {
 export class TickQueue implements Tickable {
     private _priorities: number[];
     private _items: Partial<{ [Key: number]: Tickable[] }>;
-    name: string;
 
-    constructor(name: string) {
-        this.name = name;
+    constructor() {
         this._items = [];
         this._priorities = [];
     }
@@ -19,9 +17,6 @@ export class TickQueue implements Tickable {
         } else {
             this._items[priority] = items;
             this.insertPriority(priority);
-        }
-        if (process.env.NODE_ENV === "development") {
-            console.log(`[TickQueue ${this.name}] ${this.length} items (add)`);
         }
     }
 
@@ -35,17 +30,11 @@ export class TickQueue implements Tickable {
                 this._items[priority]!.splice(i, 1);
             }
         }
-        if (process.env.NODE_ENV === "development") {
-            console.log(`[TickQueue ${this.name}] ${this.length} items (remove)`);
-        }
     }
 
     clear(): void {
         this._items = [];
         this._priorities = [];
-        if (process.env.NODE_ENV === "development") {
-            console.log(`[TickQueue ${this.name}] 0 items (clear)`);
-        }
     }
 
     tick(timestamp: number, elapsed: number): void {

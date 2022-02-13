@@ -31,6 +31,8 @@ export const pointsCoincident = (a: Vec2, b: Vec2, distance = 0) => Math.sqrt((b
 // Gets the midpoint of a line segment
 export const lineMidpoint = (line: LineSegment): Vec2 => ({ x: (line[0].x + line[1].x) / 2, y: (line[0].y + line[1].y) / 2 })
 
+export const lineSegmentLength = (line: LineSegment): number => Math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2)
+
 // atan2 where the result is adjusted to the game's coordinate system
 export const atan2 = (y: number, x: number): number => {
     let angle = Math.atan2(y, x) + Math.PI / 2;
@@ -39,87 +41,124 @@ export const atan2 = (y: number, x: number): number => {
     }
     return angle;
 }
-
-export const scaleRectangle = (rect: Rectangle, scale: number): Rectangle => {
-    if (scale === 1) {
-        return rect;
+declare module "@pixi/math" {
+    interface Rectangle {
+        translate(x: number, y: number): Rectangle;
+        scale(scale: number): Rectangle;
+        intersects(other: Rectangle): boolean;
     }
-    return new Rectangle(
-        rect.x - (rect.width / 2),
-        rect.y - (rect.height / 2),
-        rect.width * 2,
-        rect.height * 2
-    );
 }
 
-export const translateRectangle = (rect: Rectangle, delta: Vec2): Rectangle => {
-    if (delta.x === 0 && delta.y === 0) {
-        return rect;
+declare module "@pixi/math" {
+    interface Rectangle {
+        translate(x: number, y: number): Rectangle;
+        intersects(other: Rectangle): boolean;
     }
-    const pos = addVec2(rect, delta);
-    return new Rectangle(
-        pos.x,
-        pos.y,
-        rect.width,
-        rect.height,
-    );
-};
-
-export const rectanglesIntersect = (a: Rectangle, b: Rectangle): boolean =>
-    a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-
-export const translatePolygon = (polygon: Polygon, delta: Vec2): Polygon => {
-    if (delta.x === 0 && delta.y === 0) {
-        return polygon;
-    }
-    return new Polygon(polygon.points.map((num, index) =>
-        num + (index % 2 === 0 ? delta.x : delta.y)
-    ));
 }
 
-export const rotatePolygon = (polygon: Polygon, angle: number): Polygon => {
-    if (angle % PI_2 === 0) {
-        return polygon;
+Rectangle.prototype.translate = function (x: number, y: number): Rectangle {
+    if (x !== 0) {
+        this.x += x;
     }
-    const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
-    return new Polygon(polygon.points.map((num, index) =>
-        index % 2 === 0
-            ? num * cos - polygon.points[index + 1] * sin
-            : num * cos + polygon.points[index - 1] * sin
-    ));
+    if (y !== 0) {
+        this.y += y;
+    }
+    return this;
 }
 
-export const scalePolygon = (polygon: Polygon, scale: number): Polygon => {
-    if (scale === 1) {
-        return polygon;
-    }
-    return new Polygon(polygon.points.map((num) => num * scale));
+Rectangle.prototype.intersects = function (other: Rectangle): boolean {
+    return this.left < other.right
+        && this.right > other.left
+        && this.top < other.bottom
+        && this.bottom > other.top;
 }
 
-export const getPolygonBoundingBox = (polygon: Polygon): Rectangle => {
-    if (polygon.points.length === 0) {
+declare module "@pixi/math" {
+    interface Polygon {
+        translate(x: number, y: number): Polygon;
+        rotate(angle: number): Polygon;
+        scale(scale: number): Polygon;
+        getBoundingBox(result?: Rectangle): Rectangle;
+        intersects(other: Polygon): boolean;
+        contains2(point: Vec2, center: Vec2, margin?: number): boolean;
+    }
+}
+
+Polygon.prototype.translate = function (x: number, y: number): Polygon {
+    if (x !== 0 || y !== 0) {
+        const length = this.points.length;
+        for (let i = 0; i < length; ++i) {
+            this.points[i] += (i % 2 === 0 ? x : y);
+        }
+    }
+    return this;
+}
+
+Polygon.prototype.rotate = function (angle: number): Polygon {
+    if (angle % PI_2 !== 0) {
+        const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
+        let lastValue: number;
+        this.points.forEach((value, index) => {
+            this.points[index] = index % 2 === 0
+                ? value * cos - this.points[index + 1] * sin
+                : value * cos + lastValue * sin;
+            lastValue = value;
+        });
+    }
+    return this;
+}
+
+Polygon.prototype.scale = function (scale: number): Polygon {
+    if (scale !== 1) {
+        const length = this.points.length;
+        for (let i = 0; i < length; ++i) {
+            this.points[i] *= scale;
+        }
+    }
+    return this;
+}
+
+Polygon.prototype.getBoundingBox = function (result?: Rectangle): Rectangle {
+    if (this.points.length === 0) {
         throw new Error("Cannot find bounding box for empty polygon");
     }
-    let [x1, x2, y1, y2] = [
-        polygon.points[0],
-        polygon.points[0],
-        polygon.points[1],
-        polygon.points[1]
-    ];
-    for (let i = 2; i < polygon.points.length; i += 2) {
-        x1 = Math.min(x1, polygon.points[i]);
-        y1 = Math.min(y1, polygon.points[i + 1]);
-        x2 = Math.max(x2, polygon.points[i]);
-        y2 = Math.max(y2, polygon.points[i + 1]);
+    if (!result) {
+        result = new Rectangle();
     }
-    return new Rectangle(x1, y1, x2 - x1, y2 - y1);
+    result.x = this.points[0];
+    result.y = this.points[1];
+    let xMax = result.x, yMax = result.y;
+    for (let i = 2; i < this.points.length; i += 2) {
+        result.x = Math.min(result.x, this.points[i]);
+        result.y = Math.min(result.y, this.points[i + 1]);
+        xMax = Math.max(xMax, this.points[i]);
+        yMax = Math.max(yMax, this.points[i + 1]);
+    }
+    result.width = xMax - result.x;
+    result.height = yMax - result.y;
+    return result;
+}
+
+Polygon.prototype.intersects = function (other: Polygon): boolean {
+    for (let ai = 0; ai < this.points.length; ai += 2) {
+        const a1 = { x: this.points[ai], y: this.points[ai + 1] };
+        const a2 = { x: this.points[(ai + 2) % this.points.length], y: this.points[(ai + 3) % this.points.length] };
+        for (let bi = 0; bi < other.points.length; bi += 2) {
+            const b1 = { x: other.points[bi], y: other.points[bi + 1] };
+            const b2 = { x: other.points[(bi + 2) % other.points.length], y: other.points[(bi + 3) % other.points.length] };
+            if (linesIntersect([a1, a2], [b1, b2])) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 // Returns true if the point is contained in the polygon within a certain margin of error.
 // Uses the raycasting method.
-export const polygonContainsPoint = (polygon: Polygon, point: Vec2, polygonCenter: Vec2, margin = 0) => {
-    const adjacent = polygonCenter.x - point.x;
-    const opposite = polygonCenter.y - point.y;
+Polygon.prototype.contains2 = function (point: Vec2, center: Vec2, margin = 0): boolean {
+    const adjacent = center.x - point.x;
+    const opposite = center.y - point.y;
     const hypotenuse = Math.sqrt(adjacent ** 2 + opposite ** 2);
     const sin = opposite / hypotenuse;
     const cos = adjacent / hypotenuse;
@@ -127,31 +166,12 @@ export const polygonContainsPoint = (polygon: Polygon, point: Vec2, polygonCente
     const p2: Vec2 = { x: point.x + 1000000 * cos, y: point.y + 1000000 * sin };
 
     let intersections = 0;
-    for (let i = 0; i < polygon.points.length; i += 2) {
-        const pp1 = { x: polygon.points[i], y: polygon.points[i + 1] };
-        const pp2 = { x: polygon.points[(i + 2) % polygon.points.length], y: polygon.points[(i + 3) % polygon.points.length] };
+    for (let i = 0; i < this.points.length; i += 2) {
+        const pp1 = { x: this.points[i], y: this.points[i + 1] };
+        const pp2 = { x: this.points[(i + 2) % this.points.length], y: this.points[(i + 3) % this.points.length] };
         intersections += +linesIntersect([p1, p2], [pp1, pp2]);
     }
     return intersections % 2 === 1;
-}
-
-/**
- * Returns true if a polygon intersects another.
- * Uses line segment intersection, so can be relatively slow when testing two complex polygons.
- */
-export const polygonsIntersects = (a: Polygon, b: Polygon) => {
-    for (let ai = 0; ai < a.points.length; ai += 2) {
-        const a1 = { x: a.points[ai], y: a.points[ai + 1] };
-        const a2 = { x: a.points[(ai + 2) % a.points.length], y: a.points[(ai + 3) % a.points.length] };
-        for (let bi = 0; bi < b.points.length; bi += 2) {
-            const b1 = { x: b.points[bi], y: b.points[bi + 1] };
-            const b2 = { x: b.points[(bi + 2) % b.points.length], y: b.points[(bi + 3) % b.points.length] };
-            if (linesIntersect([a1, a2], [b1, b2])) {
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 // Finds a random unoccupied location to plce an an object of size objectSize within a bounding box with a list of obstacles.
@@ -178,9 +198,10 @@ export const findUnoccupiedPosition = (params: {
             x: random(params.bounds.left, params.bounds.right, params.useSeededRandom),
             y: random(params.bounds.top, params.bounds.bottom, params.useSeededRandom)
         };
-        const translatedObject = translateRectangle(object, location);
+        object.translate(location.x, location.y);
         for (const obstacle of params.obstacles) {
-            if (rectanglesIntersect(translatedObject, obstacle)) {
+            if (object.intersects(obstacle)) {
+                object.translate(-location.x, -location.y);
                 continue locationSearch;
             }
         }

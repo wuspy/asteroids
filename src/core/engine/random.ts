@@ -19,12 +19,18 @@ export const random = (min: number, max: number, useSeededRandom: boolean): numb
     return Math.floor(value * (max - min + 1)) + min;
 }
 
-export const initRandom = (): string => {
-    history = [];
+export const createRandomSeed = (): string => {
+    const history = [];
     for (let i = 0; i < K; i++) {
         history.push(random(0, MAX, false));
     }
     return history.map((x) => x.toString(36)).toString();
+}
+
+export const initRandom = (): string => {
+    const seed = createRandomSeed();
+    seedRandom(seed);
+    return seed;
 }
 
 export const seedRandom = (seed: string): boolean => {

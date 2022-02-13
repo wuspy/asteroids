@@ -1,5 +1,5 @@
 import { Polygon } from "@pixi/math";
-import { scalePolygon } from "./engine";
+import "./engine";
 
 /**
  * Constants and types that configure core gameplay mechanics.
@@ -177,7 +177,7 @@ const ASTEROID_MODEL_HITAREAS = [
 export const ASTEROID_HITAREAS = ASTEROID_MODEL_HITAREAS.map((polygon) => {
     const generations = [];
     for (let i = 0; i < ASTEROID_GENERATION_COUNT; i++) {
-        generations.push(scalePolygon(polygon, ASTEROID_GENERATION_SIZES[i]));
+        generations.push(polygon.clone().scale(ASTEROID_GENERATION_SIZES[i]));
     }
     return generations;
 });
@@ -187,7 +187,7 @@ export type UFOType = "small" | "large";
  * The min and max interval between UFO spawns. UFO spawns are calculated as a random number between
  * these two values regardless of score.
  */
-export const UFO_SPAWN_TIME = [8, 20] as const;
+export const UFO_SPAWN_TIME = [8, 16] as const;
 /**
  * The probability of each type of UFO spawning, at 'easy' and 'hard' scores. At zero score, only the easy
  * distribution is used. At UFO_HARD_DISTRIBUTION_SCORE, only the hard distribution is used. Inbetween,
@@ -266,6 +266,6 @@ const BASE_UFO_HITAREA = new Polygon(
     { x: -38, y: 12 },
 );
 export const UFO_HITAREAS: Readonly<{ [Key in UFOType]: Polygon }> = {
-    large: scalePolygon(BASE_UFO_HITAREA, UFO_SIZES.large),
-    small: scalePolygon(BASE_UFO_HITAREA, UFO_SIZES.small),
+    large: BASE_UFO_HITAREA.clone().scale(UFO_SIZES.large),
+    small: BASE_UFO_HITAREA.clone().scale(UFO_SIZES.small),
 };

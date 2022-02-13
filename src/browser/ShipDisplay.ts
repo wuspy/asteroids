@@ -1,27 +1,30 @@
-import { Container } from "@pixi/display";
+import { Container, IDestroyOptions } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { BlurFilter } from "@pixi/filter-blur";
 import { Tickable } from "@core/engine";
-import { IShipDisplay, Ship, HYPERSPACE_DELAY } from "@core";
+import { IShipDisplay, Ship, HYPERSPACE_DELAY, ShipDestroyOptions } from "@core";
 import { Explosion, ShipSpawnAnimation } from "./animations";
+import { GameTheme } from "./GameTheme";
 
 export class ShipDisplay extends Container implements IShipDisplay, Tickable {
     private readonly _ship: Ship;
+    private readonly _theme: GameTheme;
     private readonly _shipGraphics: Graphics;
     private readonly _fireGraphics: Graphics;
     private readonly _shipShadow: Graphics;
     private readonly _fireShadow: Graphics;
     private _lastFireAnimation: number;
 
-    constructor(ship: Ship) {
+    constructor(ship: Ship, theme: GameTheme) {
         super();
         ship.display = this;
         this._ship = ship;
+        this._theme = theme;
         this.position.copyFrom(ship.position);
         this.rotation = ship.rotation;
 
-        this._shipGraphics = ShipDisplay.createModel(ship.state.theme.foregroundColor);
+        this._shipGraphics = ShipDisplay.createModel(theme.foregroundColor);
         this._fireGraphics = ShipDisplay.createFireModel();
         this._lastFireAnimation = 0;
 
@@ -110,29 +113,36 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
         }
     }
 
-    createSpawnAnimation(): void {
+    onHyperspace(): void {
+        this.createSpawnAnimation();
+    }
+
+    gameObjectDestroyed({ hit }: ShipDestroyOptions): void {
+        if (hit && this.parent) {
+            const explosion = new Explosion({
+                queue: this._ship.queue,
+                diameter: 250,
+                maxDuration: 3000,
+                color: this._theme.foregroundColor,
+            });
+            explosion.position.copyFrom(this.position);
+            explosion.rotation = this.rotation;
+            this.parent.addChild(explosion);
+        }
+        this.destroy({ children: true });
+    }
+
+    override destroy(options?: boolean | IDestroyOptions): void {
+        this._ship.queue.remove(100, this);
+        this._ship.display = undefined;
+        super.destroy(options);
+    }
+
+    private createSpawnAnimation(): void {
         this.addChild(new ShipSpawnAnimation({
-            color: this._ship.state.theme.foregroundColor,
+            color: this._theme.foregroundColor,
             diameter: 50,
             queue: this._ship.queue,
         }));
-    }
-
-    createExplosion(): void {
-        const explosion = new Explosion({
-            queue: this._ship.queue,
-            diameter: 250,
-            maxDuration: 3000,
-            color: this._ship.state.theme.foregroundColor,
-        });
-        explosion.position.copyFrom(this.position);
-        explosion.rotation = this.rotation;
-        this.parent?.addChild(explosion);
-    }
-
-    override destroy(): void {
-        this._ship.queue.remove(100, this);
-        this._ship.display = undefined;
-        super.destroy({ children: true });
     }
 }

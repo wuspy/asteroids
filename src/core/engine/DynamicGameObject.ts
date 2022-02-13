@@ -11,7 +11,7 @@ export interface DynamicGameObjectParams<State, Events extends EventMap<keyof Ev
     maxRotationSpeed: number;
 }
 
-export abstract class DynamicGameObject<State, Events extends EventMap<keyof Events>> extends GameObject<State, Events> {
+export abstract class DynamicGameObject<State = any, DestroyOptions = any, Events extends EventMap<keyof Events> = object> extends GameObject<State, DestroyOptions, Events> {
     acceleration: number;
     rotationAcceleration: number;
     maxSpeed: number;

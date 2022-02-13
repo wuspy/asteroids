@@ -119,7 +119,7 @@ svg {
     justify-content: center;
     &>div {
         display: flex;
-        flex: 0 1 680px;
+        flex: 0 1 720px;
         flex-direction: column;
         &>header {
             display: flex;
@@ -138,13 +138,14 @@ svg {
             display: flex;
             flex-direction: row;
             justify-content: space-around;
-            margin-top: 24px;
+            flex-wrap: wrap;
             margin-bottom: 24px;
         }
         &>#buttons {
             display: flex;
             flex-direction: row;
             justify-content: center;
+            flex-wrap: wrap;
         }
     }
 }
@@ -164,6 +165,7 @@ svg {
     align-items: center;
     margin-left: 8px;
     margin-right: 8px;
+    margin-top: 24px;
     &>.cat-name {
         font-size: 16pt;
         margin-top: 8px;
@@ -172,7 +174,7 @@ svg {
     &>.cat-caption {
         font-size: 10pt;
         color: rgba(255, 255, 255, 0.25);
-        width: 154px;
+        width: 160px;
         text-align: center;
     }
 }
@@ -204,5 +206,12 @@ svg {
 @media(max-width: 680px) {
     #my-avatar {
         display: none;
+    }
+}
+
+
+@media(max-width: 440px) {
+    .button {
+        flex-grow: 1;
     }
 }

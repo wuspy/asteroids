@@ -1,9 +1,10 @@
-import { Container } from "@pixi/display";
+import { Container, IDestroyOptions } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { BlurFilter } from "@pixi/filter-blur";
-import { IUFODisplay, UFO, UFOType, UFO_SIZES } from "@core";
+import { IUFODisplay, UFO, UFOType, UFO_SIZES, UFODestroyOptions } from "@core";
 import { Explosion } from "./animations";
+import { GameTheme } from "./GameTheme";
 
 const EXPLOSION_SIZES: Readonly<{ [Key in UFOType]: number }> = {
     large: 250,
@@ -17,15 +18,17 @@ const LINE_WIDTHS: Readonly<{ [Key in UFOType]: number }> = {
 
 export class UFODisplay extends Container implements IUFODisplay {
     private readonly _ufo: UFO;
+    private readonly _theme: GameTheme;
 
-    constructor(ufo: UFO) {
+    constructor(ufo: UFO, theme: GameTheme) {
         super();
         ufo.display = this;
         this._ufo = ufo;
+        this._theme = theme;
         this.position.copyFrom(ufo.position);
         this.rotation = ufo.rotation;
 
-        const sprite = UFODisplay.createModel(LINE_WIDTHS[ufo.type], UFO_SIZES[ufo.type], ufo.state.theme.ufoColor);
+        const sprite = UFODisplay.createModel(LINE_WIDTHS[ufo.type], UFO_SIZES[ufo.type], theme.ufoColor);
         sprite.cacheAsBitmap = true;
         const shadow = new Graphics(sprite.geometry);
         shadow.filters = [new BlurFilter()];
@@ -56,20 +59,23 @@ export class UFODisplay extends Container implements IUFODisplay {
         return graphics;
     }
 
-    createExplosion(): void {
-        const explosion = new Explosion({
-            queue: this._ufo.queue,
-            diameter: EXPLOSION_SIZES[this._ufo.type],
-            maxDuration: 2000,
-            color: this._ufo.state.theme.ufoColor,
-        });
-        explosion.position.copyFrom(this.position);
-        explosion.rotation = this.rotation;
-        this.parent?.addChild(explosion);
+    gameObjectDestroyed({ hit }: UFODestroyOptions): void {
+        if (hit && this.parent) {
+            const explosion = new Explosion({
+                queue: this._ufo.queue,
+                diameter: EXPLOSION_SIZES[this._ufo.type],
+                maxDuration: 2000,
+                color: this._theme.ufoColor,
+            });
+            explosion.position.copyFrom(this.position);
+            explosion.rotation = this.rotation;
+            this.parent.addChild(explosion);
+        }
+        this.destroy({ children: true });
     }
 
-    override destroy(): void {
+    override destroy(options?: boolean | IDestroyOptions): void {
         this._ufo.display = undefined;
-        super.destroy({ children: true });
+        super.destroy(options);
     }
 }
