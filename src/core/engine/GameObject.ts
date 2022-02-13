@@ -64,6 +64,8 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
     wrapMode: WrapMode;
     rotationSpeed: number;
     private _rotation: number;
+    private _sinRotation: number;
+    private _cosRotation: number;
     private _boundingBox!: Rectangle;
     private _hitArea!: HitArea;
     private readonly _hitAreaPosition: IPointData;
@@ -76,15 +78,17 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
         this.queue = params.queue;
         this.queuePriority = params.queuePriority;
         this.worldSize = params.worldSize;
+        this._ignoreNextPositionChange = false;
         this.position = new ObservablePoint(this.onPositionChange, this, params.position?.x || 0, params.position?.y || 0);
         this.wrapMode = params.wrapMode ?? WrapMode.Both;
         this._rotation = params.rotation ?? 0;
+        this._sinRotation = Math.sin(this._rotation);
+        this._cosRotation = Math.cos(this._rotation);
         this.velocity = { x: params.velocity?.x || 0, y: params.velocity?.y || 0 };
         this.rotationSpeed = params.rotationSpeed || 0;
         this._hitAreaPosition = { x: 0, y: 0 };
         this._hitAreaRotation = 0;
         this.hitArea = params.hitArea;
-        this._ignoreNextPositionChange = false;
         this.queue.add(this.queuePriority, this);
     }
 
@@ -134,9 +138,19 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
     }
 
     set rotation(angle: number) {
-        this._rotation = angle;
+        this._rotation = angle % PI_2;
+        this._sinRotation = Math.sin(this._rotation);
+        this._cosRotation = Math.cos(this._rotation);
         this.updateHitarea();
-        this.display && (this.display.rotation = this._rotation % PI_2);
+        this.display && (this.display.rotation = this._rotation);
+    }
+
+    get sinRotation(): number {
+        return this._sinRotation;
+    }
+
+    get cosRotation(): number {
+        return this._cosRotation;
     }
 
     translate(dX: number, dY: number): void {

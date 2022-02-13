@@ -31,7 +31,6 @@ export abstract class DynamicGameObject<State = any, DestroyOptions = any, Event
 
     override tick(timestamp: number, elapsed: number): void {
         // Add rotation
-
         if (this.rotationAcceleration) {
             this.rotationSpeed = clamp(this.rotationSpeed + this.rotationAcceleration * elapsed, this.maxRotationSpeed);
         } else if (this.rotationSpeed > 0) {
@@ -41,25 +40,34 @@ export abstract class DynamicGameObject<State = any, DestroyOptions = any, Event
         }
 
         // Add acceleration
-
-        // TODO find a way to clamp maxSpeed without comparing every tick
-        if (this.acceleration && this.speedAtRotation < this.maxSpeed) {
-            this.velocity.x += this.acceleration * elapsed * Math.sin(this.rotation);
-            this.velocity.y += this.acceleration * elapsed * -Math.cos(this.rotation);
+        if (this.acceleration) {
+            this.velocity.x += this.acceleration * elapsed * this.sinRotation;
+            this.velocity.y -= this.acceleration * elapsed * this.cosRotation;
         }
 
-        // Add friction
+        if (this.velocity.x || this.velocity.y) {
+            let speed = this.speed;
 
-        const heading = this.heading;
-        if (this.velocity.x > 0) {
-            this.velocity.x = Math.max(0, this.velocity.x - this.friction * elapsed * Math.sin(heading));
-        } else if (this.velocity.x < 0) {
-            this.velocity.x = Math.min(0, this.velocity.x - this.friction * elapsed * Math.sin(heading));
-        }
-        if (this.velocity.y > 0) {
-            this.velocity.y = Math.max(0, this.velocity.y + this.friction * elapsed * Math.cos(heading));
-        } else if (this.velocity.y < 0) {
-            this.velocity.y = Math.min(0, this.velocity.y + this.friction * elapsed * Math.cos(heading));
+            // Add friction
+            const elapsedFriction = this.friction * elapsed;
+            if (this.velocity.x > 0) {
+                this.velocity.x = Math.max(0, this.velocity.x - elapsedFriction * (this.velocity.x / speed));
+            } else if (this.velocity.x < 0) {
+                this.velocity.x = Math.min(0, this.velocity.x - elapsedFriction * (this.velocity.x / speed));
+            }
+            if (this.velocity.y > 0) {
+                this.velocity.y = Math.max(0, this.velocity.y - elapsedFriction * (this.velocity.y / speed));
+            } else if (this.velocity.y < 0) {
+                this.velocity.y = Math.min(0, this.velocity.y - elapsedFriction * (this.velocity.y / speed));
+            }
+
+            // Limit speed
+            speed -= elapsedFriction;
+            const overSpeed = speed - this.maxSpeed;
+            if (overSpeed > 0) {
+                this.velocity.x -= overSpeed * (this.velocity.x / speed);
+                this.velocity.y -= overSpeed * (this.velocity.y / speed);
+            }
         }
 
         super.tick(timestamp, elapsed);
