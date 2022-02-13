@@ -2,7 +2,7 @@ import { ISize } from "@pixi/math";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
 import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "./constants";
-import { GameState } from "./GameState";
+import { GameState, GameStatus } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { random, TickQueue, EventManager, InputState } from "./engine";
 import { UFO } from "./UFO";
@@ -29,7 +29,7 @@ export class AsteroidsGame {
             level: 1,
             score: 0,
             lives: LIVES,
-            status: "init",
+            status: GameStatus.Init,
             timestamp: 0,
             asteroids: [],
             projectiles: [],
@@ -83,7 +83,7 @@ export class AsteroidsGame {
     }
 
     start(): void {
-        if (this.state.status !== "init") {
+        if (this.state.status !== GameStatus.Init) {
             return;
         }
         this.events.trigger("beforeStart");
@@ -95,7 +95,7 @@ export class AsteroidsGame {
             events: this.events,
             worldSize: this.worldSize,
         });
-        this.state.status = "running";
+        this.state.status = GameStatus.Running;
         this.events.trigger("started");
     }
 
@@ -134,7 +134,7 @@ export class AsteroidsGame {
         this.state.lives = LIVES;
         this.state.score = 0;
         this.state.timestamp = 0;
-        this.state.status = "init";
+        this.state.status = GameStatus.Init;
 
         this._respawnCountdown = 0;
         this._nextLevelCountdown = 0;
@@ -157,7 +157,7 @@ export class AsteroidsGame {
     tick(elapsed: number, input: InputState<typeof controls>): void {
         const { ship, asteroids, projectiles, ufos } = this.state;
 
-        if (this.state.status === "init" || this.state.status === "destroyed") {
+        if (this.state.status === GameStatus.Init || this.state.status === GameStatus.Destroyed) {
             return;
         }
 
@@ -217,7 +217,7 @@ export class AsteroidsGame {
                     projectile.destroy({ hit: true });
                     ufo.destroy({
                         hit: true,
-                        scored: projectile.from === ship && this.state.status !== "finished",
+                        scored: projectile.from === ship && this.state.status !== GameStatus.Finished,
                     });
                     break;
                 }
@@ -231,7 +231,7 @@ export class AsteroidsGame {
                 if (projectile.collidesWith(asteroid)) {
                     asteroid.destroy({
                         hit: true,
-                        scored: projectile.from === ship && this.state.status !== "finished",
+                        scored: projectile.from === ship && this.state.status !== GameStatus.Finished,
                         createChildren: true,
                     });
                     projectile.destroy({ hit: true });
@@ -268,8 +268,8 @@ export class AsteroidsGame {
 
         // Advance game status if needed
 
-        if (this.state.lives === 0 && this.state.status === "running") {
-            this.state.status = "finished";
+        if (this.state.lives === 0 && this.state.status === GameStatus.Running) {
+            this.state.status = GameStatus.Finished;
             this.events.trigger("finished");
         }
 
@@ -279,7 +279,7 @@ export class AsteroidsGame {
                 // The game will continue running even after it's finished, as a visual effect. So it's possible
                 // spanwed UFOs will destroy all asteroids and trigger the next level. But don't actually increment
                 // the level in that case.
-                if (this.state.status !== "finished") {
+                if (this.state.status !== GameStatus.Finished) {
                     this.state.level++;
                 }
                 Asteroid.createInitial({

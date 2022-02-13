@@ -3,7 +3,12 @@ import { Projectile } from "./Projectile";
 import { Ship } from "./Ship";
 import { UFO } from "./UFO";
 
-export type GameStatus = "init" | "running" | "finished" | "destroyed";
+export const enum GameStatus {
+    Init,
+    Running,
+    Finished,
+    Destroyed,
+}
 
 export interface GameState {
     level: number;

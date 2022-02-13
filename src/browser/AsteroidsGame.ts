@@ -1,13 +1,12 @@
 import { Container } from "@pixi/display";
 import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
-import { AsteroidsGame as CoreAsteroidsGame, controls, inputLogConfig, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
+import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, inputLogConfig, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
 import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, GameLog, random, EventManager } from "@core/engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
-import { BloomFilter } from "@pixi/filter-bloom";
 import { PauseScreen } from "./PauseScreen";
 import { GameOverScreen } from "./GameOverScreen";
 import { Align, JustifyContent, PositionType } from "./layout";
@@ -350,7 +349,7 @@ export class AsteroidsGame {
             }
         });
         this._uiEvents.on("pause", this, () => {
-            if (this.game.state.status === "running" && !this._paused) {
+            if (this.game.state.status === GameStatus.Running && !this._paused) {
                 this._paused = true;
                 if (!this._pauseScreen) {
                     this._pauseScreen = new PauseScreen({
@@ -365,7 +364,7 @@ export class AsteroidsGame {
             }
         });
         this._uiEvents.on("resume", this, () => {
-            if (this.game.state.status === "running" && this._paused) {
+            if (this.game.state.status === GameStatus.Running && this._paused) {
                 if (this._pauseScreen) {
                     const pauseScreen = this._pauseScreen;
                     this._pauseScreen = undefined;
@@ -539,7 +538,7 @@ export class AsteroidsGame {
     }
 
     private quit(): void {
-        if (this.game.state.status !== "init") {
+        if (this.game.state.status !== GameStatus.Init) {
             this._background.style.opacity = "0";
             this._gameplayContainer.fadeOut().then(() => {
                 this.game.reset();
@@ -559,9 +558,9 @@ export class AsteroidsGame {
         let input = this._input.poll();
 
         if (input.start) {
-            if (this.game.state.status === "init" && !this._loadingGameToken) {
+            if (this.game.state.status === GameStatus.Init && !this._loadingGameToken) {
                 this._uiEvents.trigger("start");
-            } else if (this.game.state.status === "running") {
+            } else if (this.game.state.status === GameStatus.Running) {
                 if (this._paused) {
                     this._uiEvents.trigger("resume");
                 } else {
@@ -571,7 +570,7 @@ export class AsteroidsGame {
         }
 
         if (!this._paused) {
-            if (this._logger && this.game.state.status === "running") {
+            if (this._logger && this.game.state.status === GameStatus.Running) {
                 [elapsed, input] = this._logger.logFrame(elapsed, input, this.game.worldSize);
             }
 

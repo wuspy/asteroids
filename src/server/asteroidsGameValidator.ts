@@ -1,4 +1,4 @@
-import { AsteroidsGame, inputLogConfig, GameState } from "@core";
+import { AsteroidsGame, inputLogConfig, GameState, GameStatus } from "@core";
 import { seedRandom, parseGameLog } from "@core/engine";
 import { SaveGameRequest } from "@core/api";
 import { ValidUnsavedGame } from "./ValidUnsavedGame";
@@ -80,7 +80,7 @@ export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: stri
             }
             game.tick(elapsed, input);
             frame = parser.next();
-            if (game.state.status === "finished") {
+            if (game.state.status === GameStatus.Finished) {
                 break;
             }
         }
