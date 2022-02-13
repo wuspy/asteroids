@@ -164,6 +164,10 @@ export class AsteroidsGame {
         this.state.timestamp += elapsed;
         elapsed /= 1000;
 
+        // Dispatch tick event
+
+        this.queue.tick(this.state.timestamp, elapsed);
+
         // Handle user input
 
         if (ship) {
@@ -178,10 +182,6 @@ export class AsteroidsGame {
                 ship.hyperspace();
             }
         }
-
-        // Dispatch tick event
-
-        this.queue.tick(this.state.timestamp, elapsed);
 
         this.checkShipCollisions();
 

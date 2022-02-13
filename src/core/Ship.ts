@@ -2,7 +2,7 @@ import {
     ACCELERATION,
     FRICTION,
     INVULNERABLE_TIME,
-    MAX_ROTATION,
+    MAX_ROTATION_SPEED,
     MAX_SPEED,
     RECOIL,
     ROTATION_ACCELERATION,
@@ -16,7 +16,7 @@ import {
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { DynamicGameObject, random, CoreGameObjectParams, Vec2, IGameObjectDisplay } from "./engine";
-import { IPointData, DEG_TO_RAD } from "@pixi/math";
+import { DEG_TO_RAD } from "@pixi/math";
 import { Projectile } from "./Projectile";
 
 export interface ShipDestroyOptions {
@@ -75,7 +75,7 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             this._invulnerableCountdown = Math.max(0, this._invulnerableCountdown - elapsed);
         }
 
-        this.maxRotationSpeed = Math.abs(this.rotationAmount) * MAX_ROTATION;
+        this.maxRotationSpeed = Math.abs(this.rotationAmount) * MAX_ROTATION_SPEED;
         this.rotationAcceleration = Math.sign(this.rotationAmount) * ROTATION_ACCELERATION;
         this.acceleration = this.accelerationAmount * ACCELERATION;
 
@@ -113,10 +113,10 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         }
     }
 
-    get gunPosition(): IPointData {
+    get gunPosition(): Vec2 {
         return {
-            x: this.x + 20 * Math.sin(this.rotation),
-            y: this.y + 20 * -Math.cos(this.rotation),
+            x: this.x + 36 * Math.sin(this.rotation),
+            y: this.y + 36 * -Math.cos(this.rotation),
         };
     }
 

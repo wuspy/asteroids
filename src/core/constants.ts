@@ -58,15 +58,15 @@ export const MAX_SPEED = 1000;
 /**
  * The maximum rotation speed the ship can reach.
  */
-export const MAX_ROTATION = Math.PI * 1.5;
+export const MAX_ROTATION_SPEED = Math.PI * 1.6;
 export const ACCELERATION = 1600;
-export const ROTATION_ACCELERATION = Math.PI * 12;
-export const FRICTION = 500;
-export const ROTATION_FRICTION = Math.PI * 12;
+export const ROTATION_ACCELERATION = Math.PI * 10;
+export const FRICTION = 400;
+export const ROTATION_FRICTION = Math.PI * 10;
 /**
  * How much recoil acceleration is applied to the ship when firing a shot.
  */
-export const RECOIL = 80;
+export const RECOIL = 75;
 /**
  * How long the ship remains invulerable after respawning.
  */
@@ -85,10 +85,9 @@ export const SHIP_HITAREA = new Polygon(
 
 export const SHIP_PROJECTILE_SPEED = 1000;
 /**
- * How many CSS pixels a projectile can travel before expiring. After this amount it cannot hit anything and
- * will be removed. Applies to both the player ship and UFO's.
+ * How much time a projectile can stay active
  */
-export const PROJECTILE_LIFETIME = 800;
+export const PROJECTILE_LIFETIME = 0.8;
 
 export const ASTEROID_GENERATION_COUNT = 3;
 export const ASTEROID_CHILDREN_COUNT = 2;

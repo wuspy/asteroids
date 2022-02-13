@@ -10,6 +10,7 @@ export interface ProjectileDestroyOptions {
 export type IProjectileDisplay = IGameObjectDisplay<ProjectileDestroyOptions>;
 
 export class Projectile extends GameObject<GameState, ProjectileDestroyOptions, GameEvents> {
+    private readonly _creationTime: number;
     override display?: IProjectileDisplay;
     private _traveled: number;
     private _from: GameObject;
@@ -29,14 +30,14 @@ export class Projectile extends GameObject<GameState, ProjectileDestroyOptions, 
             },
             hitArea: 6
         });
+        this._creationTime = this.state.timestamp;
         this._traveled = 0;
         this._from = params.from;
     }
 
     override tick(timestamp: number, elapsed: number): void {
         super.tick(timestamp, elapsed);
-        this._traveled += Math.abs(Math.sqrt((this.velocity.x * elapsed) ** 2 + (this.velocity.y * elapsed) ** 2));
-        if (this._traveled >= PROJECTILE_LIFETIME) {
+        if (this.life >= PROJECTILE_LIFETIME) {
             this.destroy({ hit: false });
         }
     }
@@ -50,7 +51,10 @@ export class Projectile extends GameObject<GameState, ProjectileDestroyOptions, 
         return this._from;
     }
 
-    get traveled(): number {
-        return this._traveled;
+    /**
+     * Number of seconds that this projectile has existed
+     */
+    get life(): number {
+        return (this.state.timestamp - this._creationTime) / 1000;
     }
 }

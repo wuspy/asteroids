@@ -47,7 +47,7 @@ export class ProjectileDisplay extends Graphics implements IProjectileDisplay, T
 
     tick(timestamp: number, elapsed: number): void {
         // this._timeline.tick(timestamp);
-        this.alpha = Math.min(1, (PROJECTILE_LIFETIME - this._projectile.traveled) / (PROJECTILE_LIFETIME * 0.2));
+        this.alpha = Math.min(1, (PROJECTILE_LIFETIME - this._projectile.life) / (PROJECTILE_LIFETIME * 0.2));
     }
 
     gameObjectDestroyed(): void {
