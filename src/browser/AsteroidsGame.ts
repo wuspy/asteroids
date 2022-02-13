@@ -583,7 +583,7 @@ export class AsteroidsGame {
 
         if (process.env.NODE_ENV === "development") {
             if (this.hitAreaDebugContainer.visible) {
-                const objects: GameObject<any, any>[] = [
+                const objects: GameObject[] = [
                     ...this.game.state.projectiles,
                     ...this.game.state.asteroids,
                     ...this.game.state.ufos
