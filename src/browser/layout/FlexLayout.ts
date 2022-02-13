@@ -187,6 +187,14 @@ export default class FlexLayout {
         return this._node.getComputedLayout();
     }
 
+    get comptedWidth(): number {
+        return this._node.getComputedWidth();
+    }
+
+    get computedHeight(): number {
+        return this._node.getComputedHeight();
+    }
+
     get computedMargin(): ComputedEdges {
         return this.getComputedEdges("Margin");
     }

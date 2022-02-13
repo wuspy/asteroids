@@ -122,7 +122,7 @@ export function* parseGameLog<Controls extends readonly string[]>(
         if (!isBase36Digit(token.charCodeAt(0)) || !isBase36Digit(token.charCodeAt(1))) {
             throw new Error(`Expected a 2-digit base-36 number, got '${token}' at position ${i - 2}`);
         }
-        const elapsed = parseInt(token, 36) / 10000;
+        const elapsed = parseInt(token, 36) / 10;
         // Parse multiplier
         if (log.charAt(i) === "*") {
             i++;

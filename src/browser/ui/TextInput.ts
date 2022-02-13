@@ -210,6 +210,14 @@ export class TextInput extends Container {
         this._domInput._element.maxLength = maxLength;
     }
 
+    get disabled(): boolean {
+        return this._domInput._element.disabled;
+    }
+
+    set disabled(disabled: boolean) {
+        this._domInput._element.disabled = disabled;
+    }
+
     focus() {
         this._domInput.focus();
     }

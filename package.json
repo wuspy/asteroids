@@ -1,14 +1,13 @@
 {
-    "name": "website",
+    "name": "asteroids",
     "author": "Jacob Jordan",
-    "version": "1.0.106",
+    "version": "2.0.0",
     "license": "MIT",
     "devDependencies": {
         "@types/animejs": "^3.1.4",
         "@types/config": "^0.0.41",
-        "@types/pg": "^8.6.4",
+        "@types/node": "^16.11.22",
         "@types/stats.js": "^0.17.0",
-        "@types/webfontloader": "^1.6.34",
         "@typescript-eslint/eslint-plugin": "^5.5.0",
         "@typescript-eslint/parser": "^5.5.0",
         "@webpack-cli/generators": "^2.4.1",
@@ -33,17 +32,18 @@
     },
     "scripts": {
         "lint": "eslint src --ext .ts",
-        "build": "webpack --mode=production --node-env=production",
         "watch": "webpack --watch",
+        "build": "webpack --mode=production --node-env=production",
         "build:dev": "webpack --mode=development",
-        "build:prod": "webpack --mode=production --node-env=production",
-        "server:dev": "cd dist && NODE_ENV=development nodemon server.js"
+        "server": "cd dist && NODE_ENV=production node server.js && cd ..",
+        "server:dev": "cd dist && NODE_ENV=development nodemon --signal SIGTERM server.js && cd .."
     },
     "dependencies": {
         "@pixi/constants": "^6.2.2",
         "@pixi/core": "^6.2.2",
         "@pixi/display": "^6.2.2",
         "@pixi/filter-alpha": "^6.2.2",
+        "@pixi/filter-bloom": "^4.1.5",
         "@pixi/filter-blur": "^6.2.2",
         "@pixi/filter-glow": "^4.1.5",
         "@pixi/filter-kawase-blur": "^4.1.5",
@@ -58,6 +58,7 @@
         "animejs": "^3.2.1",
         "config": "^3.3.7",
         "express": "^4.17.2",
+        "knex": "^0.95.15",
         "pg": "^8.7.1",
         "stats.js": "^0.17.0",
         "tslib": "^2.3.1",

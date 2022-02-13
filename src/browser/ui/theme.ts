@@ -7,6 +7,7 @@ export const FONT_FAMILY = "Consolas, Monaco, Noto Sans Mono, Roboto Mono, monos
 export const UI_FOREGROUND_COLOR = 0xffffff;
 export const UI_BACKGROUND_COLOR = 0;
 export const UI_BACKGROUND_ALPHA = 0.6;
+export const UI_DIVIDER_COLOR = 0x606060;
 export const MODAL_BACKGROUND: ContainerBackground = {
     shape: ContainerBackgroundShape.Rectangle,
     cornerRadius: 12,
@@ -19,6 +20,20 @@ export const MODAL_BACKGROUND: ContainerBackground = {
         alpha: 0.5,
         width: 2,
     }
+};
+
+export const LIST_BACKGROUND: ContainerBackground = {
+    shape: ContainerBackgroundShape.Rectangle,
+    cornerRadius: 12,
+    fill: {
+        color: 0x363636,
+        alpha: 0.5,
+    },
+    // stroke: {
+    //     color: 0xffffff,
+    //     alpha: 0.5,
+    //     width: 2,
+    // }
 };
 
 export const TEXT_INPUT_THEME = {

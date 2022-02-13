@@ -23,6 +23,9 @@ const server = {
         path: dist,
     },
     plugins: [
+        new webpack.DefinePlugin({
+            "process.env.npm_package_version": JSON.stringify(process.env.npm_package_version),
+        }),
         new CircularDependencyPlugin({
             exclude: /node_modules/,
             // add errors to webpack instead of warnings
@@ -69,12 +72,6 @@ const index = {
         path: public,
     },
     devtool: mode === "development" ? "source-map" : undefined,
-    // devServer: {
-    //     static: {
-    //         directory: public,
-    //     },
-    //     port: 9000,
-    // },
     plugins: [
         new CopyPlugin({
             patterns: [

@@ -2,15 +2,17 @@ import { GlowFilter } from "@pixi/filter-glow";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { TickQueue } from "@core/engine";
 import { Text } from "./Text";
-import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection } from "../layout";
+import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection, PositionType } from "../layout";
 import { Image } from "./Image";
 import { TickableContainer } from "./TickableContainer";
 import { ButtonTheme, ButtonType, BUTTON_THEMES } from "./theme";
+import { LoadingAnimation } from "./LoadingAnimation";
 
 const TRANSITION_TIME = 0.25;
 
 export class Button extends TickableContainer {
     private readonly _text: Text;
+    private readonly _type: ButtonType;
     private _image?: Image;
     private readonly _inactiveGraphics: Graphics;
     private readonly _activeGraphics: Graphics;
@@ -19,10 +21,13 @@ export class Button extends TickableContainer {
     private readonly _inactiveBackground: ContainerBackground;
     private _glowFilter: GlowFilter;
     private _activeGlowFilter: GlowFilter;
+    private _loader?: LoadingAnimation;
     private _hover: boolean;
     private _active: boolean;
     private _lastWidth: number;
     private _lastHeight: number;
+
+    enabled: boolean;
 
     onClick: () => void;
 
@@ -31,10 +36,13 @@ export class Button extends TickableContainer {
         type: ButtonType,
         text: string,
         imageResource?: string,
+        enabled?: boolean,
         onClick?: () => void,
     }) {
         super(params.queue);
+        this._type = params.type;
         this._theme = BUTTON_THEMES[params.type];
+        this.enabled = params.enabled ?? true;
         this._activeBackground = {
             shape: ContainerBackgroundShape.Rectangle,
             cornerRadius: 8,
@@ -110,22 +118,17 @@ export class Button extends TickableContainer {
         this._activeGraphics.visible = false;
         this.interactive = true;
         this.buttonMode = true;
-        this._text.cacheAsBitmap = true;
 
-        this.on("mouseover", () => { this._hover = true; });
-        this.on("mouseout", () => { this._hover = false; });
-        this.on("mousedown", () => { this._active = true; });
-        this.on("touchstart", () => { this._active = true; });
-        this.on("mouseup", () => {
-            this._active = false;
-            this.onClick();
+        this.on("pointerover", () => { this._hover = true; });
+        this.on("pointerout", () => { this._hover = false; });
+        this.on("pointerdown", () => { this._active = this.enabled && !this.loading; });
+        this.on("pointerup", () => { this._active = false; });
+        this.on("pointerupoutside", () => { this._active = false; });
+        this.on("pointertap", () => {
+            if (this.enabled && !this.loading) {
+                this.onClick();
+            }
         });
-        this.on("touchend", () => {
-            this._active = false;
-            this.onClick();
-        });
-        this.on("mouseupoutside", () => { this._active = false; });
-        this.on("touchendoutside", () => { this._active = false; });
     }
 
     tick(timestamp: number, elapsed: number): void {
@@ -165,6 +168,34 @@ export class Button extends TickableContainer {
         }
     }
 
+    get loading(): boolean {
+        return !!this._loader;
+    }
+
+    set loading(loading: boolean) {
+        if (loading && !this._loader) {
+            this._loader = new LoadingAnimation({
+                queue: this.queue,
+                diameter: 24,
+                color: this._theme.textColor,
+            });
+            this._loader.alpha = this._theme.textAlpha;
+            this._loader.layout.style({
+                position: PositionType.Absolute,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+            });
+            this.addChild(this._loader);
+            this._text.renderable = false;
+        } else if (!loading && this._loader) {
+            this._loader.destroy({ children: true });
+            this._loader = undefined;
+            this._text.renderable = true;
+        }
+    }
+
     get text(): string {
         return this._text.text;
     }
@@ -173,5 +204,9 @@ export class Button extends TickableContainer {
         this._text.cacheAsBitmap = false;
         this._text.text = text;
         this._text.cacheAsBitmap = true;
+    }
+
+    get type(): ButtonType {
+        return this._type;
     }
 }

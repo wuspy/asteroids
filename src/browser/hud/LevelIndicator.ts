@@ -1,5 +1,6 @@
 import { GameState } from "@core";
 import { random, TickQueue } from "@core/engine";
+import { GameTheme } from "../GameTheme";
 import { Text, TickableContainer } from "../ui";
 
 const FONT_SIZE = 28;
@@ -16,13 +17,14 @@ export class LevelIndicator extends TickableContainer {
 
     constructor(params: {
         queue: TickQueue,
+        theme: GameTheme,
         state: GameState,
     }) {
         super(params.queue);
         this._state = params.state;
         this._text = new Text("", {
             fontSize: FONT_SIZE,
-            fill: this._state.theme.foregroundColor,
+            fill: params.theme.foregroundColor,
         });
         this.addChild(this._text);
         this._lastLevel = -1;

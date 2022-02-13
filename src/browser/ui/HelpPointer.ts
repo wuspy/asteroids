@@ -4,9 +4,10 @@ import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { DEG_TO_RAD, PI_2 } from "@pixi/math";
 import { Renderer } from "@pixi/core";
-import { Vec2 } from "@core/engine";
+import { Vec2, TickQueue } from "@core/engine";
+import { TickableContainer } from "./TickableContainer";
 
-export class HelpPointer extends Container {
+export class HelpPointer extends TickableContainer {
     private readonly _timeline: anime.AnimeTimelineInstance;
     private readonly _pointerGraphics: Graphics;
     private readonly _content: Container;
@@ -24,6 +25,7 @@ export class HelpPointer extends Container {
     segment2Progress: number;
 
     constructor(params: {
+        queue: TickQueue,
         position: Vec2,
         content: Container,
         color: number,
@@ -35,7 +37,7 @@ export class HelpPointer extends Container {
         duration: number,
         delay: number,
     }) {
-        super();
+        super(params.queue);
         this.position.set(params.position.x, params.position.y);
         this._timeline = anime.timeline({ autoplay: false, easing: "linear" });
 
@@ -79,9 +81,9 @@ export class HelpPointer extends Container {
         this._timeline.reverse();
     }
 
-    override render(renderer: Renderer): void {
+    tick(timestamp: number, elapsed: number): void {
         if (!this._timeline.completed) {
-            this._timeline.tick(Date.now());
+            this._timeline.tick(timestamp);
             this._pointerGraphics.clear();
             this._pointerGraphics.lineStyle({
                 color: this._color,
@@ -107,6 +109,9 @@ export class HelpPointer extends Container {
             // The content also fades in with segment 2
             this._content.alpha = this.segment2Progress;
         }
+    }
+
+    override render(renderer: Renderer): void {
         if (this._angle2 >= 315 * DEG_TO_RAD || this._angle2 <= 45 * DEG_TO_RAD) {
             this._content.position.set(this._contentPosition.x - this._content.width / 2, this._contentPosition.y - this._content.height);
         } else if (this._angle2 < 135 * DEG_TO_RAD) {

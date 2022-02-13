@@ -1,10 +1,9 @@
 import { Asteroid } from "./Asteroid";
 import { Projectile } from "./Projectile";
 import { Ship } from "./Ship";
-import { Theme } from "./Theme";
 import { UFO } from "./UFO";
 
-export type GameStatus = "init" | "running" | "paused" | "finished";
+export type GameStatus = "init" | "running" | "finished" | "destroyed";
 
 export interface GameState {
     level: number;
@@ -12,7 +11,6 @@ export interface GameState {
     lives: number;
     status: GameStatus;
     timestamp: number;
-    theme: Theme;
     ship?: Ship;
     asteroids: Asteroid[];
     projectiles: Projectile[];

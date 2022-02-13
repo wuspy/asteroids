@@ -187,7 +187,7 @@ export type UFOType = "small" | "large";
  * The min and max interval between UFO spawns. UFO spawns are calculated as a random number between
  * these two values regardless of score.
  */
-export const UFO_SPAWN_TIME = [8, 20] as const;
+export const UFO_SPAWN_TIME = [8, 16] as const;
 /**
  * The probability of each type of UFO spawning, at 'easy' and 'hard' scores. At zero score, only the easy
  * distribution is used. At UFO_HARD_DISTRIBUTION_SCORE, only the hard distribution is used. Inbetween,

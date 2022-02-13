@@ -10,7 +10,7 @@ import {
     HitArea,
     pointsCoincident,
     Vec2,
-    atan2
+    atan2,
 } from "./math";
 import { EventManager, EventMap } from "./EventManager";
 import { TickQueue } from "./TickQueue";
@@ -22,8 +22,8 @@ export const enum WrapMode {
     Both = WrapMode.Vertical | WrapMode.Horizontal
 }
 
-export interface IGameObjectDisplay {
-    destroy(): void;
+export interface IGameObjectDisplay<DestroyOptions> {
+    gameObjectDestroyed(options: DestroyOptions): void;
     get position(): ObservablePoint;
     set rotation(rotation: number);
 }
@@ -52,13 +52,13 @@ export type CoreGameObjectParams<State, Events extends EventMap<keyof Events>> =
         | "worldSize"
     >;
 
-export abstract class GameObject<State, Events extends EventMap<keyof Events>> {
-    display?: IGameObjectDisplay;
+export abstract class GameObject<State = any, DestroyOptions = any, Events extends EventMap<keyof Events> = object> {
+    display?: IGameObjectDisplay<DestroyOptions>;
     readonly state: Readonly<State>;
     readonly events: EventManager<Events>
     readonly queue: TickQueue;
     readonly queuePriority: number;
-    readonly worldSize: ISize;
+    readonly worldSize: Readonly<ISize>;
     readonly position: ObservablePoint;
     readonly velocity: Vec2;
     wrapMode: WrapMode;
@@ -98,32 +98,25 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> {
     }
 
     // Returns true if this object's hitarea collides with another
-    collidesWith(other: GameObject<any, any>): boolean {
+    collidesWith(other: GameObject<any, any, any>): boolean {
         // Fast collision detection using bounding box
         if (this._boundingBox.intersects(other._boundingBox)) {
             // Slow(er) collision detection using hitarea
-            const [thisIsPoint, otherIsPoint] = [typeof (this._hitArea) === "number", typeof (other._hitArea) === "number"];
-            if (thisIsPoint || otherIsPoint) {
-                if (thisIsPoint && otherIsPoint) {
-                    return pointsCoincident(this.position, other.position, (this._hitArea as number) + (other._hitArea as number));
-                } else {
-                    const objWithHitbox = thisIsPoint ? other : this;
-                    const objWithPoint = otherIsPoint ? other : this;
-                    return (objWithHitbox._hitArea as Polygon).contains2(
-                        objWithPoint.position,
-                        objWithHitbox.position,
-                        objWithPoint._hitArea as number
-                    );
-                }
+            if (typeof (this._hitArea) === "number" && typeof (other._hitArea) === "number") {
+                return pointsCoincident(this.position, other.position, this._hitArea + other._hitArea);
+            } else if (typeof (this._hitArea) === "number") {
+                return (other._hitArea as Polygon).contains2(this.position, other.position, this._hitArea);
+            } else if (typeof (other._hitArea) === "number") {
+                return (this._hitArea as Polygon).contains2(other.position, this.position, other._hitArea);
             } else {
-                return (this._hitArea as Polygon).intersects(other._hitArea as Polygon);
+                return this._hitArea.intersects(other._hitArea);
             }
         }
         return false;
     }
 
-    destroy() {
-        this.display?.destroy();
+    destroy(options: DestroyOptions) {
+        this.display?.gameObjectDestroyed(options);
         this.events.offThis(this);
         this.queue.remove(this.queuePriority, this);
     }
@@ -143,7 +136,7 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> {
     set rotation(angle: number) {
         this._rotation = angle;
         this.updateHitarea();
-        this.display && (this.display.rotation = angle % PI_2);
+        this.display && (this.display.rotation = this._rotation % PI_2);
     }
 
     translate(dX: number, dY: number): void {
@@ -183,7 +176,7 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> {
     }
 
     get heading(): number {
-        return atan2(this.velocity.y, this.velocity.x)
+        return atan2(this.velocity.y, this.velocity.x);
     }
 
     get speed(): number {
@@ -191,7 +184,7 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> {
     }
 
     get speedAtRotation(): number {
-        return this.speed * Math.cos(this.rotation - this.heading)
+        return this.speed * Math.cos(this.rotation - this.heading);
     }
 
     stop() {
@@ -206,18 +199,18 @@ export abstract class GameObject<State, Events extends EventMap<keyof Events>> {
         if (this.wrapMode) {
             let x = this.x, y = this.y;
 
-            if (this.wrapMode & WrapMode.Horizontal && (x < 0 || x > this.worldSize.width)) {
+            if ((this.wrapMode & WrapMode.Horizontal) && (x < 0 || x > this.worldSize.width)) {
                 const margin = this._boundingBox.width / 2;
-                const width = this.worldSize.width + margin * 2;
+                const width = this.worldSize.width + this._boundingBox.width;
                 x = (this.x + margin) % width - margin;
                 if (x < -margin) {
                     x += width;
                 }
             }
 
-            if (this.wrapMode & WrapMode.Vertical && (y < 0 || y > this.worldSize.height)) {
+            if ((this.wrapMode & WrapMode.Vertical) && (y < 0 || y > this.worldSize.height)) {
                 const margin = this._boundingBox.height / 2;
-                const height = this.worldSize.height + margin * 2;
+                const height = this.worldSize.height + this._boundingBox.height;
                 y = (this.y + margin) % height - margin;
                 if (y < -margin) {
                     y += height;

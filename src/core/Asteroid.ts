@@ -27,18 +27,22 @@ import { GameEvents } from "./GameEvents";
 // an asteroid from being stuck near the screen margin.
 export const generateAsteroidAngle = (useSeededRandom: boolean) => (random(15, 75, useSeededRandom) + 90 * random(0, 3, useSeededRandom)) * DEG_TO_RAD;
 
-export interface IAsteroidDisplay extends IGameObjectDisplay {
-    createExplosion(): void;
+export interface AsteroidDestroyOptions {
+    hit: boolean;
+    scored: boolean;
+    createChildren: boolean;
 }
 
-export class Asteroid extends GameObject<GameState, GameEvents> {
+export type IAsteroidDisplay = IGameObjectDisplay<AsteroidDestroyOptions>;
+
+export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, GameEvents> {
     override display?: IAsteroidDisplay;
     private _model: number;
     private _generation: number;
 
     private constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         position?: Vec2,
-        obstacles?: GameObject<any, any>[],
+        obstacles?: GameObject[],
         velocity: Vec2,
         model: number,
         generation: number,
@@ -58,7 +62,7 @@ export class Asteroid extends GameObject<GameState, GameEvents> {
         }
     }
 
-    moveToUnoccupiedPosition(obstacles: GameObject<any, any>[]): void {
+    moveToUnoccupiedPosition(obstacles: GameObject[]): void {
         const boundingBox = this.boundingBox;
         const position = findUnoccupiedPosition({
             bounds: new Rectangle(
@@ -81,18 +85,11 @@ export class Asteroid extends GameObject<GameState, GameEvents> {
         this.position.copyFrom(position);
     }
 
-    override destroy(options?: {
-        explode: boolean,
-        scored: boolean,
-        createChildren: boolean,
-    }): void {
-        if (!!options?.explode && this.display) {
-            this.display.createExplosion();
-        }
-        super.destroy();
+    override destroy(options: AsteroidDestroyOptions): void {
+        super.destroy(options);
         const generation = this._generation + 1;
-        const createChildren = !!options?.createChildren && generation < ASTEROID_GENERATION_COUNT;
-        this.events.trigger("asteroidDestroyed", this, !!options?.scored, createChildren);
+        const createChildren = options.createChildren && generation < ASTEROID_GENERATION_COUNT;
+        this.events.trigger("asteroidDestroyed", this, options.hit, options.scored, createChildren);
 
         if (createChildren) {
             let lastAngle = -15;
@@ -142,7 +139,7 @@ export class Asteroid extends GameObject<GameState, GameEvents> {
         for (let i = 0; i <= count; i++) {
             modelNumbers.push(random(0, ASTEROID_HITAREAS.length - 1, true));
         }
-        const obstacles: GameObject<any, any>[] = [...params.state.asteroids, ...params.state.ufos];
+        const obstacles: GameObject[] = [...params.state.asteroids, ...params.state.ufos];
         if (params.state.ship) {
             obstacles.push(params.state.ship);
         }

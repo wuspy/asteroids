@@ -31,6 +31,8 @@ export const pointsCoincident = (a: Vec2, b: Vec2, distance = 0) => Math.sqrt((b
 // Gets the midpoint of a line segment
 export const lineMidpoint = (line: LineSegment): Vec2 => ({ x: (line[0].x + line[1].x) / 2, y: (line[0].y + line[1].y) / 2 })
 
+export const lineSegmentLength = (line: LineSegment): number => Math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2)
+
 // atan2 where the result is adjusted to the game's coordinate system
 export const atan2 = (y: number, x: number): number => {
     let angle = Math.atan2(y, x) + Math.PI / 2;
@@ -47,14 +49,11 @@ declare module "@pixi/math" {
     }
 }
 
-Rectangle.prototype.scale = function (scale: number): Rectangle {
-    if (scale !== 1) {
-        this.x -= (this.width / 2),
-            this.y -= (this.height / 2),
-            this.width *= 2;
-        this.height *= 2;
+declare module "@pixi/math" {
+    interface Rectangle {
+        translate(x: number, y: number): Rectangle;
+        intersects(other: Rectangle): boolean;
     }
-    return this;
 }
 
 Rectangle.prototype.translate = function (x: number, y: number): Rectangle {
@@ -65,6 +64,13 @@ Rectangle.prototype.translate = function (x: number, y: number): Rectangle {
         this.y += y;
     }
     return this;
+}
+
+Rectangle.prototype.intersects = function (other: Rectangle): boolean {
+    return this.left < other.right
+        && this.right > other.left
+        && this.top < other.bottom
+        && this.bottom > other.top;
 }
 
 Rectangle.prototype.intersects = function (other: Rectangle): boolean {
