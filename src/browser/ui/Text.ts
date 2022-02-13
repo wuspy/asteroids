@@ -14,9 +14,9 @@ export class Text extends PixiText {
         height: number,
         heightMeasureMode: MeasureMode
     ): ISize {
-        if (this.style.wordWrap && widthMeasureMode !== MeasureMode.Undefined) {
-            this.style.wordWrapWidth = width;
-        }
+        this.style.wordWrapWidth = this.style.wordWrap && widthMeasureMode !== MeasureMode.Undefined
+            ? width
+            : undefined;
         this.updateText(true);
         return super.onLayoutMeasure(width, widthMeasureMode, height, heightMeasureMode);
     }
