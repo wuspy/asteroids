@@ -9,13 +9,15 @@ import {
     ROTATION_FRICTION,
     SHIP_HITAREA,
     HYPERSPACE_DELAY,
-    SHIP_PROJECTILE_SPEED,
+    BASE_SHIP_PROJECTILE_SPEED,
+    MIN_SHIP_PROJECTILE_SPEED,
+    MAX_SHIP_PROJECTILE_SPEED,
     QUEUE_PRIORITIES,
     HYPERSPACE_COOLDOWN
 } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { DynamicGameObject, random, CoreGameObjectParams, Vec2, IGameObjectDisplay } from "./engine";
+import { DynamicGameObject, random, CoreGameObjectParams, Vec2, IGameObjectDisplay, addVec2 } from "./engine";
 import { DEG_TO_RAD } from "@pixi/math";
 import { Projectile } from "./Projectile";
 
@@ -88,21 +90,44 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
     }
 
     fire(): void {
+        const velocity = { ...this.velocity };
+        // Add tangential velocity from rotation
+        velocity.x += this.rotationSpeed * 36 * this.cosRotation;
+        velocity.y += this.rotationSpeed * 36 * this.sinRotation;
+        // Add base velocity
+        velocity.x += BASE_SHIP_PROJECTILE_SPEED * this.sinRotation;
+        velocity.y -= BASE_SHIP_PROJECTILE_SPEED * this.cosRotation;
+        // Clamp speed between MAX_SHIP_PROJECTILE_SPEED and MIN_SHIP_PROJECTILE_SPEED
+        const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
+        if (speed > MAX_SHIP_PROJECTILE_SPEED) {
+            velocity.x -= (speed - MAX_SHIP_PROJECTILE_SPEED) * (velocity.x / speed);
+            velocity.y -= (speed - MAX_SHIP_PROJECTILE_SPEED) * (velocity.y / speed);
+        } else if (speed < MIN_SHIP_PROJECTILE_SPEED) {
+            velocity.x += (MIN_SHIP_PROJECTILE_SPEED - speed) * (velocity.x / speed);
+            velocity.y += (MIN_SHIP_PROJECTILE_SPEED - speed) * (velocity.y / speed);
+        }
+
         this.events.trigger("projectileCreated", new Projectile({
             events: this.events,
             state: this.state,
             queue: this.queue,
             worldSize: this.worldSize,
-            position: this.gunPosition,
+            position: {
+                x: this.x + 36 * this.sinRotation,
+                y: this.y - 36 * this.cosRotation,
+            },
             rotation: this.rotation,
-            // Give projectiles a little boost if we're moving in the same direction
-            speed: Math.max(SHIP_PROJECTILE_SPEED, SHIP_PROJECTILE_SPEED + this.speedAtRotation / 2),
+            velocity,
             from: this,
         }));
+
         // Add recoil
-        if (this.speedAtRotation > -MAX_SPEED) {
-            this.velocity.x -= RECOIL * Math.sin(this.rotation);
-            this.velocity.y -= RECOIL * -Math.cos(this.rotation);
+        this.velocity.x -= RECOIL * this.sinRotation;
+        this.velocity.y += RECOIL * this.cosRotation;
+        const overSpeed = speed - this.maxSpeed;
+        if (overSpeed > 0) {
+            this.velocity.x -= overSpeed * (this.velocity.x / speed);
+            this.velocity.y -= overSpeed * (this.velocity.y / speed);
         }
     }
 
@@ -111,13 +136,6 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             this._hyperspaceCountdown = HYPERSPACE_DELAY;
             this._lastHyperspaceTime = this.state.timestamp;
         }
-    }
-
-    get gunPosition(): Vec2 {
-        return {
-            x: this.x + 36 * Math.sin(this.rotation),
-            y: this.y + 36 * -Math.cos(this.rotation),
-        };
     }
 
     get invulnerable(): boolean {

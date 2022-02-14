@@ -12,26 +12,20 @@ export type IProjectileDisplay = IGameObjectDisplay<ProjectileDestroyOptions>;
 export class Projectile extends GameObject<GameState, ProjectileDestroyOptions, GameEvents> {
     private readonly _creationTime: number;
     override display?: IProjectileDisplay;
-    private _traveled: number;
     private _from: GameObject;
 
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         position: Vec2,
-        from: GameObject,
-        speed: number,
         rotation: number,
+        velocity: Vec2,
+        from: GameObject,
     }) {
         super({
             ...params,
             queuePriority: QUEUE_PRIORITIES.projectile,
-            velocity: {
-                x: params.speed * Math.sin(params.rotation),
-                y: params.speed * -Math.cos(params.rotation),
-            },
             hitArea: 6
         });
         this._creationTime = this.state.timestamp;
-        this._traveled = 0;
         this._from = params.from;
     }
 

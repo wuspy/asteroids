@@ -2,7 +2,7 @@ import { DEG_TO_RAD } from "@pixi/math";
 import { UFOType, UFO_HITAREAS, UFO_SCORES, UFO_SPEEDS, UFO_PROJECTILE_SPEEDS, QUEUE_PRIORITIES, UFO_INACCURACY, UFO_FIRE_INTERVALS, UFO_SHIFT_INTERVALS, UFO_SHIFT_AMOUNTS, UFO_HARD_INACCURACY_SCORE } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { atan2, calculateVelocityToIntercept, CoreGameObjectParams, GameObject, IGameObjectDisplay, random, WrapMode } from "./engine";
+import { atan2, calculateVelocityToIntercept, CoreGameObjectParams, GameObject, IGameObjectDisplay, random, Vec2, WrapMode } from "./engine";
 import { Projectile } from "./Projectile";
 
 export interface UFODestroyOptions {
@@ -69,7 +69,7 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
     }
 
     private fire(): void {
-        let angle;
+        let angle: number;
         if (this._type === "large") {
             // Large UFOs just fire in a random direction
             angle = random(1, 360, true) * DEG_TO_RAD;
@@ -109,6 +109,7 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
             }
         }
 
+        const speed = UFO_PROJECTILE_SPEEDS[this._type];
         this.events.trigger("projectileCreated", new Projectile({
             state: this.state,
             events: this.events,
@@ -116,7 +117,10 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
             worldSize: this.worldSize,
             position: this.position,
             rotation: angle,
-            speed: UFO_PROJECTILE_SPEEDS[this._type],
+            velocity: {
+                x: speed * Math.sin(angle),
+                y: speed * -Math.cos(angle),
+            },
             from: this,
         }));
     }

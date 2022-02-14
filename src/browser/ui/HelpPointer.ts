@@ -4,7 +4,7 @@ import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { DEG_TO_RAD, PI_2 } from "@pixi/math";
 import { Renderer } from "@pixi/core";
-import { Vec2, TickQueue } from "@core/engine";
+import { Vec2, TickQueue, PI_1_2 } from "@core/engine";
 import { TickableContainer } from "./TickableContainer";
 
 export class HelpPointer extends TickableContainer {
@@ -90,7 +90,7 @@ export class HelpPointer extends TickableContainer {
                 width: 2,
                 join: LINE_JOIN.BEVEL,
             });
-            const circleAngle = this._angle1 - Math.PI / 2;
+            const circleAngle = this._angle1 - PI_1_2;
             this._pointerGraphics.arc(0, 0, 4, circleAngle, circleAngle + this.circleProgress * PI_2);
 
             const currentPosition = { x: 4 * this._angle1Sin, y: 4 * -this._angle1Cos };

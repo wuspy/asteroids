@@ -83,7 +83,9 @@ export const SHIP_HITAREA = new Polygon(
     { x: 7, y: 16 },
 );
 
-export const SHIP_PROJECTILE_SPEED = 1000;
+export const BASE_SHIP_PROJECTILE_SPEED = 1000;
+export const MAX_SHIP_PROJECTILE_SPEED = 1500;
+export const MIN_SHIP_PROJECTILE_SPEED = 800;
 /**
  * How much time a projectile can stay active
  */

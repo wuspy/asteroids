@@ -198,7 +198,7 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
     }
 
     get speedAtRotation(): number {
-        return this.speed * Math.cos(this.rotation - this.heading);
+        return this.velocity.x * this.sinRotation - this.velocity.y * this.cosRotation;
     }
 
     stop() {
@@ -208,6 +208,7 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
 
     protected onPositionChange(): void {
         if (this._ignoreNextPositionChange) {
+            this._ignoreNextPositionChange = false;
             return;
         }
         if (this.wrapMode) {
@@ -234,7 +235,6 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
             if (x !== this.x || y !== this.y) {
                 this._ignoreNextPositionChange = true;
                 this.position.set(x, y);
-                this._ignoreNextPositionChange = false;
             }
         }
         this.updateHitarea();

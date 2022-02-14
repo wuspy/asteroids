@@ -1,6 +1,8 @@
 import { ISize, IPointData, Rectangle, Polygon, PI_2 } from "@pixi/math";
 import { random } from "./random";
 
+export const PI_1_2 = Math.PI / 2;
+
 // Aliased because the name IPointData doesn't really make sense when referring to things like
 // velocity or deltas, which this type is also used for. Also to shorten the name.
 export type Vec2 = IPointData;
@@ -35,12 +37,13 @@ export const lineSegmentLength = (line: LineSegment): number => Math.sqrt((line[
 
 // atan2 where the result is adjusted to the game's coordinate system
 export const atan2 = (y: number, x: number): number => {
-    let angle = Math.atan2(y, x) + Math.PI / 2;
+    let angle = Math.atan2(y, x) + PI_1_2;
     if (angle < 0) {
         angle += PI_2;
     }
     return angle;
 }
+
 declare module "@pixi/math" {
     interface Rectangle {
         translate(x: number, y: number): Rectangle;
