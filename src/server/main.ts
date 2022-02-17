@@ -38,9 +38,7 @@ app.get("/api/game-token", async (request, response) => {
 
 app.get("/api/leaderboard", async (request, response) => {
     try {
-        setTimeout(async () => {
         response.json(successResponse<HighScoreResponse[]>(await findHighScores()));
-        }, 1000);
     } catch (e) {
         response.sendStatus(500);
     }
