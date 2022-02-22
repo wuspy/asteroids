@@ -45,6 +45,7 @@
         "@pixi/filter-alpha": "^6.2.2",
         "@pixi/filter-bloom": "^4.1.5",
         "@pixi/filter-blur": "^6.2.2",
+        "@pixi/filter-glitch": "^4.1.5",
         "@pixi/filter-glow": "^4.1.5",
         "@pixi/filter-kawase-blur": "^4.1.5",
         "@pixi/graphics-smooth": "^0.0.20",

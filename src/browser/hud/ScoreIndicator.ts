@@ -1,6 +1,6 @@
 import { GameState } from "@core";
 import { TickQueue } from "@core/engine";
-import { ScoreText, Text, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui";
+import { ScoreText, Text, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR } from "../ui";
 import { ContainerBackgroundShape } from "../layout";
 import { PopAnimation } from "../animations";
 import { ITextStyle, TextStyle } from "@pixi/text";
@@ -35,10 +35,7 @@ export class ScoreIndicator extends TickableContainer {
             },
         };
 
-        this._text = new ScoreText(this._state.score, 0.25, {
-            fontSize: 48,
-            fill: UI_FOREGROUND_COLOR,
-        });
+        this._text = new ScoreText(this._state.score, 0.25, { fontSize: 48 });
 
         this.addChild(this._text);
     }

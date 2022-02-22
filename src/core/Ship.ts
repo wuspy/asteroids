@@ -13,13 +13,21 @@ import {
     MIN_SHIP_PROJECTILE_SPEED,
     MAX_SHIP_PROJECTILE_SPEED,
     QUEUE_PRIORITIES,
-    HYPERSPACE_COOLDOWN
+    HYPERSPACE_COOLDOWN,
+    SHIP_POWERUP_DURATION,
+    SHIP_POWERUP_PROJECTILE_SPEED_MULTIPLIER,
+    SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY,
+    SHIP_FIRE_COOLDOWN,
+    SHIP_POWERUP_RECOIL_MULTIPLER
 } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { DynamicGameObject, random, CoreGameObjectParams, Vec2, IGameObjectDisplay, addVec2 } from "./engine";
+import { DynamicGameObject, random, CoreGameObjectParams, Vec2, IGameObjectDisplay } from "./engine";
 import { DEG_TO_RAD } from "@pixi/math";
 import { Projectile } from "./Projectile";
+
+const HYPERSPACE_COOLDOWN_MS = HYPERSPACE_COOLDOWN * 1000;
+const FIRE_COOLDOWN_MS = SHIP_FIRE_COOLDOWN * 1000;
 
 export interface ShipDestroyOptions {
     hit: boolean;
@@ -27,15 +35,19 @@ export interface ShipDestroyOptions {
 
 export interface IShipDisplay extends IGameObjectDisplay<ShipDestroyOptions> {
     onHyperspace(): void;
+    onPowerupStart(): void;
+    onPowerupEnd(): void;
 }
 
 export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameEvents> {
     override display?: IShipDisplay;
     accelerationAmount: number;
     rotationAmount: number;
-    private _invulnerableCountdown!: number;
+    private _invulnerableRemaining!: number;
     private _hyperspaceCountdown: number;
     private _lastHyperspaceTime: number;
+    private _lastFireTime: number;
+    private _powerupRemaining: number;
 
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         invulnerable: boolean,
@@ -54,8 +66,10 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         this.accelerationAmount = 0;
         this._hyperspaceCountdown = 0;
         this._lastHyperspaceTime = 0;
+        this._lastFireTime = 0;
         this.rotationAmount = 0;
         this.invulnerable = params.invulnerable;
+        this._powerupRemaining = 0;
     }
 
     override tick(timestamp: number, elapsed: number): void {
@@ -73,8 +87,15 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             this._hyperspaceCountdown = Math.max(0, this._hyperspaceCountdown - elapsed);
         }
 
-        if (this.invulnerable) {
-            this._invulnerableCountdown = Math.max(0, this._invulnerableCountdown - elapsed);
+        if (this._invulnerableRemaining) {
+            this._invulnerableRemaining = Math.max(0, this._invulnerableRemaining - elapsed);
+        }
+
+        if (this._powerupRemaining) {
+            this._powerupRemaining = Math.max(0, this._powerupRemaining - elapsed);
+            if (this._powerupRemaining === 0) {
+                this.display?.onPowerupEnd();
+            }
         }
 
         this.maxRotationSpeed = Math.abs(this.rotationAmount) * MAX_ROTATION_SPEED;
@@ -90,13 +111,21 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
     }
 
     fire(): void {
+        if (!this._powerupRemaining && this.state.timestamp - this._lastFireTime < FIRE_COOLDOWN_MS) {
+            return;
+        }
         const velocity = { ...this.velocity };
         // Add tangential velocity from rotation
-        velocity.x += this.rotationSpeed * 36 * this.cosRotation;
-        velocity.y += this.rotationSpeed * 36 * this.sinRotation;
+        if (SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY) {
+            velocity.x += this.rotationSpeed * 36 * this.cosRotation;
+            velocity.y += this.rotationSpeed * 36 * this.sinRotation;
+        }
         // Add base velocity
-        velocity.x += BASE_SHIP_PROJECTILE_SPEED * this.sinRotation;
-        velocity.y -= BASE_SHIP_PROJECTILE_SPEED * this.cosRotation;
+        const baseSpeed = this._powerupRemaining
+            ? BASE_SHIP_PROJECTILE_SPEED * SHIP_POWERUP_PROJECTILE_SPEED_MULTIPLIER
+            : BASE_SHIP_PROJECTILE_SPEED;
+        velocity.x += baseSpeed * this.sinRotation;
+        velocity.y -= baseSpeed * this.cosRotation;
         // Clamp speed between MAX_SHIP_PROJECTILE_SPEED and MIN_SHIP_PROJECTILE_SPEED
         const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
         if (speed > MAX_SHIP_PROJECTILE_SPEED) {
@@ -122,39 +151,54 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         }));
 
         // Add recoil
-        this.velocity.x -= RECOIL * this.sinRotation;
-        this.velocity.y += RECOIL * this.cosRotation;
-        const overSpeed = speed - this.maxSpeed;
+        const recoil = this._powerupRemaining ? RECOIL * SHIP_POWERUP_RECOIL_MULTIPLER : RECOIL;
+        this.velocity.x -= recoil * this.sinRotation;
+        this.velocity.y += recoil * this.cosRotation;
+        const overSpeed = this.speed - this.maxSpeed;
         if (overSpeed > 0) {
             this.velocity.x -= overSpeed * (this.velocity.x / speed);
             this.velocity.y -= overSpeed * (this.velocity.y / speed);
         }
+        this._lastFireTime = this.state.timestamp;
     }
 
     hyperspace(): void {
-        if (this.state.timestamp - this._lastHyperspaceTime >= HYPERSPACE_COOLDOWN * 1000) {
+        if (this.state.timestamp - this._lastHyperspaceTime >= HYPERSPACE_COOLDOWN_MS) {
             this._hyperspaceCountdown = HYPERSPACE_DELAY;
             this._lastHyperspaceTime = this.state.timestamp;
         }
     }
 
     get invulnerable(): boolean {
-        return this._invulnerableCountdown > 0 || this._hyperspaceCountdown > 0;
+        return this._invulnerableRemaining > 0 || this._hyperspaceCountdown > 0;
     }
 
     set invulnerable(invulnerable: boolean) {
-        this._invulnerableCountdown = invulnerable ? INVULNERABLE_TIME : 0;
+        this._invulnerableRemaining = invulnerable ? INVULNERABLE_TIME : 0;
     }
 
     get hyperspaceCountdown(): number {
         return this._hyperspaceCountdown;
     }
 
-    get invulnerableCountdown(): number {
-        return this._invulnerableCountdown;
+    get invulnerableRemaining(): number {
+        return this._invulnerableRemaining;
     }
 
     get lastHyperspaceTime(): number {
         return this._lastHyperspaceTime;
+    }
+
+    get lastFireTime(): number {
+        return this._lastFireTime;
+    }
+
+    startPowerup(): void {
+        this._powerupRemaining = SHIP_POWERUP_DURATION;
+        this.display?.onPowerupStart();
+    }
+
+    get powerupRemaining(): number {
+        return this._powerupRemaining;
     }
 }

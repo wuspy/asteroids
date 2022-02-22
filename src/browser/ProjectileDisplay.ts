@@ -1,6 +1,6 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Tickable } from "@core/engine";
-import { IProjectileDisplay, Projectile, PROJECTILE_LIFETIME, UFO } from "@core";
+import { IProjectileDisplay, Projectile, PROJECTILE_LIFETIME, UFO, Ship } from "@core";
 import { GameTheme } from "./GameTheme";
 import { IDestroyOptions } from "@pixi/display";
 
@@ -21,7 +21,12 @@ export class ProjectileDisplay extends Graphics implements IProjectileDisplay, T
         projectile.display = this;
         this._projectile = projectile;
         this._projectile.queue.add(100, this);
-        this.tint = projectile.from instanceof UFO ? theme.ufoColor : theme.foregroundColor;
+        this.tint = projectile.from instanceof UFO
+            ? theme.ufoColor
+            : projectile.from instanceof Ship && projectile.from.powerupRemaining
+                ? theme.powerupColor
+                : theme.foregroundColor;
+
         this.position.copyFrom(projectile.position);
         this.rotation = projectile.rotation;
 

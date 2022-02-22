@@ -3,8 +3,10 @@ import { BlurFilter } from "@pixi/filter-blur";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { Asteroid, IAsteroidDisplay, ASTEROID_HITAREAS, AsteroidDestroyOptions } from "@core";
+import { Tickable } from "@core/engine";
 import { Explosion, PopAnimation } from "./animations";
 import { GameTheme } from "./GameTheme";
+import { PowerupFilter } from "./filters";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
 const GENERATION_SPAWN_SIZES: readonly number[] = [1, 1.75, 2.25];
@@ -22,25 +24,40 @@ const GEOMETRIES = ASTEROID_HITAREAS.map((generations) => generations.map((polyg
     return graphics.geometry;
 }));
 
-export class AsteroidDisplay extends Container implements IAsteroidDisplay {
+export class AsteroidDisplay extends Container implements IAsteroidDisplay, Tickable {
     private readonly _asteroid: Asteroid;
-    private readonly _theme: GameTheme;
+    private readonly _color: number;
+    private _powerupFilter?: PowerupFilter;
 
     constructor(asteroid: Asteroid, theme: GameTheme) {
         super();
         asteroid.display = this;
         this._asteroid = asteroid;
-        this._theme = theme;
         this.position.copyFrom(asteroid.position);
         this.rotation = asteroid.rotation;
 
         const sprite = new Graphics(GEOMETRIES[asteroid.model][asteroid.generation]);
-        sprite.tint = theme.foregroundColor;
+        this._color = sprite.tint = theme.foregroundColor;
         const blur = sprite.clone();
-        blur.filters = [new BlurFilter()];
+        const blurFilter = new BlurFilter();
+        blurFilter.padding *= 2;
+        blur.filters = [blurFilter];
         this.addChild(blur, sprite);
 
         this.createSpawnAnimation();
+
+        if (asteroid.hasPowerup) {
+            this.filters = [
+                this._powerupFilter = new PowerupFilter(),
+            ];
+            this._color = sprite.tint = blur.tint = theme.powerupColor;
+        }
+
+        this._asteroid.queue.add(100, this);
+    }
+
+    tick(timestamp: number, elapsed: number): void {
+        this._powerupFilter?.tick(timestamp, elapsed);
     }
 
     gameObjectDestroyed({ hit }: AsteroidDestroyOptions): void {
@@ -49,7 +66,7 @@ export class AsteroidDisplay extends Container implements IAsteroidDisplay {
                 queue: this._asteroid.queue,
                 diameter: GENERATION_EXPLOSION_SIZES[this._asteroid.generation],
                 maxDuration: 2000,
-                color: this._theme.foregroundColor,
+                color: this._color,
             });
             explosion.position.copyFrom(this.position);
             this.parent.addChild(explosion);
@@ -58,13 +75,14 @@ export class AsteroidDisplay extends Container implements IAsteroidDisplay {
     }
 
     override destroy(options?: boolean | IDestroyOptions): void {
+        this._asteroid.queue.remove(100, this);
         this._asteroid.display = undefined;
         super.destroy(options);
     }
 
     private createSpawnAnimation(): void {
         const sprite = new Graphics(GEOMETRIES[this._asteroid.model][this._asteroid.generation]);
-        sprite.tint = this._theme.foregroundColor;
+        sprite.tint = this._color;
         sprite.filters = [new BlurFilter(12)];
 
         const animation = new PopAnimation({

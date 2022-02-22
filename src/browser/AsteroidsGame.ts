@@ -1,9 +1,9 @@
 import { Container } from "@pixi/display";
 import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
-import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, inputLogConfig, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
+import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
-import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, GameLog, random, EventManager } from "@core/engine";
+import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, random, EventManager } from "@core/engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
@@ -92,12 +92,12 @@ export class AsteroidsGame {
     private _saveScoreModal?: SaveScoreModal;
     private _leaderboardModal?: LeaderboardModal;
     private _gameOverScreen?: GameOverScreen;
-    private _logger?: GameLog<typeof controls>;
     private _timestamp!: number;
     private _paused: boolean;
     private _queuedResizeId?: number;
     private _backgroundAsteroids: BackgroundAsteroid[];
     private _nextAnimationFrameId?: number;
+    private _lastStartPressed: boolean;
 
     // Only used in development mode
     readonly fpsStats!: Stats;
@@ -121,6 +121,7 @@ export class AsteroidsGame {
 
         this.game = new CoreAsteroidsGame();
         this._paused = false;
+        this._lastStartPressed = false;
 
         this._apiRoot = params.apiRoot;
         this._loadingGameToken = false;
@@ -301,27 +302,28 @@ export class AsteroidsGame {
             if (this._nextToken) {
                 try {
                     seedRandom(this._nextToken.randomSeed);
-                    this._logger = new GameLog(this.game.worldSize, inputLogConfig);
+                    this.game.enableLogging = true;
                     this._token = this._nextToken;
                     this._nextToken = undefined;
                 } catch (e) {
                     initRandom();
                     this._nextToken = this._token = undefined;
+                    this.game.enableLogging = false;
                 }
             } else {
                 initRandom();
                 this._token = undefined;
+                this.game.enableLogging = false;
             }
             this.fetchNextGameToken();
             this._gameplayContainer.show();
         });
         this.game.events.on("finished", this, () => {
-            this._logger?.flush();
             this._gameOverScreen = new GameOverScreen({
                 queue: this._uiQueue,
                 events: this._uiEvents,
                 state: this.game.state,
-                enableSave: !!this._token && !!this._logger && !!this._apiRoot,
+                enableSave: !!this._token && !!this.game.log && !!this._apiRoot,
             });
             this._hudContainer.addChild(this._gameOverScreen);
         });
@@ -420,13 +422,13 @@ export class AsteroidsGame {
             }
         });
         this._uiEvents.on("openSaveScore", this, () => {
-            if (this._token && this._logger && this._apiRoot && !this._saveScoreModal) {
+            if (this._token && this.game.log && this._apiRoot && !this._saveScoreModal) {
                 this._saveScoreModal = new SaveScoreModal({
                     queue: this._uiQueue,
                     events: this._uiEvents,
                     token: this._token,
                     apiRoot: this._apiRoot,
-                    log: this._logger.log,
+                    log: this.game.log,
                     state: this.game.state,
                 });
                 this._hudContainer.addChild(this._saveScoreModal);
@@ -553,11 +555,11 @@ export class AsteroidsGame {
             this.fpsStats.begin();
             this.memoryStats.begin();
         }
-        let elapsed = timestamp - this._timestamp;
+        const elapsed = timestamp - this._timestamp;
         this._timestamp = timestamp;
-        let input = this._input.poll();
+        const input = this._input.poll();
 
-        if (input.start) {
+        if (input.start && !this._lastStartPressed) {
             if (this.game.state.status === GameStatus.Init && !this._loadingGameToken) {
                 this._uiEvents.trigger("start");
             } else if (this.game.state.status === GameStatus.Running) {
@@ -568,12 +570,9 @@ export class AsteroidsGame {
                 }
             }
         }
+        this._lastStartPressed = !!input.start;
 
         if (!this._paused) {
-            if (this._logger && this.game.state.status === GameStatus.Running) {
-                [elapsed, input] = this._logger.logFrame(elapsed, input, this.game.worldSize);
-            }
-
             this.game.tick(elapsed, input);
         }
         this._uiQueue.tick(this._timestamp, elapsed / 1000);
@@ -619,6 +618,7 @@ export class AsteroidsGame {
     }
 
     private executeResize(): void {
+        this._uiEvents.trigger("pause");
         const [nativeWidth, nativeHeight] = [
             this._container.clientWidth * this._dpr,
             this._container.clientHeight * this._dpr,

@@ -29,22 +29,27 @@ export type GamepadAxisName =
 
 export type InputState<Controls extends readonly string[]> = { [Key in Controls[number]]: number };
 
+export const enum InputMappingType {
+    Digital,
+    Analog,
+}
+
 export type DigitalInputMapping<Controls extends readonly string[]> = {
+    type: InputMappingType.Digital;
     control: Controls[number];
-    type: "action" | "momentary";
 } | {
+    type: InputMappingType.Analog;
     control: Controls[number];
-    type: "analog";
     value: number;
 };
 
 export type AnalogInputMapping<Controls extends readonly string[]> = {
+    type: InputMappingType.Digital;
     control: Controls[number];
-    type: "action" | "momentary";
     threshold: number;
 } | {
+    type: InputMappingType.Analog;
     control: Controls[number];
-    type: "analog";
     invert?: boolean;
 };
 
@@ -99,9 +104,6 @@ export class InputProvider<Controls extends readonly string[]> {
     deadzone: number;
     private _initialState: InputState<Controls>;
     private _keyState: { [Key in string]: boolean };
-    private _lastKeyState: { [Key in string]: boolean };
-    private _lastButtonState: Partial<{ [Key in GamepadButtonName]: boolean }>;
-    private _lastAnalogState: Partial<{ [Key in GamepadAxisName]: boolean }>;
     private _gamepad: Gamepad | null;
     private _mapping: InputMapping<Controls>;
     private _events: EventManager<InputProviderEvents<Controls>>;
@@ -110,9 +112,6 @@ export class InputProvider<Controls extends readonly string[]> {
         this.deadzone = deadzone ?? DEFAULT_DEADZONE;
         this._mapping = {};
         this._keyState = {};
-        this._lastKeyState = {};
-        this._lastButtonState = {};
-        this._lastAnalogState = {};
         this._gamepad = null;
         this._initialState = createEmptyInput(controls);
         this._events = new EventManager();
@@ -168,26 +167,17 @@ export class InputProvider<Controls extends readonly string[]> {
             if (this._mapping.buttons) {
                 for (const [button, mapping] of Object.entries(this._mapping.buttons)) {
                     const pressed = gamepadButtonPressed(this._gamepad.buttons[GAMEPAD_BUTTON_INDEX[button as GamepadButtonName]]);
-                    this.applyDigitalInput(button, mapping, pressed, state, this._lastButtonState);
+                    this.applyDigitalInput(mapping, pressed, state);
                 }
             }
             if (this._mapping.axes) {
                 for (const [axis, mapping] of Object.entries(this._mapping.axes)) {
                     const value = this.clampDeadzone(this._gamepad.axes[GAMEPAD_AXIS_INDEX[axis as GamepadAxisName]]);
-                    if (mapping.type === "analog") {
+                    if (mapping.type === InputMappingType.Analog) {
                         state[mapping.control] = value * (mapping.invert ? -1 : 1);
                     } else {
                         const pressed = Math.sign(mapping.threshold) === Math.sign(value) && Math.abs(value) >= Math.abs(mapping.threshold);
-                        if (pressed) {
-                            if (mapping.type === "action") {
-                                if (!this._lastAnalogState[axis as GamepadAxisName]) {
-                                    state[mapping.control] = 1;
-                                }
-                            } else if (mapping.type === "momentary") {
-                                state[mapping.control] = 1;
-                            }
-                        }
-                        this._lastAnalogState[axis as GamepadAxisName] = pressed;
+                        state[mapping.control] = +pressed;
                     }
                 }
             }
@@ -195,27 +185,21 @@ export class InputProvider<Controls extends readonly string[]> {
         if (this._mapping.keys) {
             for (const [key, mapping] of Object.entries(this._mapping.keys)) {
                 const pressed = this._keyState[key] || false;
-                this.applyDigitalInput(key, mapping, pressed, state, this._lastKeyState);
+                this.applyDigitalInput(mapping, pressed, state);
             }
         }
         return state;
     }
 
     private applyDigitalInput(
-        key: string,
         mapping: DigitalInputMapping<Controls>,
         pressed: boolean,
         state: InputState<Controls>,
-        lastPressed: Partial<{ [Key in string]: boolean }>
     ) {
         if (pressed) {
-            if (mapping.type === "action") {
-                if (!lastPressed[key]) {
-                    state[mapping.control] = 1;
-                }
-            } else if (mapping.type === "momentary") {
+            if (mapping.type === InputMappingType.Digital) {
                 state[mapping.control] = 1;
-            } else if (mapping.type === "analog") {
+            } else {
                 if (state[mapping.control] === 0) {
                     state[mapping.control] = mapping.value;
                 } else {
@@ -225,7 +209,6 @@ export class InputProvider<Controls extends readonly string[]> {
                 }
             }
         }
-        lastPressed[key] = pressed;
     }
 
     private onKeyEvent(e: KeyboardEvent, pressed: boolean) {

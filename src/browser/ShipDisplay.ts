@@ -6,6 +6,7 @@ import { Tickable } from "@core/engine";
 import { IShipDisplay, Ship, HYPERSPACE_DELAY, ShipDestroyOptions } from "@core";
 import { Explosion, ShipSpawnAnimation } from "./animations";
 import { GameTheme } from "./GameTheme";
+import { PowerupFilter } from "./filters";
 
 export class ShipDisplay extends Container implements IShipDisplay, Tickable {
     private readonly _ship: Ship;
@@ -15,6 +16,7 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
     private readonly _shipShadow: Graphics;
     private readonly _fireShadow: Graphics;
     private _lastFireAnimation: number;
+    private _powerupFilter?: PowerupFilter;
 
     constructor(ship: Ship, theme: GameTheme) {
         super();
@@ -25,7 +27,7 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
         this.rotation = ship.rotation;
 
         this._shipGraphics = ShipDisplay.createModel(theme.foregroundColor);
-        this._fireGraphics = ShipDisplay.createFireModel();
+        this._fireGraphics = ShipDisplay.createFireModel(theme.fireColor);
         this._lastFireAnimation = 0;
 
         this._shipShadow = this._shipGraphics.clone();
@@ -73,12 +75,12 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
         return ship;
     }
 
-    static createFireModel(): Graphics {
+    static createFireModel(color: number): Graphics {
         const fire = new Graphics();
 
         fire.lineStyle({
             width: 3,
-            color: 0xfa7850,
+            color,
             alpha: 1,
             join: LINE_JOIN.BEVEL,
         });
@@ -94,7 +96,7 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
             this.alpha = progress;
             this.scale.set(progress / 2 + 0.5);
         } else if (this._ship.invulnerable) {
-            this.alpha = (this._ship.invulnerableCountdown * 1000) % 150 > 75 ? 0.2 : 1;
+            this.alpha = (this._ship.invulnerableRemaining * 1000) % 150 > 75 ? 0.2 : 1;
         } else {
             this.alpha = 1;
         }
@@ -111,10 +113,35 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
             this._fireGraphics.visible = false;
             this._fireShadow.visible = false;
         }
+        this._powerupFilter?.tick(timestamp, elapsed);
     }
 
     onHyperspace(): void {
         this.createSpawnAnimation();
+    }
+
+    onPowerupStart(): void {
+        this._shipGraphics.cacheAsBitmap = false;
+        this._fireGraphics.cacheAsBitmap = false;
+        this._shipGraphics.tint = this._shipShadow.tint = this._theme.powerupColor;
+        this._fireGraphics.tint = this._fireShadow.tint = this._theme.powerupColor;
+        this.filters = [
+            this._powerupFilter = new PowerupFilter(),
+        ];
+        this._shipGraphics.cacheAsBitmap = true;
+        this._fireGraphics.cacheAsBitmap = true;
+        this.createSpawnAnimation();
+    }
+
+    onPowerupEnd(): void {
+        this._shipGraphics.cacheAsBitmap = false;
+        this._fireGraphics.cacheAsBitmap = false;
+        this._shipGraphics.tint = this._shipShadow.tint = 0xffffff;
+        this._fireGraphics.tint = this._fireShadow.tint = 0xffffff;
+        this._shipGraphics.cacheAsBitmap = true;
+        this._fireGraphics.cacheAsBitmap = true;
+        this.filters = null;
+        this._powerupFilter = undefined;
     }
 
     gameObjectDestroyed({ hit }: ShipDestroyOptions): void {
@@ -140,7 +167,7 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
 
     private createSpawnAnimation(): void {
         this.addChild(new ShipSpawnAnimation({
-            color: this._theme.foregroundColor,
+            color: this._ship.powerupRemaining ? this._theme.powerupColor : this._theme.foregroundColor,
             diameter: 50,
             queue: this._ship.queue,
         }));

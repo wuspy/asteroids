@@ -5,6 +5,7 @@ import {
     ASTEROID_GENERATION_SCORES,
     ASTEROID_GENERATION_SPEEDS,
     ASTEROID_HITAREAS,
+    ASTEROID_POWERUP_SPAWN_CHANCE,
     INITIAL_ASTEROID_COUNT,
     MAX_ASTEROID_COUNT,
     QUEUE_PRIORITIES
@@ -39,6 +40,7 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
     override display?: IAsteroidDisplay;
     private _model: number;
     private _generation: number;
+    readonly hasPowerup: boolean;
 
     private constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         position?: Vec2,
@@ -59,6 +61,12 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
 
         if (params.obstacles) {
             this.moveToUnoccupiedPosition(params.obstacles);
+        }
+
+        if (this._generation === 2 && random(0, 1000, true) <= ASTEROID_POWERUP_SPAWN_CHANCE * 1000) {
+            this.hasPowerup = true;
+        } else {
+            this.hasPowerup = false;
         }
     }
 

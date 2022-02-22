@@ -85,7 +85,15 @@ export const SHIP_HITAREA = new Polygon(
 
 export const BASE_SHIP_PROJECTILE_SPEED = 1000;
 export const MAX_SHIP_PROJECTILE_SPEED = 1500;
-export const MIN_SHIP_PROJECTILE_SPEED = 800;
+export const MIN_SHIP_PROJECTILE_SPEED = 1000;
+export const SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY = false;
+export const SHIP_FIRE_COOLDOWN = 0.05;
+
+export const SHIP_POWERUP_DURATION = 20;
+export const SHIP_POWERUP_PROJECTILE_SPEED_MULTIPLIER = 2;
+export const SHIP_POWERUP_FIRE_INTERVAL = 0.05;
+export const SHIP_POWERUP_RECOIL_MULTIPLER = 0.25;
+
 /**
  * How much time a projectile can stay active
  */
@@ -94,6 +102,7 @@ export const PROJECTILE_LIFETIME = 0.8;
 export const ASTEROID_GENERATION_COUNT = 3;
 export const ASTEROID_CHILDREN_COUNT = 2;
 export const ASTEROID_GENERATION_SIZES = [1, 0.6, 0.3] as const;
+export const ASTEROID_POWERUP_SPAWN_CHANCE = 0.02;
 /**
  * The score each asteroid generation is worth when destroyed by the ship.
  */

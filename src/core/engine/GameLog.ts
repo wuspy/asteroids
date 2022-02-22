@@ -1,29 +1,29 @@
 import { ISize } from "@pixi/math";
+import { InputMappingType } from ".";
 import { InputState, createEmptyInput } from "./InputProvider";
 
 export type InputLogConfig<Controls extends readonly string[]> = {
     [Key in Controls[number]]: {
         code: string;
-        type: "action" | "momentary" | "analog";
-    };
-};
+        type: InputMappingType;
+    }
+}
 
 export class GameLog<Controls extends readonly string[]> {
     private _lastElapsed100uS: number;
     private _lastElapsedCount: number;
-    private _lastAnalogInputs: { [Key in string]: number };
-    private _lastMomentaryInputs: { [Key in string]: number };
+    private _lastInputs: { [Key in string]: number };
     private _lastWorldSize: ISize;
     private _log: string;
     private _inputLogConfig: InputLogConfig<Controls>;
 
     constructor(initialWorldSize: Readonly<ISize>, inputLogConfig: InputLogConfig<Controls>) {
+        const buf = new Uint8Array();
         validateInputCodes(inputLogConfig);
         this._lastWorldSize = { width: 0, height: 0 };
         this._lastElapsed100uS = 0;
         this._lastElapsedCount = 0;
-        this._lastAnalogInputs = {};
-        this._lastMomentaryInputs = {};
+        this._lastInputs = {};
         this._log = "";
         this._inputLogConfig = inputLogConfig;
 
@@ -42,12 +42,10 @@ export class GameLog<Controls extends readonly string[]> {
         this.logWorldSize(worldSize);
 
         for (const [control, { code, type }] of Object.entries(this._inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
-            if (type === "action") {
-                this.logActionInput(code, input[control]);
-            } else if (type === "analog") {
+            if (type === InputMappingType.Digital) {
+                this.logDigitalInput(code, input[control]);
+            } else {
                 this.logAnalogInput(code, input[control]);
-            } else if (type === "momentary") {
-                this.logMomentaryInput(code, input[control]);
             }
         }
 
@@ -66,32 +64,26 @@ export class GameLog<Controls extends readonly string[]> {
         if (this._lastWorldSize.width !== size.width || this._lastWorldSize.height !== size.height) {
             this.writeElapsed();
             this._log += `[${size.width.toString(36)},${size.height.toString(36)}]`;
-            this._lastWorldSize = { ...size };
+            this._lastWorldSize.width = size.width;
+            this._lastWorldSize.height = size.height;
         }
     }
 
     private logAnalogInput(inputCode: string, value: number): number {
         const clampedValue = Math.round(value * 17) + 17;
-        if (clampedValue !== this._lastAnalogInputs[inputCode] || 0) {
+        if (clampedValue !== (this._lastInputs[inputCode] || 0)) {
             this.writeElapsed();
             this._log += `${inputCode}${clampedValue.toString(36)}`;
-            this._lastAnalogInputs[inputCode] = clampedValue;
+            this._lastInputs[inputCode] = clampedValue;
         }
         return (clampedValue - 17) / 17;
     }
 
-    private logActionInput(inputCode: string, value: number): void {
-        if (value) {
+    private logDigitalInput(inputCode: string, value: number): void {
+        if (value !== (this._lastInputs[inputCode] || 0)) {
             this.writeElapsed();
             this._log += inputCode;
-        }
-    }
-
-    private logMomentaryInput(inputCode: string, value: number): void {
-        if (value !== this._lastMomentaryInputs[inputCode] || 0) {
-            this.writeElapsed();
-            this._log += inputCode;
-            this._lastMomentaryInputs[inputCode] = value;
+            this._lastInputs[inputCode] = value;
         }
     }
 
@@ -140,12 +132,6 @@ export function* parseGameLog<Controls extends readonly string[]>(
         // Parse input
         i = consumeInput(log, i, input, inputLogConfig);
         yield [elapsed, worldSize, input, i];
-        // Reset actions
-        for (const control in inputLogConfig) {
-            if (inputLogConfig[control as Controls[number]].type === "action") {
-                input[control as Controls[number]] = 0;
-            }
-        }
     }
 }
 
@@ -183,10 +169,8 @@ const consumeInput = <Controls extends readonly string[]>(
         let found = false;
         for (const [control, { code, type }] of Object.entries(inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
             if (token === code) {
-                if (type === "action") {
-                    input[control] = 1;
-                } else if (type === "momentary") {
-                    input[control] = Number(!input[control]);
+                if (type === InputMappingType.Digital) {
+                    input[control] = +!input[control];
                 } else {
                     input[control] = parseAnalogInput(log.charAt(i++), i - 1);
                 }

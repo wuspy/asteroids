@@ -6,6 +6,8 @@ export interface GameTheme {
     foregroundContrastColor: number
     foregroundAlpha: number;
     ufoColor: number;
+    powerupColor: number;
+    fireColor: number;
 }
 
 const DEFAULTS = {
@@ -15,6 +17,8 @@ const DEFAULTS = {
     foregroundContrastColor: 0x000000,
     foregroundAlpha: 0.9,
     ufoColor: 0xffff00,
+    powerupColor: 0xff023a,
+    fireColor: 0xfa7850,
 } as const;
 
 export const GAME_THEMES: readonly GameTheme[] = [
@@ -53,5 +57,9 @@ export const GAME_THEMES: readonly GameTheme[] = [
     {
         ...DEFAULTS,
         background: "linear-gradient(120deg, #37093a, #083957)",
+    },
+    {
+        ...DEFAULTS,
+        background: "linear-gradient(30deg, #1d0002, #2a0c3e)",
     },
 ] as const;

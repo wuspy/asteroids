@@ -1,14 +1,15 @@
 import { ISize } from "@pixi/math";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
-import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "./constants";
+import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, SHIP_POWERUP_FIRE_INTERVAL } from "./constants";
 import { GameState, GameStatus } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { random, TickQueue, EventManager, InputState } from "./engine";
+import { random, TickQueue, EventManager, InputState, GameLog } from "./engine";
 import { UFO } from "./UFO";
-import { controls } from "./input";
+import { controls, inputLogConfig } from "./input";
 
 const WORLD_AREA_PX = WORLD_AREA * 1000000;
+const SHIP_POWERUP_FIRE_INTERVAL_MS = SHIP_POWERUP_FIRE_INTERVAL * 1000;
 
 export class AsteroidsGame {
     readonly state: GameState;
@@ -18,10 +19,16 @@ export class AsteroidsGame {
     private _nextLevelCountdown: number;
     private _respawnCountdown: number;
     private _nextUFOSpawn: number;
+    private _logger?: GameLog<typeof controls>;
+    private _lastFirePressed: boolean;
+    private _lastHyperspacePressed: boolean;
+
+    enableLogging: boolean;
 
     constructor() {
         this.worldSize = { width: 0, height: 0 };
         this.aspectRatio = 1;
+        this.enableLogging = false;
         this.events = new EventManager();
         this.queue = new TickQueue();
 
@@ -39,6 +46,8 @@ export class AsteroidsGame {
         this._respawnCountdown = 0;
         this._nextLevelCountdown = 0;
         this._nextUFOSpawn = 0;
+        this._lastFirePressed = false;
+        this._lastHyperspacePressed = false;
 
         this.events.on("shipCreated", this, (ship) => {
             if (this.state.ship) {
@@ -87,6 +96,9 @@ export class AsteroidsGame {
             return;
         }
         this.events.trigger("beforeStart");
+        this._logger = this.enableLogging
+            ? new GameLog(this.worldSize, inputLogConfig)
+            : undefined
         this.spawnShip(false);
         this.setNextUFOSpawn();
         Asteroid.createInitial({
@@ -139,6 +151,8 @@ export class AsteroidsGame {
         this._respawnCountdown = 0;
         this._nextLevelCountdown = 0;
         this._nextUFOSpawn = 0;
+        this._lastFirePressed = false;
+        this._lastHyperspacePressed = false;
         this.events.trigger("reset");
     }
 
@@ -154,11 +168,17 @@ export class AsteroidsGame {
         this.worldSize.height = Math.floor(WORLD_AREA_PX / this.worldSize.width);
     }
 
-    tick(elapsed: number, input: InputState<typeof controls>): void {
-        const { ship, asteroids, projectiles, ufos } = this.state;
+    get log(): string | undefined {
+        return this._logger?.log;
+    }
 
+    tick(elapsed: number, input: InputState<typeof controls>): void {
         if (this.state.status === GameStatus.Init || this.state.status === GameStatus.Destroyed) {
             return;
+        }
+
+        if (this._logger && this.state.status === GameStatus.Running) {
+            [elapsed, input] = this._logger.logFrame(elapsed, input, this.worldSize);
         }
 
         this.state.timestamp += elapsed;
@@ -170,18 +190,29 @@ export class AsteroidsGame {
 
         // Handle user input
 
+        const { ship, asteroids, projectiles, ufos } = this.state;
+
         if (ship) {
             ship.rotationAmount = input.turn;
             ship.accelerationAmount = input.thrust;
 
             if (input.fire) {
-                ship.fire();
+                if (ship.powerupRemaining) {
+                    if (this.state.timestamp - ship.lastFireTime >= SHIP_POWERUP_FIRE_INTERVAL_MS) {
+                        ship.fire();
+                    }
+                } else if (!this._lastFirePressed) {
+                    ship.fire();
+                }
             }
 
-            if (input.hyperspace) {
+            if (input.hyperspace && !this._lastHyperspacePressed) {
                 ship.hyperspace();
             }
         }
+
+        this._lastFirePressed = !!input.fire;
+        this._lastHyperspacePressed = !!input.fire;
 
         this.checkShipCollisions();
 
@@ -270,6 +301,7 @@ export class AsteroidsGame {
 
         if (this.state.lives === 0 && this.state.status === GameStatus.Running) {
             this.state.status = GameStatus.Finished;
+            this._logger?.flush();
             this.events.trigger("finished");
         }
 
@@ -346,21 +378,29 @@ export class AsteroidsGame {
             for (const ufo of ufos) {
                 if (ship.collidesWith(ufo)) {
                     ufo.destroy({ hit: true, scored: true });
-                    ship.destroy({ hit: true });
+                    if (!ship.powerupRemaining) {
+                        ship.destroy({ hit: true });
+                    }
                     return;
                 }
             }
             for (const asteroid of asteroids) {
                 if (ship.collidesWith(asteroid)) {
                     asteroid.destroy({ hit: true, scored: true, createChildren: true });
-                    ship.destroy({ hit: true });
+                    if (asteroid.hasPowerup) {
+                        ship.startPowerup();
+                    } else if (!ship.powerupRemaining) {
+                        ship.destroy({ hit: true });
+                    }
                     return;
                 }
             }
             for (const projectile of projectiles) {
                 if (projectile.from !== ship && ship.collidesWith(projectile)) {
                     projectile.destroy({ hit: true });
-                    ship.destroy({ hit: true });
+                    if (!ship.powerupRemaining) {
+                        ship.destroy({ hit: true });
+                    }
                     return;
                 }
             }
