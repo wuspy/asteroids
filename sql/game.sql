@@ -9,6 +9,7 @@ create table game (
     large_ufos_destroyed    int not null,
     small_ufos_destroyed    int not null,
     asteroids_destroyed     int not null,
+    accuracy                real not null,
     game_log                text not null,
     game_version            varchar(12) not null,
     time_added              timestamp without time zone not null default (now() at time zone 'utc'),

@@ -8,6 +8,7 @@ const HtmlInlineCssPlugin = require("html-inline-css-webpack-plugin").default;
 const CircularDependencyPlugin = require("circular-dependency-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
+const nodeExternals = require("webpack-node-externals");
 
 const mode = process.env.NODE_ENV === "production" ? "production" : "development";
 const dist = path.resolve(__dirname, "dist");
@@ -18,6 +19,7 @@ del(dist);
 const server = {
     entry: "./src/server/main.ts",
     target: ["node16", "es2021"],
+    externals: [nodeExternals()],
     output: {
         filename: "server.js",
         path: dist,

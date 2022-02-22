@@ -28,15 +28,16 @@
         "typescript": "^4.5.2",
         "webpack": "^5.65.0",
         "webpack-cli": "^4.9.1",
-        "webpack-dev-server": "^4.7.3"
+        "webpack-dev-server": "^4.7.3",
+        "webpack-node-externals": "^3.0.0"
     },
     "scripts": {
         "lint": "eslint src --ext .ts",
         "watch": "webpack --watch",
         "build": "webpack --mode=production --node-env=production",
         "build:dev": "webpack --mode=development",
-        "server": "cd dist && NODE_ENV=production node server.js && cd ..",
-        "server:dev": "cd dist && NODE_ENV=development nodemon --signal SIGTERM server.js && cd .."
+        "server": "cd dist && NODE_ENV=production node server.js",
+        "server:dev": "cd dist && NODE_ENV=development nodemon --signal SIGTERM server.js"
     },
     "dependencies": {
         "@pixi/constants": "^6.2.2",
@@ -48,7 +49,7 @@
         "@pixi/filter-glitch": "^4.1.5",
         "@pixi/filter-glow": "^4.1.5",
         "@pixi/filter-kawase-blur": "^4.1.5",
-        "@pixi/graphics-smooth": "^0.0.20",
+        "@pixi/graphics-smooth": "^0.0.21",
         "@pixi/interaction": "^6.2.2",
         "@pixi/loaders": "^6.2.2",
         "@pixi/math": "^6.2.2",
@@ -59,7 +60,7 @@
         "animejs": "^3.2.1",
         "config": "^3.3.7",
         "express": "^4.17.2",
-        "knex": "^0.95.15",
+        "kysely": "^0.17.1",
         "pg": "^8.7.1",
         "stats.js": "^0.17.0",
         "tslib": "^2.3.1",
