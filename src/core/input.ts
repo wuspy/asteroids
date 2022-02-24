@@ -58,9 +58,9 @@ export const gamepadMapping: InputMapping<typeof controls> = {
 };
 
 export const inputLogConfig: InputLogConfig<typeof controls> = {
-    fire: { code: "F", type: InputMappingType.Digital },
-    hyperspace: { code: "H", type: InputMappingType.Digital },
-    start: { code: "S", type: InputMappingType.Digital },
-    turn: { code: ">", type: InputMappingType.Analog },
-    thrust: { code: "^", type: InputMappingType.Analog },
+    fire: { code: 255, type: InputMappingType.Digital },
+    hyperspace: { code: 254, type: InputMappingType.Digital },
+    start: { code: 253, type: InputMappingType.Digital },
+    turn: { code: 252, type: InputMappingType.Analog },
+    thrust: { code: 251, type: InputMappingType.Analog },
 }

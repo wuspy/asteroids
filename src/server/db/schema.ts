@@ -2,7 +2,7 @@ import { Generated, ColumnType } from "kysely";
 
 export interface GameTokenTable {
     game_token_id: Generated<number>;
-    random_seed: string;
+    random_seed: Buffer;
     time_added: ColumnType<string, never, never>;
 }
 
@@ -18,7 +18,7 @@ export interface GameTable {
     small_ufos_destroyed: number;
     asteroids_destroyed: number;
     accuracy: number;
-    game_log: string;
+    game_log: Buffer;
     game_version: string;
     time_added: ColumnType<string, never, never>;
     deleted: Generated<boolean>;

@@ -1,4 +1,4 @@
-import { SaveGameRequest } from "@core/api";
+import { SaveGameRequest } from "./SaveGameRequest";
 
 export interface ValidUnsavedGame extends SaveGameRequest {
     duration: number;

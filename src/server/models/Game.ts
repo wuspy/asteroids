@@ -1,4 +1,4 @@
-export interface GameResponse {
+export interface Game {
     id: number;
     playerName: string;
     score: number;
@@ -9,7 +9,7 @@ export interface GameResponse {
     largeUfosDestroyed: number;
     smallUfosDestroyed: number;
     asteroidsDestroyed: number;
-    randomSeed: string;
+    randomSeed: number[];
     version: string;
     timeAdded: string;
 }

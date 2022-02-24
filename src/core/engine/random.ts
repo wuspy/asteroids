@@ -19,29 +19,24 @@ export const random = (min: number, max: number, useSeededRandom: boolean): numb
     return Math.floor(value * (max - min + 1)) + min;
 }
 
-export const createRandomSeed = (): string => {
+export const createRandomSeed = (): number[] => {
     const history = [];
     for (let i = 0; i < K; i++) {
         history.push(random(0, MAX, false));
     }
-    return history.map((x) => x.toString(36)).toString();
+    return history;
 }
 
-export const initRandom = (): string => {
+export const initRandom = (): number[] => {
     const seed = createRandomSeed();
     seedRandom(seed);
     return seed;
 }
 
-export const seedRandom = (seed: string): boolean => {
-    try {
-        const maybeHistory = seed.split(",").map((x) => parseInt(x, 36));
-        if (maybeHistory.length === K && maybeHistory.reduce((valid, x) => valid && x >= 0 && x <= MAX, true)) {
-            history = maybeHistory;
-            return true;
-        }
-        return false;
-    } catch (Error) {
-        return false;
+export const seedRandom = (seed: number[]): boolean => {
+    if (seed.length === K && seed.reduce((valid, x) => valid && x <= MAX, true)) {
+        history = [...seed];
+        return true;
     }
+    return false;
 }

@@ -1,7 +1,7 @@
 import { ISize } from "@pixi/math";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
-import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, SHIP_POWERUP_FIRE_INTERVAL } from "./constants";
+import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, SHIP_POWERUP_FIRE_INTERVAL, MIN_FPS } from "./constants";
 import { GameState, GameStatus } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { random, TickQueue, EventManager, InputState, GameLog } from "./engine";
@@ -10,6 +10,7 @@ import { controls, inputLogConfig } from "./input";
 
 const WORLD_AREA_PX = WORLD_AREA * 1000000;
 const SHIP_POWERUP_FIRE_INTERVAL_MS = SHIP_POWERUP_FIRE_INTERVAL * 1000;
+const MAX_ELAPSED_MS = 1000 / MIN_FPS;
 
 export class AsteroidsGame {
     readonly state: GameState;
@@ -168,21 +169,21 @@ export class AsteroidsGame {
         this.worldSize.height = Math.floor(WORLD_AREA_PX / this.worldSize.width);
     }
 
-    get log(): string | undefined {
+    get log(): Uint8Array | undefined {
         return this._logger?.log;
     }
 
-    tick(elapsed: number, input: InputState<typeof controls>): void {
+    tick(elapsedMs: number, input: InputState<typeof controls>): void {
         if (this.state.status === GameStatus.Init || this.state.status === GameStatus.Destroyed) {
             return;
         }
 
+        elapsedMs = Math.min(MAX_ELAPSED_MS, elapsedMs);
         if (this._logger && this.state.status === GameStatus.Running) {
-            [elapsed, input] = this._logger.logFrame(elapsed, input, this.worldSize);
+            [elapsedMs, input] = this._logger.logFrame(elapsedMs, input, this.worldSize);
         }
-
-        this.state.timestamp += elapsed;
-        elapsed /= 1000;
+        this.state.timestamp += elapsedMs;
+        const elapsed  = elapsedMs / 1000;
 
         // Dispatch tick event
 

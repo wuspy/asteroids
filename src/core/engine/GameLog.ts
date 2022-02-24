@@ -4,35 +4,51 @@ import { InputState, createEmptyInput } from "./InputProvider";
 
 export type InputLogConfig<Controls extends readonly string[]> = {
     [Key in Controls[number]]: {
-        code: string;
+        code: number;
         type: InputMappingType;
     }
 }
 
+const MAX_ELAPSED_VALUE_PER_BYTE = 240;
+const FRAME_MULTIPLIER = 241;
+const WORLD_SIZE_CHANGE = 242;
+const INPUT_START = 243;
+
 export class GameLog<Controls extends readonly string[]> {
     private _lastElapsed100uS: number;
     private _lastElapsedCount: number;
-    private _lastInputs: { [Key in string]: number };
+    private _lastInput: InputState<Controls>;
     private _lastWorldSize: ISize;
-    private _log: string;
     private _inputLogConfig: InputLogConfig<Controls>;
+    private _buffer: Uint8Array;
+    private _i: number;
 
     constructor(initialWorldSize: Readonly<ISize>, inputLogConfig: InputLogConfig<Controls>) {
-        const buf = new Uint8Array();
         validateInputCodes(inputLogConfig);
         this._lastWorldSize = { width: 0, height: 0 };
         this._lastElapsed100uS = 0;
         this._lastElapsedCount = 0;
-        this._lastInputs = {};
-        this._log = "";
+        this._lastInput = createEmptyInput(Object.keys(inputLogConfig) as any as Controls);
         this._inputLogConfig = inputLogConfig;
+        this._buffer = new Uint8Array(10000);
+        this._i = 0;
 
-        const initialInput = createEmptyInput(Object.keys(inputLogConfig) as any as Controls);
-        this.logFrame(0, initialInput, initialWorldSize);
+        this.logFrame(0, this._lastInput, initialWorldSize);
     }
 
-    logFrame(elapsedMS: number, input: InputState<Controls>, worldSize: Readonly<ISize>): [number, InputState<Controls>] {
-        const elapsed100uS = Math.min(1295, Math.round(elapsedMS * 10));
+    private writeU16(val: number): void {
+        this._buffer[this._i++] = val >> 8 & 0xff;
+        this._buffer[this._i++] = val & 0xff;
+    }
+
+    logFrame(elapsedMs: number, input: InputState<Controls>, worldSize: Readonly<ISize>): [number, InputState<Controls>] {
+        if (this._buffer.length - this._i < 100) {
+            const old = this._buffer;
+            this._buffer = new Uint8Array(old.length + 10000);
+            this._buffer.set(old);
+        }
+
+        const elapsed100uS = Math.round(elapsedMs * 10);
         if (this._lastElapsed100uS !== elapsed100uS) {
             this.writeElapsed();
         }
@@ -41,11 +57,11 @@ export class GameLog<Controls extends readonly string[]> {
 
         this.logWorldSize(worldSize);
 
-        for (const [control, { code, type }] of Object.entries(this._inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
+        for (const [control, { type }] of Object.entries(this._inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
             if (type === InputMappingType.Digital) {
-                this.logDigitalInput(code, input[control]);
+                this.logDigitalInput(control, input[control]);
             } else {
-                this.logAnalogInput(code, input[control]);
+                this.logAnalogInput(control, input[control]);
             }
         }
 
@@ -56,150 +72,156 @@ export class GameLog<Controls extends readonly string[]> {
         this.writeElapsed();
     }
 
-    get log(): string {
-        return this._log;
+    get log(): Uint8Array {
+        return this._buffer.slice(0, this._i);
     }
 
     private logWorldSize(size: ISize): void {
         if (this._lastWorldSize.width !== size.width || this._lastWorldSize.height !== size.height) {
             this.writeElapsed();
-            this._log += `[${size.width.toString(36)},${size.height.toString(36)}]`;
+            this._buffer[this._i++] = WORLD_SIZE_CHANGE;
+            this.writeU16(size.width);
+            this.writeU16(size.height);
             this._lastWorldSize.width = size.width;
             this._lastWorldSize.height = size.height;
         }
     }
 
-    private logAnalogInput(inputCode: string, value: number): number {
-        const clampedValue = Math.round(value * 17) + 17;
-        if (clampedValue !== (this._lastInputs[inputCode] || 0)) {
+    private logAnalogInput(control: Controls[number], value: number): number {
+        const clampedValue = Math.round(value * 127) + 128;
+        if (clampedValue !== (this._lastInput[control] || 0)) {
             this.writeElapsed();
-            this._log += `${inputCode}${clampedValue.toString(36)}`;
-            this._lastInputs[inputCode] = clampedValue;
+            this._buffer[this._i++] = this._inputLogConfig[control].code;
+            this._buffer[this._i++] = clampedValue;
+            this._lastInput[control] = clampedValue;
         }
-        return (clampedValue - 17) / 17;
+        return (clampedValue - 128) / 127;
     }
 
-    private logDigitalInput(inputCode: string, value: number): void {
-        if (value !== (this._lastInputs[inputCode] || 0)) {
+    private logDigitalInput(control: Controls[number], value: number): void {
+        if (value !== (this._lastInput[control] || 0)) {
             this.writeElapsed();
-            this._log += inputCode;
-            this._lastInputs[inputCode] = value;
+            this._buffer[this._i++] = this._inputLogConfig[control].code;
+            this._lastInput[control] = value;
         }
     }
 
     private writeElapsed(): void {
         if (this._lastElapsedCount) {
-            this._log += this._lastElapsed100uS.toString(36).padStart(2, "0");
-            if (this._lastElapsedCount > 1) {
-                this._log += `*${Math.min(35, this._lastElapsedCount).toString(36)}`;
-                this._lastElapsedCount = Math.max(0, this._lastElapsedCount - 35);
-                this.writeElapsed();
-            } else {
-                this._lastElapsedCount = 0;
+            let elapsed = this._lastElapsed100uS;
+            while (elapsed > -1) {
+                this._buffer[this._i++] = Math.min(MAX_ELAPSED_VALUE_PER_BYTE, elapsed);
+                elapsed -= MAX_ELAPSED_VALUE_PER_BYTE;
             }
+            if (this._lastElapsedCount > 2) {
+                this._buffer[this._i++] = FRAME_MULTIPLIER;
+                this._buffer[this._i++] = Math.min(255, this._lastElapsedCount);
+                this._lastElapsedCount = Math.max(0, this._lastElapsedCount - 255);
+            } else {
+                --this._lastElapsedCount;
+            }
+            this.writeElapsed();
         }
     }
 }
 
 export function* parseGameLog<Controls extends readonly string[]>(
-    log: string,
+    log: Uint8Array,
     inputLogConfig: InputLogConfig<Controls>,
-): Generator<[number, Readonly<ISize>, Readonly<InputState<Controls>>, number]> {
+): Generator<[number, Readonly<ISize>, Readonly<InputState<Controls>>]> {
     validateInputCodes(inputLogConfig);
     const input = createEmptyInput(Object.keys(inputLogConfig) as any as Controls);
     const worldSize: ISize = { width: 0, height: 0 };
-    for (let i = 0; i < log.length;) {
+
+    // Parse header
+    let i = consumeWorldSize(log, 1, worldSize);
+    if (log[0] !== 0 || worldSize.width === 0 || worldSize.height === 0) {
+        throw new Error("Invalid header");
+    }
+    i = consumeInput(log, i, input, inputLogConfig);
+    yield [0, worldSize, input];
+
+    while (i < log.length) {
+        let elapsed = 0;
         // Parse time elapsed
-        let token = log.slice(i++, ++i);
-        if (!isBase36Digit(token.charCodeAt(0)) || !isBase36Digit(token.charCodeAt(1))) {
-            throw new Error(`Expected a 2-digit base-36 number, got '${token}' at position ${i - 2}`);
+        while (i < log.length && log[i] === MAX_ELAPSED_VALUE_PER_BYTE) {
+            ++i;
+            elapsed += MAX_ELAPSED_VALUE_PER_BYTE;
         }
-        const elapsed = parseInt(token, 36) / 10;
-        // Parse multiplier
-        if (log.charAt(i) === "*") {
-            i++;
-            token = log.charAt(i++);
-            if (!isBase36Digit(token.charCodeAt(0))) {
-                throw new Error(`Expected a base-36 digit, got '${token}' at position ${i - 1}`);
-            }
-            const frames = parseInt(token, 36);
-            for (let f = 1; f < frames; f++) {
-                yield [elapsed, worldSize, input, i];
+        if (i < log.length && log[i] < MAX_ELAPSED_VALUE_PER_BYTE) {
+            elapsed += log[i++];
+        } else if (elapsed) {
+            throw new Error(`Invalid token ${log[i]} at position ${i}`);
+        }
+        if (elapsed <= 0) {
+            throw new Error(`Invalid token ${log[i]} at position ${i}`);
+        }
+        elapsed /= 10;
+        // Parse frame multiplier
+        if (i < log.length - 1 && log[i] === FRAME_MULTIPLIER) {
+            ++i;
+            const frames = log[i++];
+            for (let f = 1; f < frames; ++f) {
+                yield [elapsed, worldSize, input];
             }
         }
-        // Parse world size
         i = consumeWorldSize(log, i, worldSize);
-        // Parse input
         i = consumeInput(log, i, input, inputLogConfig);
-        yield [elapsed, worldSize, input, i];
+        yield [elapsed, worldSize, input];
     }
 }
 
-const consumeWorldSize = (log: string, i: number, worldSize: ISize): number => {
-    if (i < log.length && log.charAt(i) === "[") {
-        i++;
-        [worldSize.width, i] = parseNumberUntil(log, i, ",");
-        [worldSize.height, i] = parseNumberUntil(log, i, "]");
+const consumeU16 = (log: Uint8Array, i: number): [number, number] => {
+    if (log.length - i <= 2) {
+        throw new Error("Premature end of log");
+    }
+    return [(log[i++] << 8) + log[i++], i];
+}
+
+const consumeWorldSize = (log: Uint8Array, i: number, worldSize: ISize): number => {
+    if (i < log.length && log[i] === WORLD_SIZE_CHANGE) {
+        [worldSize.width, i] = consumeU16(log, ++i);
+        [worldSize.height, i] = consumeU16(log, i);
+        if (worldSize.width === 0 || worldSize.height === 0) {
+            throw new Error("Invalid world size");
+        }
     }
     return i;
 }
 
-const parseNumberUntil = (log: string, i: number, char: string): [number, number] => {
-    let result = "";
-    while (i < log.length && isBase36Digit(log.charCodeAt(i))) {
-        result += log[i++];
-    }
-    if (result === "") {
-        throw new Error(`Expected a base-36 number, got '${log.charAt(i)}' at position ${i}`);
-    }
-    if (log.charAt(i) !== char) {
-        throw new Error(`Expected '${char}', got '${log.charAt(i)}' at position ${i}`);
-    }
-    return [parseInt(result, 36), ++i];
-}
-
 const consumeInput = <Controls extends readonly string[]>(
-    log: string,
+    log: Uint8Array,
     i: number,
     input: InputState<Controls>,
     inputLogConfig: InputLogConfig<Controls>,
 ): number => {
-    while (i < log.length && !isBase36Digit(log.charCodeAt(i))) {
-        const token = log.charAt(i++);
+    while (i < log.length && log[i] >= INPUT_START) {
+        const code = log[i++];
         let found = false;
-        for (const [control, { code, type }] of Object.entries(inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
-            if (token === code) {
+        for (const [control, { code: currentCode, type }] of Object.entries(inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
+            if (code === currentCode) {
                 if (type === InputMappingType.Digital) {
                     input[control] = +!input[control];
                 } else {
-                    input[control] = parseAnalogInput(log.charAt(i++), i - 1);
+                    if (i >= log.length) {
+                        throw new Error("Premature end of log");
+                    }
+                    input[control] = (log[i++] - 128) / 127;
                 }
                 found = true;
                 break;
             }
         }
         if (!found) {
-            throw new Error(`Expected an input code or base-36 digit, got '${token}' at position ${i - 1}`);
+            throw new Error(`Invalid token ${log[i]} at position ${i - 1}`);
         }
     }
     return i;
 }
 
-const parseAnalogInput = (token: string, position: number): number => {
-    if (!isBase36Digit(token.charCodeAt(0))) {
-        throw new Error(`Expected a base-36 digit, got '${token}' at position ${position}`);
-    }
-    return (parseInt(token, 36) - 17) / 17;
-}
-
-// Matches 0-9a-z, lowercase
-const isBase36Digit = (charCode: number): boolean => (charCode > 47 && charCode < 58) || (charCode > 96 && charCode < 123);
-
-const isReservedChar = (char: string) => isBase36Digit(char.charCodeAt(0)) || "*[],".includes(char);
-
 const validateInputCodes = (map: InputLogConfig<any>) =>
     Object.values(map).forEach(({ code }) => {
-        if (code.length !== 1 || isReservedChar(code)) {
+        if (code < INPUT_START) {
             throw new Error(`Invalid input code '${code}'`);
         }
     });

@@ -20,6 +20,12 @@ import "./engine";
 } as const;
 
 export const LIVES = 5;
+
+/**
+ * The minimum FPS the game will run at before it starts slowing down.
+ */
+export const MIN_FPS = 10;
+
 /**
  * After the score increases by this amount, an extra life will be given. Zero to disable.
  */

@@ -1,8 +1,9 @@
 import config from "../config";
 import { Kysely, PostgresDialect } from "kysely";
-import { GameResponse, GameTokenResponse, HighScoreResponse } from "@core/api";
-import { ValidUnsavedGame } from "../ValidUnsavedGame";
+import { ValidUnsavedGame } from "../models/ValidUnsavedGame";
 import { Database } from "./schema";
+import { Game, GameToken, HighScore } from "../models";
+import { bufferToUintArray, uintArrayToBuffer } from "./util";
 
 const db = new Kysely<Database>({
     dialect: new PostgresDialect({
@@ -19,7 +20,7 @@ console.log(`Connected to database at ${config.dbHostname}:${config.dbPort}`);
 
 export const destroyConnection = () => db.destroy();
 
-export const findHighScores = async (): Promise<HighScoreResponse[]> =>
+export const findHighScores = async (): Promise<HighScore[]> =>
     await db.selectFrom("game")
         .select([
             "game_id as id",
@@ -33,12 +34,12 @@ export const findHighScores = async (): Promise<HighScoreResponse[]> =>
             "accuracy"
         ])
         .where("deleted", "=", false)
-        .orderBy("game_id", "desc")
+        .orderBy("score", "desc")
         .orderBy("time_added", "asc")
         .limit(999)
         .execute();
 
-export const findGame = async (id: number): Promise<GameResponse | undefined> =>
+export const findGame = async (id: number): Promise<Game | undefined> =>
     await db.selectFrom("game")
         .innerJoin("game_token", "game_token.game_token_id", "game.game_token_id")
         .select([
@@ -52,16 +53,28 @@ export const findGame = async (id: number): Promise<GameResponse | undefined> =>
             "large_ufos_destroyed as largeUfosDestroyed",
             "small_ufos_destroyed as smallUfosDestroyed",
             "asteroids_destroyed as asteroidsDestroyed",
-            "game_log as log",
             "game_version as version",
             "game.time_added as timeAdded",
             "random_seed as randomSeed",
         ])
         .where("game_id", "=", id)
         .where("deleted", "=", false)
-        .executeTakeFirst();
+        .executeTakeFirst()
+        .then((row) => !row ? undefined : {
+            ...row,
+            randomSeed: bufferToUintArray(row.randomSeed, 4),
+        });
 
-export const findUnusedGameToken = async (id: number): Promise<GameTokenResponse | undefined> =>
+export const findGameLog = async (id: number): Promise<Buffer | undefined> =>
+    await db.selectFrom("game")
+        .innerJoin("game_token", "game_token.game_token_id", "game.game_token_id")
+        .select("game_log")
+        .where("game_id", "=", id)
+        .where("deleted", "=", false)
+        .executeTakeFirst()
+        .then((row) => !row ? undefined : row.game_log);
+
+export const findUnusedGameToken = async (id: number): Promise<GameToken | undefined> =>
     await db.selectFrom("game_token")
         .select([
             "game_token_id as id",
@@ -73,12 +86,16 @@ export const findUnusedGameToken = async (id: number): Promise<GameTokenResponse
             .select("game.game_id")
             .whereRef("game.game_token_id", "=", "game_token.game_token_id")
         )
-        .executeTakeFirst();
+        .executeTakeFirst()
+        .then((row) => !row ? undefined : {
+            ...row,
+            randomSeed: bufferToUintArray(row.randomSeed, 4),
+        });
 
-export const createGameToken = async (randomSeed: string): Promise<{ id: number, timeAdded: string }> =>
+export const createGameToken = async (randomSeed: number[]): Promise<{ id: number, timeAdded: string }> =>
     await db.insertInto("game_token")
         .values({
-            random_seed: randomSeed,
+            random_seed: uintArrayToBuffer(randomSeed, 4),
         })
         .returning([
             "game_token_id as id",

@@ -11,7 +11,7 @@ export class SaveScoreModal extends Modal {
     private readonly _apiRoot: string;
     private readonly _state: GameState;
     private readonly _token: GameTokenResponse;
-    private readonly _log: string;
+    private readonly _log: Uint8Array;
     private readonly _events: EventManager<UIEvents>;
     private readonly _saveButton: Button;
     private readonly _info: Text;
@@ -23,7 +23,7 @@ export class SaveScoreModal extends Modal {
         events: EventManager<UIEvents>;
         apiRoot: string;
         state: GameState;
-        log: string;
+        log: Uint8Array;
         token: GameTokenResponse;
     }) {
         super({
@@ -51,15 +51,19 @@ export class SaveScoreModal extends Modal {
 
         const content = new Container();
         content.flexContainer = true;
-        content.layout.flexDirection = FlexDirection.Column;
-        content.layout.alignItems = Align.Center;
-        content.layout.padding = 8;
+        content.layout.style({
+            flexDirection: FlexDirection.Column,
+            alignItems: Align.Center,
+            padding: 8,
+            width: 360,
+        });
         this.addChild(content);
 
         this._info = new Text(`${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH} characters`, {
             fontSize: 20,
             fill: UI_FOREGROUND_COLOR,
             wordWrap: true,
+            align: "center",
         });
         this._info.layout.style({
             marginBottom: 12,
@@ -68,7 +72,7 @@ export class SaveScoreModal extends Modal {
 
         this._input = new TextInput(32);
         this._input.layout.style({
-            width: 340,
+            width: "100%",
             marginBottom: 32,
         });
         this._input.align = "center";

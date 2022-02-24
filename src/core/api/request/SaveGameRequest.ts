@@ -3,6 +3,6 @@ export interface SaveGameRequest {
     score: number,
     level: number,
     tokenId: number,
-    log: string,
+    log: Uint8Array,
     version: string,
 }

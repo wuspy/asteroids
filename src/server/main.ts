@@ -3,16 +3,19 @@ console.log(`Version ${process.env.npm_package_version}`);
 import config from "./config";
 import express from "express";
 import bodyParser from "body-parser";
-import { SaveGameRequest, SaveGameResponse, GameTokenResponse, HighScoreResponse, GameResponse } from "@core/api";
+import multer from "multer";
+import { SaveGameResponse, GameTokenResponse, HighScoreResponse, GameResponse, encodeIntArray } from "@core/api";
+import { SaveGameRequest } from "./models";
 import { createRandomSeed } from "@core/engine";
 import { GameValidatorError, validateAsteroidsGame } from "./asteroidsGameValidator";
-import { createGameToken, destroyConnection, findGame, findHighScores, findUnusedGameToken, storeGame } from "./db";
+import { createGameToken, destroyConnection, findGame, findGameLog, findHighScores, findUnusedGameToken, storeGame } from "./db";
 import { validatePlayerName } from "./playerNameValidator";
 
 const successResponse = <T>(data: T) => ({ ok: true, data });
 const errorResponse = (message: string) => ({ ok: false, message });
 
 const app = express();
+const upload = multer();
 
 if (process.env.NODE_ENV === "development") {
     // Static content isn't hosted through express in production
@@ -21,16 +24,14 @@ if (process.env.NODE_ENV === "development") {
 
 app.use(
     bodyParser.json(),
-    bodyParser.urlencoded({
-        extended: true,
-    }),
+    bodyParser.urlencoded({ extended: true }),
 );
 
 app.get("/api/game-token", async (request, response) => {
     try {
         const randomSeed = createRandomSeed();
         const { id } = await createGameToken(randomSeed);
-        response.json(successResponse<GameTokenResponse>({ id, randomSeed }));
+        response.json(successResponse<GameTokenResponse>({ id, randomSeed: encodeIntArray(randomSeed) }));
     } catch (e) {
         response.sendStatus(500);
     }
@@ -49,7 +50,10 @@ app.get("/api/game/:id(\\d{1,10})", async (request, response) => {
         const id = parseInt(request.params.id + "", 10);
         const game = await findGame(id);
         if (game) {
-            response.json(successResponse<GameResponse>(game));
+            response.json(successResponse<GameResponse>({
+                ...game,
+                randomSeed: encodeIntArray(game.randomSeed)
+            }));
         } else {
             response.sendStatus(404);
         }
@@ -58,21 +62,43 @@ app.get("/api/game/:id(\\d{1,10})", async (request, response) => {
     }
 });
 
-app.post("/api/games", async (request, response) => {
+app.get("/api/game/:id(\\d{1,10})/log", async (request, response) => {
+    try {
+        const id = parseInt(request.params.id + "", 10);
+        const log = await findGameLog(id);
+        if (log) {
+            response.writeHead(200, {
+                "Content-Type": "application/octet-stream",
+                "Content-Length": log.byteLength,
+            });
+            response.end(log);
+        } else {
+            response.sendStatus(404);
+        }
+    } catch (e) {
+        response.sendStatus(500);
+    }
+});
+
+app.post("/api/games", upload.single("log"), async (request, response) => {
     try {
         const { body } = request;
+        const log = request.file?.buffer;
+        if (!log) {
+            return response.sendStatus(400);
+        }
         const params: SaveGameRequest = {
             playerName: body.playerName,
             score: parseInt(body.score + "", 10),
             level: parseInt(body.level + "", 10),
             tokenId: parseInt(body.tokenId + "", 10),
             version: body.version,
-            log: body.log,
+            log: request.file!.buffer,
         };
 
         if (typeof params.playerName !== "string"
             || typeof params.version !== "string"
-            || typeof params.log !== "string"
+            || !params.log
             || isNaN(params.score)
             || isNaN(params.level)
             || isNaN(params.tokenId)

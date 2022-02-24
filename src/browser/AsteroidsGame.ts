@@ -19,7 +19,7 @@ import { ProjectileDisplay } from "./ProjectileDisplay";
 import { AsteroidDisplay } from "./AsteroidDisplay";
 import { UFODisplay } from "./UFODisplay";
 import { GameTheme, GAME_THEMES } from "./GameTheme";
-import { GameTokenResponse } from "@core/api";
+import { GameTokenResponse, decodeIntArray } from "@core/api";
 import { getGameToken } from "./api";
 import { UIEvents } from "./UIEvents";
 import { AboutMeModal } from "./AboutMeModal";
@@ -38,6 +38,7 @@ declare global {
 
 if (process.env.NODE_ENV === "development") {
     window.asteroids = {
+        state: () => window.asteroidsInstance.game.state,
         showStats: () => {
             window.asteroidsInstance.statsDiv.style.display = "block";
         },
@@ -92,7 +93,7 @@ export class AsteroidsGame {
     private _saveScoreModal?: SaveScoreModal;
     private _leaderboardModal?: LeaderboardModal;
     private _gameOverScreen?: GameOverScreen;
-    private _timestamp!: number;
+    private _timestamp: number;
     private _paused: boolean;
     private _queuedResizeId?: number;
     private _backgroundAsteroids: BackgroundAsteroid[];
@@ -301,7 +302,7 @@ export class AsteroidsGame {
 
             if (this._nextToken) {
                 try {
-                    seedRandom(this._nextToken.randomSeed);
+                    seedRandom(decodeIntArray(this._nextToken.randomSeed));
                     this.game.enableLogging = true;
                     this._token = this._nextToken;
                     this._nextToken = undefined;
@@ -323,7 +324,7 @@ export class AsteroidsGame {
                 queue: this._uiQueue,
                 events: this._uiEvents,
                 state: this.game.state,
-                enableSave: !!this._token && !!this.game.log && !!this._apiRoot,
+                enableSave: !!this._token && this.game.enableLogging && !!this._apiRoot,
             });
             this._hudContainer.addChild(this._gameOverScreen);
         });
@@ -555,7 +556,7 @@ export class AsteroidsGame {
             this.fpsStats.begin();
             this.memoryStats.begin();
         }
-        const elapsed = timestamp - this._timestamp;
+        const elapsedMs = timestamp - this._timestamp;
         this._timestamp = timestamp;
         const input = this._input.poll();
 
@@ -573,9 +574,9 @@ export class AsteroidsGame {
         this._lastStartPressed = !!input.start;
 
         if (!this._paused) {
-            this.game.tick(elapsed, input);
+            this.game.tick(elapsedMs, input);
         }
-        this._uiQueue.tick(this._timestamp, elapsed / 1000);
+        this._uiQueue.tick(this._timestamp, elapsedMs / 1000);
 
         // Debug options
 

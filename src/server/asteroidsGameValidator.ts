@@ -1,7 +1,6 @@
 import { AsteroidsGame, inputLogConfig, GameState, GameStatus } from "@core";
 import { seedRandom, parseGameLog } from "@core/engine";
-import { SaveGameRequest } from "@core/api";
-import { ValidUnsavedGame } from "./ValidUnsavedGame";
+import { SaveGameRequest, ValidUnsavedGame } from "./models";
 
 const [V_MAJOR, V_MINOR, V_PATCH] = process.env.npm_package_version!.split(".");
 
@@ -24,7 +23,7 @@ export type GameValidatorResult = {
     state?: GameState;
 };
 
-export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: string): GameValidatorResult => {
+export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: number[]): GameValidatorResult => {
     const [major, minor, patch] = request.version.split(".");
 
     if (major !== V_MAJOR || minor !== V_MINOR) {
@@ -61,10 +60,7 @@ export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: stri
         if (frame.done) {
             return { success: false, error: GameValidatorError.EmptyLog, state: game.state };
         }
-        const [elapsed, worldSize] = frame.value;
-        if (elapsed !== 0 || worldSize.width === 0 || worldSize.height === 0) {
-            return { success: false, error: GameValidatorError.LogParseError, state: game.state };
-        }
+        const worldSize = frame.value[1];
         game.worldSize.width = worldSize.width;
         game.worldSize.height = worldSize.height;
 
@@ -75,9 +71,6 @@ export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: stri
             const [elapsed, worldSize, input] = frame.value;
             game.worldSize.width = worldSize.width;
             game.worldSize.height = worldSize.height;
-            if (elapsed === 0 || worldSize.width === 0 || worldSize.height === 0) {
-                return { success: false, error: GameValidatorError.LogParseError };
-            }
             game.tick(elapsed, input);
             frame = parser.next();
             if (game.state.status === GameStatus.Finished) {
