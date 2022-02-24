@@ -37,7 +37,7 @@ export const RESPAWN_DELAY = 2;
 /**
  * How long after the current level is cleared before the next level starts.
  */
-export const NEXT_LEVEL_DELAY = 0.25;
+export const NEXT_LEVEL_DELAY = 0.5;
 
 /**
  * The world area in mega(css)pixels. The game will be scaled so that it perceives that the container
