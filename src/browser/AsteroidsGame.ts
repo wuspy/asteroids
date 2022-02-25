@@ -205,6 +205,7 @@ export class AsteroidsGame {
             fadeOutExtraDelay: 500,
         });
         this._gameplayContainer.filters!.push(this._mainAlphaFilter = new AlphaFilter());
+        this._mainAlphaFilter.padding = 24;
         this._gameplayContainer.interactiveChildren = false;
         this._mainContainer.addChild(this._gameplayContainer);
 
