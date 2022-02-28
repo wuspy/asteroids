@@ -4,8 +4,10 @@ import { GameTokenResponse, MIN_PLAYER_NAME_LENGTH, MAX_PLAYER_NAME_LENGTH, isVa
 import { GameState } from "../core";
 import { ApiErrorType, saveGame } from "./api";
 import { Align, FlexDirection } from "./layout";
-import { Button, ButtonType, Modal, Text, TextInput, UI_FOREGROUND_COLOR } from "./ui";
+import { Button, ButtonType, Modal, Text, TextInput } from "./ui";
 import { UIEvents } from "./UIEvents";
+
+const DEFAULT_INFO_TEXT = `${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH} characters`;
 
 export class SaveScoreModal extends Modal {
     private readonly _apiRoot: string;
@@ -62,7 +64,7 @@ export class SaveScoreModal extends Modal {
         });
         this.addChild(content);
 
-        this._info = new Text(`${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH} characters`, {
+        this._info = new Text(DEFAULT_INFO_TEXT, {
             fontSize: 20,
             wordWrap: true,
             align: "center",
@@ -163,6 +165,7 @@ export class SaveScoreModal extends Modal {
                         wordWrap: true,
                         align: "center",
                     });
+                    this._info.text = DEFAULT_INFO_TEXT;
                     this._passwordInfo.text = "This name requires a password. Enter it here.";
                     this._passwordInfo.layout.style({
                         marginBottom: 12,
