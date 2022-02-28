@@ -121,27 +121,32 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
     }
 
     onPowerupStart(): void {
-        this._shipGraphics.cacheAsBitmap = false;
-        this._fireGraphics.cacheAsBitmap = false;
-        this._shipGraphics.tint = this._shipShadow.tint = this._theme.powerupColor;
-        this._fireGraphics.tint = this._fireShadow.tint = this._theme.powerupColor;
-        this.filters = [
-            this._powerupFilter = new PowerupFilter(),
-        ];
-        this._shipGraphics.cacheAsBitmap = true;
-        this._fireGraphics.cacheAsBitmap = true;
+        if (!this._powerupFilter) {
+            this._shipGraphics.cacheAsBitmap = false;
+            this._fireGraphics.cacheAsBitmap = false;
+            this._shipGraphics.tint = this._shipShadow.tint = this._theme.powerupColor;
+            this._fireGraphics.tint = this._fireShadow.tint = this._theme.powerupColor;
+            this.filters = [
+                this._powerupFilter = new PowerupFilter(),
+            ];
+            this._shipGraphics.cacheAsBitmap = true;
+            this._fireGraphics.cacheAsBitmap = true;
+        }
         this.createSpawnAnimation();
     }
 
     onPowerupEnd(): void {
-        this._shipGraphics.cacheAsBitmap = false;
-        this._fireGraphics.cacheAsBitmap = false;
-        this._shipGraphics.tint = this._shipShadow.tint = 0xffffff;
-        this._fireGraphics.tint = this._fireShadow.tint = 0xffffff;
-        this._shipGraphics.cacheAsBitmap = true;
-        this._fireGraphics.cacheAsBitmap = true;
-        this.filters = null;
-        this._powerupFilter = undefined;
+        if (this._powerupFilter) {
+            this._shipGraphics.cacheAsBitmap = false;
+            this._fireGraphics.cacheAsBitmap = false;
+            this._shipGraphics.tint = this._shipShadow.tint = 0xffffff;
+            this._fireGraphics.tint = this._fireShadow.tint = 0xffffff;
+            this._shipGraphics.cacheAsBitmap = true;
+            this._fireGraphics.cacheAsBitmap = true;
+            this.filters = null;
+            this._powerupFilter.destroy();
+            this._powerupFilter = undefined;
+        }
     }
 
     gameObjectDestroyed({ hit }: ShipDestroyOptions): void {

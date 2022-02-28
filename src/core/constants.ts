@@ -102,14 +102,20 @@ export const BASE_SHIP_PROJECTILE_SPEED = 1000;
 export const MAX_SHIP_PROJECTILE_SPEED = 1500;
 export const MIN_SHIP_PROJECTILE_SPEED = 1000;
 export const SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY = false;
-export const SHIP_FIRE_COOLDOWN = 0.05;
+
+/**
+ * Ship projecitle rate limiting
+ */
+export const SHIP_FIRE_COOLDOWN = 1 / 20;
+export const SHIP_PROJECTILE_CAPACITY = 10;
+export const SHIP_PROJECTILE_RECHARGE_RATE = 5;
 
 /**
  * Ship powerup parameters
  */
 export const SHIP_POWERUP_DURATION = 20;
 export const SHIP_POWERUP_PROJECTILE_SPEED_MULTIPLIER = 2;
-export const SHIP_POWERUP_FIRE_INTERVAL = 0.05;
+export const SHIP_POWERUP_FIRE_INTERVAL = 1 / 30;
 export const SHIP_POWERUP_RECOIL_MULTIPLER = 0.25;
 
 /**

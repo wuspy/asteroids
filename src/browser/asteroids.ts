@@ -22,7 +22,7 @@ import "./loaderMixin";
         new AsteroidsGame({
             containerId: "game",
             backgroundId: "background",
-            apiRoot: "/api",
+            apiRoot: process.env.NODE_ENV === "production" ? "https://astapi.jacobjordan.tech/api" : "/api",
         });
     });
 })();

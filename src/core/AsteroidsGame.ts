@@ -1,7 +1,21 @@
 import { ISize } from "@pixi/math";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
-import { LIVES, NEXT_LEVEL_DELAY, RESPAWN_DELAY, WORLD_AREA, UFO_SPAWN_TIME, UFO_DISTRIBUTION, UFOType, UFO_HARD_DISTRIBUTION_SCORE, EXTRA_LIFE_AT_SCORE, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, SHIP_POWERUP_FIRE_INTERVAL, MIN_FPS } from "./constants";
+import {
+    LIVES,
+    NEXT_LEVEL_DELAY,
+    RESPAWN_DELAY,
+    WORLD_AREA,
+    UFO_SPAWN_TIME,
+    UFO_DISTRIBUTION,
+    UFOType,
+    UFO_HARD_DISTRIBUTION_SCORE,
+    EXTRA_LIFE_AT_SCORE,
+    MAX_ASPECT_RATIO,
+    MIN_ASPECT_RATIO,
+    SHIP_POWERUP_FIRE_INTERVAL,
+    MIN_FPS
+} from "./constants";
 import { GameState, GameStatus } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { random, TickQueue, EventManager, InputState, GameLog } from "./engine";
@@ -9,7 +23,6 @@ import { UFO } from "./UFO";
 import { controls, inputLogConfig } from "./input";
 
 const WORLD_AREA_PX = WORLD_AREA * 1000000;
-const SHIP_POWERUP_FIRE_INTERVAL_MS = SHIP_POWERUP_FIRE_INTERVAL * 1000;
 const MAX_ELAPSED_MS = 1000 / MIN_FPS;
 
 export class AsteroidsGame {
@@ -182,8 +195,31 @@ export class AsteroidsGame {
         if (this._logger && this.state.status === GameStatus.Running) {
             [elapsedMs, input] = this._logger.logFrame(elapsedMs, input, this.worldSize);
         }
-        this.state.timestamp += elapsedMs;
-        const elapsed  = elapsedMs / 1000;
+
+        const { ship, ufos } = this.state;
+
+        const timestamp = this.state.timestamp + elapsedMs;
+        while (timestamp > this.state.timestamp) {
+            let nextCriticalTime = timestamp;
+            for (const ufo of ufos) {
+                nextCriticalTime = Math.min(nextCriticalTime, ufo.nextFireTime);
+                if (ufo.nextYShift) {
+                    nextCriticalTime = Math.min(nextCriticalTime, ufo.nextYShift);
+                }
+                if (ufo.currentYShiftEnd) {
+                    nextCriticalTime = Math.min(nextCriticalTime, ufo.currentYShiftEnd);
+                }
+            }
+            if (ship?.nextFireTime) {
+                nextCriticalTime = Math.min(nextCriticalTime, ship.nextFireTime);
+            }
+            this._tick(nextCriticalTime - this.state.timestamp, input);
+        }
+    }
+
+    private _tick(elapsedMs: number, input: InputState<typeof controls>): void {
+        this.state.timestamp += elapsedMs
+        const elapsed = elapsedMs / 1000;
 
         // Dispatch tick event
 
@@ -199,12 +235,16 @@ export class AsteroidsGame {
 
             if (input.fire) {
                 if (ship.powerupRemaining) {
-                    if (this.state.timestamp - ship.lastFireTime >= SHIP_POWERUP_FIRE_INTERVAL_MS) {
-                        ship.fire();
+                    if (!ship.isFiringFullAuto) {
+                        ship.startFireFullAuto(SHIP_POWERUP_FIRE_INTERVAL);
                     }
                 } else if (!this._lastFirePressed) {
                     ship.fire();
                 }
+            }
+
+            if (ship.isFiringFullAuto && (!input.fire || !ship.powerupRemaining)) {
+                ship.endFireFullAuto();
             }
 
             if (input.hyperspace && !this._lastHyperspacePressed) {
@@ -213,7 +253,7 @@ export class AsteroidsGame {
         }
 
         this._lastFirePressed = !!input.fire;
-        this._lastHyperspacePressed = !!input.fire;
+        this._lastHyperspacePressed = !!input.hyperspace;
 
         this.checkShipCollisions();
 

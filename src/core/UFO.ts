@@ -39,15 +39,21 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
 
     override tick(timestamp: number, elapsed: number): void {
         if (this._nextYShift && timestamp >= this._nextYShift) {
+            if (process.env.NODE_ENV === "development" && timestamp > this._nextYShift) {
+                console.warn("Frame tick not synced to UFO y-shift start");
+            }
             this._nextYShift = undefined;
             this.velocity.x = this.velocity.x / Math.SQRT2;
             this.velocity.y = [-1, 1][random(0, 1, true)] * this.velocity.x;
             this._currentYShiftEnd = timestamp + random(UFO_SHIFT_AMOUNTS[this._type][0], UFO_SHIFT_AMOUNTS[this._type][1], true) / Math.abs(this.velocity.y) * 1000;
         } else if (this._currentYShiftEnd && timestamp >= this._currentYShiftEnd) {
+            if (process.env.NODE_ENV === "development" && timestamp > this._currentYShiftEnd) {
+                console.warn("Frame tick not synced to UFO y-shift end");
+            }
             const distanceToEdge = Math.min(this.position.y, this.worldSize.height - this.position.y);
             if (distanceToEdge < this.boundingBox.height) {
                 // Don't allow a UFO to get stuck near the screen margin, even if it needs to travel a bit further
-                this._currentYShiftEnd = timestamp + distanceToEdge / Math.abs(this.velocity.y) * 1000;
+                this._currentYShiftEnd = timestamp + this.boundingBox.height / Math.abs(this.velocity.y) * 1000;
             } else {
                 this._currentYShiftEnd = undefined;
                 this.velocity.y = 0;
@@ -63,6 +69,9 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
         ) {
             this.destroy({ hit: false, scored: false });
         } else if (timestamp >= this._nextFireTime) {
+            if (process.env.NODE_ENV === "development" && timestamp > this._nextFireTime) {
+                console.warn("Frame tick not synced to UFO fire time");
+            }
             this.fire();
             this.setNextFireTime();
         }
@@ -144,5 +153,17 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
 
     get type(): UFOType {
         return this._type;
+    }
+
+    get nextYShift(): number | undefined {
+        return this._nextYShift;
+    }
+
+    get currentYShiftEnd(): number | undefined {
+        return this._currentYShiftEnd;
+    }
+
+    get nextFireTime(): number {
+        return this._nextFireTime;
     }
 }

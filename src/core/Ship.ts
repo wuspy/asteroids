@@ -18,7 +18,9 @@ import {
     SHIP_POWERUP_PROJECTILE_SPEED_MULTIPLIER,
     SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY,
     SHIP_FIRE_COOLDOWN,
-    SHIP_POWERUP_RECOIL_MULTIPLER
+    SHIP_POWERUP_RECOIL_MULTIPLER,
+    SHIP_PROJECTILE_CAPACITY,
+    SHIP_PROJECTILE_RECHARGE_RATE
 } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
@@ -47,7 +49,10 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
     private _hyperspaceCountdown: number;
     private _lastHyperspaceTime: number;
     private _lastFireTime: number;
+    private _nextFireTime: number | undefined;
+    private _fullAutoInterval: number | undefined;
     private _powerupRemaining: number;
+    private _projectiles: number;
 
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         invulnerable: boolean,
@@ -70,9 +75,16 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         this.rotationAmount = 0;
         this.invulnerable = params.invulnerable;
         this._powerupRemaining = 0;
+        this._projectiles = SHIP_PROJECTILE_CAPACITY;
     }
 
     override tick(timestamp: number, elapsed: number): void {
+        this.maxRotationSpeed = Math.abs(this.rotationAmount) * MAX_ROTATION_SPEED;
+        this.rotationAcceleration = Math.sign(this.rotationAmount) * ROTATION_ACCELERATION;
+        this.acceleration = this.accelerationAmount * ACCELERATION;
+
+        super.tick(timestamp, elapsed);
+
         if (this._hyperspaceCountdown) {
             if (this._hyperspaceCountdown >= HYPERSPACE_DELAY / 2 && this._hyperspaceCountdown - elapsed < HYPERSPACE_DELAY / 2) {
                 // We're in the middle of the hyperspace delay, the ship is invisible, so find a new location and move the ship to it
@@ -98,22 +110,38 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             }
         }
 
-        this.maxRotationSpeed = Math.abs(this.rotationAmount) * MAX_ROTATION_SPEED;
-        this.rotationAcceleration = Math.sign(this.rotationAmount) * ROTATION_ACCELERATION;
-        this.acceleration = this.accelerationAmount * ACCELERATION;
+        if (this._nextFireTime && timestamp >= this._nextFireTime) {
+            if (process.env.NODE_ENV === "development" && timestamp > this._nextFireTime) {
+                console.warn("Frame tick not synced to ship fire time");
+            }
+            this.fire();
+            if (this._fullAutoInterval) {
+                this._nextFireTime = timestamp + this._fullAutoInterval;
+            }
+        }
 
-        super.tick(timestamp, elapsed);
+        this._projectiles = Math.min(SHIP_PROJECTILE_CAPACITY, this._projectiles + elapsed * SHIP_PROJECTILE_RECHARGE_RATE);
     }
 
     override destroy(options: ShipDestroyOptions): void {
+        this.endFireFullAuto();
+        this._powerupRemaining = 0;
         super.destroy(options);
         this.events.trigger("shipDestroyed", this, options.hit);
     }
 
     fire(): void {
-        if (!this._powerupRemaining && this.state.timestamp - this._lastFireTime < FIRE_COOLDOWN_MS) {
-            return;
+        if (this.isFiringFullAuto && this._nextFireTime) {
+            if (this.state.timestamp < this._nextFireTime) {
+                return;
+            }
+        } else {
+            if (this._projectiles <= 0 || this.state.timestamp - this._lastFireTime < FIRE_COOLDOWN_MS) {
+                return;
+            }
+            --this._projectiles;
         }
+
         const velocity = { ...this.velocity };
         // Add tangential velocity from rotation
         if (SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY) {
@@ -162,6 +190,27 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         this._lastFireTime = this.state.timestamp;
     }
 
+    startFireFullAuto(interval: number): void {
+        if (!this.isFiringFullAuto) {
+            this.fire();
+            this._projectiles = Number.MAX_SAFE_INTEGER;
+            this._fullAutoInterval = interval * 1000;
+            this._nextFireTime = this.state.timestamp + this._fullAutoInterval;
+        }
+    }
+
+    endFireFullAuto(): void {
+        if (this.isFiringFullAuto) {
+            this._projectiles = SHIP_PROJECTILE_CAPACITY;
+            this._nextFireTime = undefined;
+            this._fullAutoInterval = undefined;
+        }
+    }
+
+    get isFiringFullAuto(): boolean {
+        return !!this._fullAutoInterval;
+    }
+
     hyperspace(): void {
         if (this.state.timestamp - this._lastHyperspaceTime >= HYPERSPACE_COOLDOWN_MS) {
             this._hyperspaceCountdown = HYPERSPACE_DELAY;
@@ -191,6 +240,10 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
 
     get lastFireTime(): number {
         return this._lastFireTime;
+    }
+
+    get nextFireTime(): number | undefined {
+        return this._nextFireTime;
     }
 
     startPowerup(): void {
