@@ -1,4 +1,4 @@
-import { GameObject, TickQueue } from "@core/engine";
+import { GameObject, TickQueue } from "../../core/engine";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { TickableContainer } from "./TickableContainer";
 

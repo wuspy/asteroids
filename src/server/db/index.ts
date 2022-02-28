@@ -1,7 +1,7 @@
 import config from "../config";
-import { Kysely, PostgresDialect } from "kysely";
+import { InsertResult, Kysely, PostgresDialect } from "kysely";
 import { ValidUnsavedGame } from "../models/ValidUnsavedGame";
-import { Database } from "./schema";
+import { Database, PlayerNameFilterAction } from "./schema";
 import { Game, GameToken, HighScore } from "../models";
 import { bufferToUintArray, uintArrayToBuffer } from "./util";
 
@@ -124,3 +124,38 @@ export const storeGame = async (game: ValidUnsavedGame): Promise<{ id: number, t
             "time_added as timeAdded",
         ])
         .executeTakeFirstOrThrow();
+
+export const storeReservedPlayerName = async (playerName: string, password: string): Promise<InsertResult> =>
+    await db.insertInto("reserved_player_name")
+        .values({
+            player_name: playerName,
+            passwd: password
+        })
+        .executeTakeFirstOrThrow();
+
+export const findReservedPlayerNames = async (): Promise<{ [Key in string]: string }> =>
+    await db.selectFrom("reserved_player_name")
+        .select(["player_name", "passwd"])
+        .execute()
+        .then((result) => result.reduce((obj, row) => {
+            obj[row.player_name] = row.passwd;
+            return obj;
+        }, <{ [Key in string]: string }>{}))
+
+export const storePlayerNameFilter = async (phrase: string, action: PlayerNameFilterAction): Promise<InsertResult> =>
+        await db.insertInto("player_name_filter")
+            .values({
+                phrase,
+                filter_action: action
+            })
+            .executeTakeFirstOrThrow()
+
+export const findPlayerNameFilters = async (): Promise<{ [Key in string]: PlayerNameFilterAction }> =>
+    await db.selectFrom("player_name_filter")
+        .select(["phrase", "filter_action"])
+        .orderBy("filter_action", "asc")
+        .execute()
+        .then((result) => result.reduce((obj, row) => {
+            obj[row.phrase] = row.filter_action;
+            return obj;
+        }, <{ [Key in string]: PlayerNameFilterAction }>{}))

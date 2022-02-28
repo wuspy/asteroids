@@ -1,9 +1,9 @@
 import { Container } from "@pixi/display";
 import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
-import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "@core";
+import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, MIN_FPS } from "../core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
-import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, random, EventManager } from "@core/engine";
+import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, random, EventManager } from "../core/engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
@@ -19,7 +19,7 @@ import { ProjectileDisplay } from "./ProjectileDisplay";
 import { AsteroidDisplay } from "./AsteroidDisplay";
 import { UFODisplay } from "./UFODisplay";
 import { GameTheme, GAME_THEMES } from "./GameTheme";
-import { GameTokenResponse, decodeIntArray } from "@core/api";
+import { GameTokenResponse, decodeIntArray } from "../core/api";
 import { getGameToken } from "./api";
 import { UIEvents } from "./UIEvents";
 import { AboutMeModal } from "./AboutMeModal";
@@ -29,6 +29,8 @@ import { LeaderboardModal } from "./LeaderboardModal";
 const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
 const MAX_DEVICE_PIXEL_RATIO = 2;
+const MAX_ELAPSED_MS = 1000 / MIN_FPS;
+
 declare global {
     interface Window {
         asteroidsInstance: AsteroidsGame;
@@ -557,7 +559,7 @@ export class AsteroidsGame {
             this.fpsStats.begin();
             this.memoryStats.begin();
         }
-        const elapsedMs = timestamp - this._timestamp;
+        const elapsedMs = Math.min(MAX_ELAPSED_MS, timestamp - this._timestamp);
         this._timestamp = timestamp;
         const input = this._input.poll();
 

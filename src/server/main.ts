@@ -4,12 +4,13 @@ import config from "./config";
 import express from "express";
 import bodyParser from "body-parser";
 import multer from "multer";
-import { SaveGameResponse, GameTokenResponse, HighScoreResponse, GameResponse, encodeIntArray } from "@core/api";
+import { SaveGameResponse, GameTokenResponse, HighScoreResponse, GameResponse, encodeIntArray } from "../core/api";
 import { SaveGameRequest } from "./models";
-import { createRandomSeed } from "@core/engine";
+import { createRandomSeed } from "../core/engine";
 import { GameValidatorError, validateAsteroidsGame } from "./asteroidsGameValidator";
 import { createGameToken, destroyConnection, findGame, findGameLog, findHighScores, findUnusedGameToken, storeGame } from "./db";
 import { validatePlayerName } from "./playerNameValidator";
+import { promisify } from "util";
 
 const successResponse = <T>(data: T) => ({ ok: true, data });
 const errorResponse = (message: string) => ({ ok: false, message });
@@ -19,7 +20,7 @@ const upload = multer();
 
 if (process.env.NODE_ENV === "development") {
     // Static content isn't hosted through express in production
-    app.use(express.static("public"));
+    app.use(express.static("../../dist"));
 }
 
 app.use(
@@ -89,6 +90,7 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
         }
         const params: SaveGameRequest = {
             playerName: body.playerName,
+            playerNameAuth: body.playerNameAuth,
             score: parseInt(body.score + "", 10),
             level: parseInt(body.level + "", 10),
             tokenId: parseInt(body.tokenId + "", 10),
@@ -97,6 +99,7 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
         };
 
         if (typeof params.playerName !== "string"
+            || !["undefined", "string"].includes(typeof params.playerNameAuth)
             || typeof params.version !== "string"
             || !params.log
             || isNaN(params.score)
@@ -111,16 +114,23 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
             return response.json(errorResponse("Invalid game token."));
         }
 
-        const nameError = validatePlayerName(params.playerName);
-        if (nameError) {
-            return response.json(errorResponse(nameError));
+        const nameResult = await validatePlayerName(params.playerName, params.playerNameAuth);
+        if (nameResult.ok) {
+            params.playerName = nameResult.playerName;
+        } else if ("unauthorized" in nameResult) {
+            if (params.playerNameAuth !== undefined) {
+                await promisify(setTimeout)(2000);
+            }
+            return response.sendStatus(401);
+        } else {
+            return response.json(errorResponse(nameResult.error));
         }
 
-        const result = validateAsteroidsGame(params, token.randomSeed);
-        if (result.success) {
-            const { game } = result;
+        const gameResult = validateAsteroidsGame(params, token.randomSeed);
+        if (gameResult.success) {
+            const { game } = gameResult;
             response.json(successResponse<SaveGameResponse>(await storeGame(game)));
-        } else if (result.error === GameValidatorError.VersionMismatch) {
+        } else if (gameResult.error === GameValidatorError.VersionMismatch) {
             response.json(errorResponse("You're playing an old version of the game, so your score can't be saved."));
         } else {
             if (process.env.NODE_ENV === "development") {

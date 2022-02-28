@@ -1,8 +1,8 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { ISize, Rectangle } from "@pixi/math";
-import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, random, TickQueue, Vec2 } from "@core/engine";
-import { ASTEROID_GENERATION_COUNT, ASTEROID_HITAREAS, GameState, GameEvents, generateAsteroidAngle } from "@core";
+import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, random, TickQueue, Vec2 } from "../core/engine";
+import { ASTEROID_GENERATION_COUNT, ASTEROID_HITAREAS, GameState, GameEvents, generateAsteroidAngle } from "../core";
 import { GameTheme } from "./GameTheme";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];

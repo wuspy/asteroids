@@ -1,7 +1,7 @@
 import { Resource, Texture } from "@pixi/core";
 import { Loader } from "@pixi/loaders";
 import { Sprite } from "@pixi/sprite";
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../../core/engine";
 import { FadeContainer } from "./FadeContainer";
 import { ComputedLayout } from "../layout";
 

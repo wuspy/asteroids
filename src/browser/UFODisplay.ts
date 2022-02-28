@@ -2,7 +2,7 @@ import { Container, IDestroyOptions } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { BlurFilter } from "@pixi/filter-blur";
-import { IUFODisplay, UFO, UFOType, UFO_SIZES, UFODestroyOptions } from "@core";
+import { IUFODisplay, UFO, UFOType, UFO_SIZES, UFODestroyOptions } from "../core";
 import { Explosion } from "./animations";
 import { GameTheme } from "./GameTheme";
 

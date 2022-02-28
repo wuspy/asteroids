@@ -1,13 +1,13 @@
 import { GlitchFilter } from "@pixi/filter-glitch";
-import { Tickable } from "@core/engine";
+import { Tickable } from "../../core/engine";
 
 export class PowerupFilter extends GlitchFilter implements Tickable {
     private _elapsed: number;
 
-    constructor() {
+    constructor(strength = 1) {
         super({
             slices: 8,
-            offset: 4,
+            offset: 4 * strength,
         });
         this._elapsed = 0;
     }

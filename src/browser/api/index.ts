@@ -1,6 +1,6 @@
 export { ApiResponse, ApiErrorType } from "./request";
 import { ApiResponse, get, mapApiResponse, post } from "./request";
-import { GameResponse, HighScoreResponse, SaveGameRequest, GameTokenResponse } from "@core/api";
+import { GameResponse, HighScoreResponse, SaveGameRequest, GameTokenResponse } from "../../core/api";
 
 export const getHighScores = async (
     apiRoot: string,
@@ -26,7 +26,7 @@ export const getGameLog = async (
     get({
         url: `${apiRoot}/game/${gameId}/log`,
         accept: "application/octet-stream",
-        timeout: 10000,
+        timeout: 30000,
     }),
     async (blob) => new Uint8Array(await blob.arrayBuffer())
 );
@@ -45,6 +45,9 @@ export const saveGame = async (
 ): Promise<ApiResponse<GameResponse>> => {
     const body = new FormData();
     body.append("playerName", game.playerName);
+    if (game.playerNameAuth !== undefined) {
+        body.append("playerNameAuth", game.playerNameAuth);
+    }
     body.append("score", game.score.toFixed());
     body.append("level", game.level.toFixed());
     body.append("tokenId", game.tokenId.toFixed());
@@ -54,6 +57,6 @@ export const saveGame = async (
         url: `${apiRoot}/games`,
         accept: "application/json",
         body,
-        timeout: 10000,
+        timeout: 30000,
     });
 }

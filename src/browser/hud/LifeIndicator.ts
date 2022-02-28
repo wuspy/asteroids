@@ -1,7 +1,7 @@
 import "@pixi/mixin-cache-as-bitmap";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { LIVES, GameState } from "@core";
-import { TickQueue } from "@core/engine";
+import { LIVES, GameState } from "../../core";
+import { TickQueue } from "../../core/engine";
 import { ShipDisplay } from "../ShipDisplay";
 import { ContainerBackgroundShape, FlexDirection } from "../layout";
 import { PopAnimation } from "../animations";

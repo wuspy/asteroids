@@ -1,10 +1,13 @@
 {
     "name": "asteroids",
     "author": "Jacob Jordan",
-    "version": "2.4.0",
+    "version": "2.5.0",
     "license": "MIT",
     "devDependencies": {
+        "@swc/core": "^1.2.145",
+        "@swc/helpers": "^0.3.6",
         "@types/animejs": "^3.1.4",
+        "@types/bcrypt": "^5.0.0",
         "@types/config": "^0.0.41",
         "@types/multer": "^1.4.7",
         "@types/node": "^16.11.22",
@@ -25,20 +28,23 @@
         "sass-loader": "^12.4.0",
         "terser-webpack-plugin": "^5.2.5",
         "ts-loader": "^9.2.6",
+        "ts-node": "^10.5.0",
         "ts-shader-loader": "^1.0.6",
         "typescript": "^4.5.2",
         "webpack": "^5.65.0",
-        "webpack-cli": "^4.9.1",
-        "webpack-dev-server": "^4.7.3",
-        "webpack-node-externals": "^3.0.0"
+        "webpack-cli": "^4.9.1"
     },
     "scripts": {
         "lint": "eslint src --ext .ts",
         "watch": "webpack --watch",
         "build": "webpack --mode=production --node-env=production",
         "build:dev": "webpack --mode=development",
-        "server": "cd dist && NODE_ENV=production node server.js",
-        "server:dev": "cd dist && NODE_ENV=development nodemon --signal SIGTERM server.js"
+        "server": "cd src/server && NODE_ENV=production ts-node main.ts",
+        "server:dev": "cd src/server && NODE_ENV=development nodemon --signal SIGTERM main.ts",
+        "storeReservedName": "cd src/server/scripts && NODE_ENV=production ts-node storeReservedName.ts",
+        "storeReservedName:dev": "cd src/server/scripts && NODE_ENV=development ts-node storeReservedName.ts",
+        "storeNameFilter": "cd src/server/scripts && NODE_ENV=production ts-node storeNameFilter.ts",
+        "storeNameFilter:dev": "cd src/server/scripts && NODE_ENV=development ts-node storeNameFilter.ts"
     },
     "dependencies": {
         "@pixi/constants": "^6.2.2",
@@ -59,7 +65,7 @@
         "@pixi/sprite": "^6.2.2",
         "@pixi/text": "^6.2.2",
         "animejs": "^3.2.1",
-        "config": "^3.3.7",
+        "bcrypt": "^5.0.1",
         "express": "^4.17.2",
         "kysely": "^0.17.1",
         "multer": "^1.4.4",

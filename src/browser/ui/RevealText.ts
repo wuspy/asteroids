@@ -1,5 +1,5 @@
 import { ITextStyle, TextStyle } from "@pixi/text";
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../../core/engine";
 import { TickableContainer } from "./TickableContainer";
 import anime from "animejs";
 import { ISize } from "@pixi/math";

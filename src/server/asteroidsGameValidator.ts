@@ -1,5 +1,5 @@
-import { AsteroidsGame, inputLogConfig, GameState, GameStatus } from "@core";
-import { seedRandom, parseGameLog } from "@core/engine";
+import { AsteroidsGame, inputLogConfig, GameState, GameStatus } from "../core";
+import { seedRandom, parseGameLog } from "../core/engine";
 import { SaveGameRequest, ValidUnsavedGame } from "./models";
 
 const [V_MAJOR, V_MINOR, V_PATCH] = process.env.npm_package_version!.split(".");

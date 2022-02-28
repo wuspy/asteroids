@@ -1,5 +1,5 @@
 import anime from "animejs";
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../../core/engine";
 import { TickableContainer } from "../ui";
 
 export abstract class OneShotAnimation extends TickableContainer {

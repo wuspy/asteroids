@@ -1,5 +1,5 @@
-import { EventManager, TickQueue } from "@core/engine";
-import { GameState } from "@core";
+import { EventManager, TickQueue } from "../core/engine";
+import { GameState } from "../core";
 import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
 import { Button, ButtonType, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, FadeContainer, LinearGroup, RevealText, ScoreText, Text, BUTTON_THEMES } from "./ui";
 import { GlowFilter } from "@pixi/filter-glow";

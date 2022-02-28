@@ -1,6 +1,6 @@
 import { GlowFilter } from "@pixi/filter-glow";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../../core/engine";
 import { Text } from "./Text";
 import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection, PositionType } from "../layout";
 import { Image } from "./Image";

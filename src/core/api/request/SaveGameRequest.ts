@@ -1,5 +1,6 @@
 export interface SaveGameRequest {
     playerName: string,
+    playerNameAuth?: string,
     score: number,
     level: number,
     tokenId: number,

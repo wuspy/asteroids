@@ -4,7 +4,7 @@ import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { DEG_TO_RAD, PI_2 } from "@pixi/math";
 import { Renderer } from "@pixi/core";
-import { Vec2, TickQueue, PI_1_2 } from "@core/engine";
+import { Vec2, TickQueue, PI_1_2 } from "../../core/engine";
 import { TickableContainer } from "./TickableContainer";
 
 export class HelpPointer extends TickableContainer {

@@ -1,6 +1,6 @@
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { KawaseBlurFilter } from "@pixi/filter-kawase-blur";
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../../core/engine";
 import anime from "animejs";
 import { TickableContainer } from "./TickableContainer";
 

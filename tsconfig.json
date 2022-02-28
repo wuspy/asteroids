@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "moduleResolution": "node",
+        "module": "es6",
         "target": "es6",
         "strict": true,
         "allowJs": false,
@@ -11,11 +12,6 @@
         "noImplicitOverride": true,
         "forceConsistentCasingInFileNames": true,
         "importHelpers": true,
-        "paths": {
-            "@core": ["./src/core"],
-            "@core/engine": ["./src/core/engine"],
-            "@core/api": ["./src/core/api"],
-        }
     },
     "exclude": [
         "node_modules"

@@ -2,8 +2,7 @@ import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Text } from "./Text";
 import { Align, JustifyContent, PositionType } from "../layout";
-import { controls } from "@core";
-import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "@core/engine";
+import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "../../core/engine";
 
 export type ControlType = "key" | "button" | "trigger" | "stick";
 

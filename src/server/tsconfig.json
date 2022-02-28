@@ -1,9 +1,12 @@
 {
-    "extends": "./tsconfig.json",
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
         "module": "commonjs",
         "target": "es2021",
         "sourceMap": false,
         "removeComments": false,
     },
+    "ts-node": {
+        "swc": true
+    }
 }

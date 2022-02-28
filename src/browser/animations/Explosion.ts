@@ -1,6 +1,6 @@
 import { DEG_TO_RAD } from "@pixi/math";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { random, TickQueue } from "@core/engine";
+import { random, TickQueue } from "../../core/engine";
 import { OneShotAnimation } from "./OneShotAnimation";
 
 interface Particle {

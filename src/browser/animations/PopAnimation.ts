@@ -1,6 +1,6 @@
 import { Container } from "@pixi/display";
 import { OneShotAnimation } from "./OneShotAnimation";
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../../core/engine";
 import { Renderer, RenderTexture } from "@pixi/core";
 
 export class PopAnimation extends OneShotAnimation {

@@ -186,6 +186,14 @@ export class TextInput extends Container {
         this._domInput._element.style.textAlign = align;
     }
 
+    get type(): string {
+        return this._domInput._element.type;
+    }
+
+    set type(type: string) {
+        this._domInput._element.type = type;
+    }
+
     get value(): string {
         return this._domInput._element.value;
     }

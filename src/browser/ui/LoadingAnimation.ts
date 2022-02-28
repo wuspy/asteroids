@@ -1,5 +1,5 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../../core/engine";
 import { TickableContainer } from "./TickableContainer";
 import { Align, JustifyContent, PositionType } from "../layout";
 import { DEG_TO_RAD } from "@pixi/math";

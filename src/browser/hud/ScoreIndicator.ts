@@ -1,5 +1,5 @@
-import { GameState } from "@core";
-import { TickQueue } from "@core/engine";
+import { GameState } from "../../core";
+import { TickQueue } from "../../core/engine";
 import { ScoreText, Text, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR } from "../ui";
 import { ContainerBackgroundShape } from "../layout";
 import { PopAnimation } from "../animations";

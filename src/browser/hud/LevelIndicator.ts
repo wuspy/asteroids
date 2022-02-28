@@ -1,5 +1,5 @@
-import { GameState } from "@core";
-import { random, TickQueue } from "@core/engine";
+import { GameState } from "../../core";
+import { random, TickQueue } from "../../core/engine";
 import { GameTheme } from "../GameTheme";
 import { Text, TickableContainer } from "../ui";
 

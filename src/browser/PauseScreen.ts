@@ -1,6 +1,6 @@
 import { GlowFilter } from "@pixi/filter-glow";
-import { EventManager, InputProvider, TickQueue } from "@core/engine";
-import { GameState, controls } from "@core";
+import { EventManager, InputProvider, TickQueue } from "../core/engine";
+import { GameState, controls } from "../core";
 import anime from "animejs";
 import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
 import { ButtonType, Button, FadeContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, LinearGroup, RevealText, ControlDescription, ControlGraphic } from "./ui";

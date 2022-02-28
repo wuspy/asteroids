@@ -1,6 +1,6 @@
 import { Container, DisplayObject } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { clamp, TickQueue, lineSegmentLength } from "@core/engine";
+import { clamp, TickQueue, lineSegmentLength } from "../../core/engine";
 import anime from "animejs";
 import { TickableContainer } from "./TickableContainer";
 import { ComputedLayout, drawContainerBackground, FlexDirection, PositionType } from "../layout";

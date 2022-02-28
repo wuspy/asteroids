@@ -1,6 +1,6 @@
-import { TickQueue } from "@core/engine";
+import { TickQueue } from "../core/engine";
 import { Container } from "@pixi/display";
-import { EventManager } from "@core/engine";
+import { EventManager } from "../core/engine";
 import { LeaderboardListItem } from "./LeaderboardListItem";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { Button, ButtonType, Divider, DividerDirection, LinearGroup, LoadingAnimation, Modal, Text, UI_FOREGROUND_COLOR, VirtualizedList } from "./ui";
