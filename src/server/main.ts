@@ -2,6 +2,7 @@ console.log(`Version ${process.env.npm_package_version}`);
 
 import config from "./config";
 import express from "express";
+import cors from "cors";
 import bodyParser from "body-parser";
 import multer from "multer";
 import { SaveGameResponse, GameTokenResponse, HighScoreResponse, GameResponse, encodeIntArray } from "../core/api";
@@ -24,6 +25,9 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(
+    cors({
+        origin: "https://jacobjordan.tech",
+    }),
     bodyParser.json(),
     bodyParser.urlencoded({ extended: true }),
 );
@@ -159,9 +163,11 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
 const server = app.listen(config.port, () => console.log(`Server listening on port: ${config.port}`));
 
 const shutdown = () => {
-    console.log("Shutting down");
+    console.log("Shutting down server");
     server.close(() => {
+        console.log("Closing database connection");
         destroyConnection();
+        console.log("Done");
     });
 }
 
