@@ -8,5 +8,5 @@ RUN npm ci
 
 COPY . .
 
-EXPOSE 9000
+EXPOSE 8080
 ENTRYPOINT npm run server

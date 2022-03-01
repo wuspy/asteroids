@@ -113,7 +113,7 @@ export const SHIP_PROJECTILE_RECHARGE_RATE = 5;
 /**
  * Ship powerup parameters
  */
-export const SHIP_POWERUP_DURATION = 20;
+export const SHIP_POWERUP_DURATION = 15;
 export const SHIP_POWERUP_PROJECTILE_SPEED_MULTIPLIER = 2;
 export const SHIP_POWERUP_FIRE_INTERVAL = 1 / 30;
 export const SHIP_POWERUP_RECOIL_MULTIPLER = 0.25;

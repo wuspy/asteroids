@@ -1,7 +1,7 @@
 {
     "name": "asteroids",
     "author": "Jacob Jordan",
-    "version": "2.6.1",
+    "version": "2.7.0",
     "license": "MIT",
     "devDependencies": {
         "@swc/core": "^1.2.145",

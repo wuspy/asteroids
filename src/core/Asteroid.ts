@@ -63,7 +63,11 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
             this.moveToUnoccupiedPosition(params.obstacles);
         }
 
-        if (this._generation === 2 && random(0, 1000, true) <= ASTEROID_POWERUP_SPAWN_CHANCE * 1000) {
+        if (this.state.ship
+            && !this.state.ship.powerupRemaining
+            && this._generation === 2
+            && random(0, 1000, true) <= ASTEROID_POWERUP_SPAWN_CHANCE * 1000
+        ) {
             this.hasPowerup = true;
         } else {
             this.hasPowerup = false;
