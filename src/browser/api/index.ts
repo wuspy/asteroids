@@ -2,47 +2,34 @@ export { ApiResponse, ApiErrorType } from "./request";
 import { ApiResponse, get, mapApiResponse, post } from "./request";
 import { GameResponse, HighScoreResponse, SaveGameRequest, GameTokenResponse } from "../../core/api";
 
-export const getHighScores = async (
-    apiRoot: string,
-): Promise<ApiResponse<HighScoreResponse[]>> => get({
-    url: `${apiRoot}/leaderboard`,
+export const getHighScores = async (): Promise<ApiResponse<HighScoreResponse[]>> => get({
+    url: "/api/leaderboard",
     accept: "application/json",
     timeout: 10000,
 });
 
-export const getGame = async (
-    apiRoot: string,
-    gameId: number,
-): Promise<ApiResponse<GameResponse>> => get({
-    url: `${apiRoot}/game/${gameId}`,
+export const getGame = async (gameId: number): Promise<ApiResponse<GameResponse>> => get({
+    url: `/api/game/${gameId}`,
     accept: "application/json",
     timeout: 10000,
 });
 
-export const getGameLog = async (
-    apiRoot: string,
-    gameId: number,
-): Promise<ApiResponse<Uint8Array>> => mapApiResponse(
+export const getGameLog = async (gameId: number): Promise<ApiResponse<Uint8Array>> => mapApiResponse(
     get({
-        url: `${apiRoot}/game/${gameId}/log`,
+        url: `/api/game/${gameId}/log`,
         accept: "application/octet-stream",
         timeout: 30000,
     }),
     async (blob) => new Uint8Array(await blob.arrayBuffer())
 );
 
-export const getGameToken = async (
-    apiRoot: string,
-): Promise<ApiResponse<GameTokenResponse>> => get({
-    url: `${apiRoot}/game-token`,
+export const getGameToken = async (): Promise<ApiResponse<GameTokenResponse>> => get({
+    url: "/api/game-token",
     accept: "application/json",
     timeout: 4000,
 });
 
-export const saveGame = async (
-    apiRoot: string,
-    game: SaveGameRequest,
-): Promise<ApiResponse<GameResponse>> => {
+export const saveGame = async (game: SaveGameRequest): Promise<ApiResponse<GameResponse>> => {
     const body = new FormData();
     body.append("playerName", game.playerName);
     if (game.playerNameAuth !== undefined) {
@@ -54,7 +41,7 @@ export const saveGame = async (
     body.append("version", game.version);
     body.append("log", new Blob([game.log]));
     return post({
-        url: `${apiRoot}/games`,
+        url: "/api/games",
         accept: "application/json",
         body,
         timeout: 30000,

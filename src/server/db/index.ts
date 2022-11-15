@@ -1,22 +1,25 @@
 import config from "../config";
 import { InsertResult, Kysely, PostgresDialect } from "kysely";
+import { Pool } from "pg";
 import { ValidUnsavedGame } from "../models/ValidUnsavedGame";
 import { Database, PlayerNameFilterAction } from "./schema";
 import { Game, GameToken, HighScore } from "../models";
 import { bufferToUintArray, uintArrayToBuffer } from "./util";
 
+console.log(`Using database at ${config.dbHostname}:${config.dbPort}`);
+
 const db = new Kysely<Database>({
     dialect: new PostgresDialect({
-        database: "asteroids",
-        user: config.dbUsername,
-        host: config.dbHostname,
-        password: config.dbPassword,
-        port: config.dbPort,
-        ssl: config.dbSsl,
+        pool: new Pool({
+            database: "asteroids",
+            user: config.dbUsername,
+            host: config.dbHostname,
+            password: config.dbPassword,
+            port: config.dbPort,
+            ssl: config.dbSsl,
+        }),
     }),
 });
-
-console.log(`Connected to database at ${config.dbHostname}:${config.dbPort}`);
 
 export const destroyConnection = () => db.destroy();
 
@@ -39,8 +42,8 @@ export const findHighScores = async (): Promise<HighScore[]> =>
         .limit(999)
         .execute();
 
-export const findGame = async (id: number): Promise<Game | undefined> =>
-    await db.selectFrom("game")
+const selectGames = () =>
+        db.selectFrom("game")
         .innerJoin("game_token", "game_token.game_token_id", "game.game_token_id")
         .select([
             "game_id as id",
@@ -57,13 +60,27 @@ export const findGame = async (id: number): Promise<Game | undefined> =>
             "game.time_added as timeAdded",
             "random_seed as randomSeed",
         ])
+        .where("deleted", "=", false);
+
+export const findGame = async (id: number): Promise<Omit<Game, "log"> | undefined> =>
+    await selectGames()
         .where("game_id", "=", id)
-        .where("deleted", "=", false)
         .executeTakeFirst()
         .then((row) => !row ? undefined : {
             ...row,
             randomSeed: bufferToUintArray(row.randomSeed, 4),
         });
+
+export const findAllGames = async (offset: number, limit: number): Promise<Game[]> =>
+    await selectGames()
+        .select("game_log as log")
+        .offset(offset)
+        .limit(limit)
+        .execute()
+        .then((result) => result.map((row) => ({
+            ...row,
+            randomSeed: bufferToUintArray(row.randomSeed, 4),
+        })));
 
 export const findGameLog = async (id: number): Promise<Buffer | undefined> =>
     await db.selectFrom("game")
@@ -72,7 +89,7 @@ export const findGameLog = async (id: number): Promise<Buffer | undefined> =>
         .where("game_id", "=", id)
         .where("deleted", "=", false)
         .executeTakeFirst()
-        .then((row) => !row ? undefined : row.game_log);
+        .then((row) => row?.game_log);
 
 export const findUnusedGameToken = async (id: number): Promise<GameToken | undefined> =>
     await db.selectFrom("game_token")

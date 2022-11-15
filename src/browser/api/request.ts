@@ -51,6 +51,7 @@ export const fetch = async <CT extends ContentType>(params: {
         const init: RequestInit = {
             method: params.method,
             credentials: "same-origin",
+            cache: "no-store",
             headers: {
                 "accept": params.accept,
             },

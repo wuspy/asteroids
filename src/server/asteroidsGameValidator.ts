@@ -1,6 +1,5 @@
 import { AsteroidsGame, inputLogConfig, GameState, GameStatus } from "../core";
 import { seedRandom, parseGameLog } from "../core/engine";
-import { SaveGameRequest, ValidUnsavedGame } from "./models";
 
 const [V_MAJOR, V_MINOR, V_PATCH] = process.env.npm_package_version!.split(".");
 
@@ -16,17 +15,30 @@ export const enum GameValidatorError {
 
 export type GameValidatorResult = {
     success: true;
-    game: ValidUnsavedGame;
+    duration: number;
+    shotsFired: number;
+    accuracy: number;
+    asteroidsDestroyed: number;
+    largeUfosDestroyed: number;
+    smallUfosDestroyed: number;
 } | {
     success: false;
     error: GameValidatorError;
     state?: GameState;
 };
 
-export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: number[]): GameValidatorResult => {
+export interface GameValidatorRequest {
+    version: string;
+    randomSeed: number[];
+    log: Buffer;
+    score: number;
+    level: number;
+}
+
+export const validateAsteroidsGame = (request: GameValidatorRequest, allowVersionMismatch = false): GameValidatorResult => {
     const [major, minor, patch] = request.version.split(".");
 
-    if (major !== V_MAJOR || minor !== V_MINOR) {
+    if (!allowVersionMismatch && (major !== V_MAJOR || minor !== V_MINOR)) {
         return { success: false, error: GameValidatorError.VersionMismatch };
     }
 
@@ -52,7 +64,7 @@ export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: numb
     });
 
     try {
-        if (!seedRandom(randomSeed)) {
+        if (!seedRandom(request.randomSeed)) {
             return { success: false, error: GameValidatorError.InvalidRandomSeed };
         }
         const parser = parseGameLog(request.log, inputLogConfig);
@@ -88,15 +100,12 @@ export const validateAsteroidsGame = (request: SaveGameRequest, randomSeed: numb
         }
         return {
             success: true,
-            game: {
-                ...request,
-                duration: game.state.timestamp,
-                shotsFired,
-                accuracy: shotsHit / shotsFired,
-                asteroidsDestroyed,
-                largeUfosDestroyed,
-                smallUfosDestroyed,
-            }
+            duration: game.state.timestamp,
+            shotsFired,
+            accuracy: shotsHit / shotsFired,
+            asteroidsDestroyed,
+            largeUfosDestroyed,
+            smallUfosDestroyed,
         };
     } catch (e) {
         return {

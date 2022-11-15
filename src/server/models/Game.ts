@@ -10,6 +10,7 @@ export interface Game {
     smallUfosDestroyed: number;
     asteroidsDestroyed: number;
     randomSeed: number[];
+    log: Buffer;
     version: string;
     timeAdded: string;
 }

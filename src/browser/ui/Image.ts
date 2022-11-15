@@ -1,5 +1,5 @@
+import { Assets } from "@pixi/assets";
 import { Resource, Texture } from "@pixi/core";
-import { Loader } from "@pixi/loaders";
 import { Sprite } from "@pixi/sprite";
 import { TickQueue } from "../../core/engine";
 import { FadeContainer } from "./FadeContainer";
@@ -11,35 +11,29 @@ export class Image extends FadeContainer {
 
     constructor(params: {
         queue: TickQueue,
-        resource: string,
+        url: string,
         tint?: number,
     }) {
-        const resource = Loader.shared.resources[params.resource];
+        const texture = Assets.get(params.url);
         super({
             queue: params.queue,
             fadeInDuration: 200,
             fadeOutDuration: 200,
-            initiallyVisible: resource.isComplete && !!resource.texture,
+            initiallyVisible: !!texture,
             keepVisible: true,
         });
 
         this._tint = params.tint ?? 0xffffff;
 
-        const waitForTexture = () => {
-            if (resource.texture) {
-                if (!this.destroyed) { // In case the container was destroyed before the resource loaded
-                    this.addSprite(resource.texture);
+        if (texture) {
+            this.addSprite(texture);
+        } else {
+            Assets.load(params.url).then((texture) => {
+                if (!this.destroyed) {
+                    this.addSprite(texture);
                     this.fadeIn();
                 }
-            } else {
-                window.setTimeout(waitForTexture);
-            }
-        }
-
-        if (resource.isComplete) {
-            waitForTexture();
-        } else {
-            resource.onComplete.add(waitForTexture);
+            });
         }
     }
 

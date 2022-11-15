@@ -5,6 +5,7 @@ export interface ServerConfig {
     dbUsername: string;
     dbPassword: string;
     dbSsl: boolean;
+    trustedProxies: string[];
 }
 
 const config: ServerConfig = process.env.NODE_ENV === "production"

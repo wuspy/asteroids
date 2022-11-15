@@ -10,7 +10,6 @@ import { UIEvents } from "./UIEvents";
 const DEFAULT_INFO_TEXT = `${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH} characters`;
 
 export class SaveScoreModal extends Modal {
-    private readonly _apiRoot: string;
     private readonly _state: GameState;
     private readonly _token: GameTokenResponse;
     private readonly _log: Uint8Array;
@@ -26,7 +25,6 @@ export class SaveScoreModal extends Modal {
     constructor(params: {
         queue: TickQueue;
         events: EventManager<UIEvents>;
-        apiRoot: string;
         state: GameState;
         log: Uint8Array;
         token: GameTokenResponse;
@@ -48,7 +46,6 @@ export class SaveScoreModal extends Modal {
             },
         });
         this._saving = false;
-        this._apiRoot = params.apiRoot;
         this._state = params.state;
         this._token = params.token;
         this._log = params.log;
@@ -144,7 +141,7 @@ export class SaveScoreModal extends Modal {
             if (this._passwordInput) {
                 this._passwordInput.disabled = true;
             }
-            const response = await saveGame(this._apiRoot, {
+            const response = await saveGame({
                 playerName: this._input.value,
                 playerNameAuth: this._passwordInput?.value,
                 score: this._state.score,

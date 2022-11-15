@@ -35,7 +35,7 @@ export class Button extends TickableContainer {
         queue: TickQueue,
         type: ButtonType,
         text: string,
-        imageResource?: string,
+        imageUrl?: string,
         enabled?: boolean,
         onClick?: () => void,
     }) {
@@ -71,10 +71,10 @@ export class Button extends TickableContainer {
         this._activeGraphics.layout.excluded = true;
         this.addChild(this._inactiveGraphics, this._activeGraphics);
 
-        if (params.imageResource) {
+        if (params.imageUrl) {
             this._image = new Image({
                 queue: params.queue,
-                resource: params.imageResource,
+                url: params.imageUrl,
                 tint: this._theme.textColor,
             });
             this._image.alpha = this._theme.textAlpha;

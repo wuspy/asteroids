@@ -12,7 +12,6 @@ export class LeaderboardModal extends Modal {
     constructor(params: {
         queue: TickQueue;
         events: EventManager<UIEvents>;
-        apiRoot: string;
     }) {
         super({
             queue: params.queue,
@@ -56,7 +55,7 @@ export class LeaderboardModal extends Modal {
             bottom: 0,
         });
         content.addChild(loaderContainer);
-        getHighScores(params.apiRoot).then((response) => {
+        getHighScores().then((response) => {
             if (!response.ok) {
                 loader.visible = false;
                 loaderText.text = "Error contacting server. Try again later.";

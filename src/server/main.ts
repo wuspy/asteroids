@@ -2,8 +2,8 @@ console.log(`Version ${process.env.npm_package_version}`);
 
 import config from "./config";
 import express from "express";
-import cors from "cors";
 import bodyParser from "body-parser";
+import morgan from "morgan";
 import multer from "multer";
 import { SaveGameResponse, GameTokenResponse, HighScoreResponse, GameResponse, encodeIntArray } from "../core/api";
 import { SaveGameRequest } from "./models";
@@ -19,17 +19,17 @@ const errorResponse = (message: string) => ({ ok: false, message });
 const app = express();
 const upload = multer();
 
+app.set("trust proxy", config.trustedProxies);
+
 if (process.env.NODE_ENV === "development") {
     // Static content isn't hosted through express in production
     app.use(express.static("../../dist"));
 }
 
 app.use(
-    cors({
-        origin: "https://jacobjordan.tech",
-    }),
     bodyParser.json(),
     bodyParser.urlencoded({ extended: true }),
+    morgan(":remote-addr - [:date[clf]] :method :url :status :res[content-length] - :response-time ms"),
 );
 
 app.get("/api/game-token", async (request, response) => {
@@ -38,6 +38,7 @@ app.get("/api/game-token", async (request, response) => {
         const { id } = await createGameToken(randomSeed);
         response.json(successResponse<GameTokenResponse>({ id, randomSeed: encodeIntArray(randomSeed) }));
     } catch (e) {
+        console.error(e);
         response.sendStatus(500);
     }
 });
@@ -46,6 +47,7 @@ app.get("/api/leaderboard", async (request, response) => {
     try {
         response.json(successResponse<HighScoreResponse[]>(await findHighScores()));
     } catch (e) {
+        console.error(e);
         response.sendStatus(500);
     }
 });
@@ -63,6 +65,7 @@ app.get("/api/game/:id(\\d{1,10})", async (request, response) => {
             response.sendStatus(404);
         }
     } catch (e) {
+        console.error(e);
         response.sendStatus(500);
     }
 });
@@ -81,6 +84,7 @@ app.get("/api/game/:id(\\d{1,10})/log", async (request, response) => {
             response.sendStatus(404);
         }
     } catch (e) {
+        console.error(e);
         response.sendStatus(500);
     }
 });
@@ -130,10 +134,15 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
             return response.json(errorResponse(nameResult.error));
         }
 
-        const gameResult = validateAsteroidsGame(params, token.randomSeed);
+        const gameResult = validateAsteroidsGame({
+            ...params,
+            randomSeed: token.randomSeed,
+        });
         if (gameResult.success) {
-            const { game } = gameResult;
-            response.json(successResponse<SaveGameResponse>(await storeGame(game)));
+            response.json(successResponse<SaveGameResponse>(await storeGame({
+                ...params,
+                ...gameResult
+            })));
         } else if (gameResult.error === GameValidatorError.VersionMismatch) {
             response.json(errorResponse("You're playing an old version of the game, so your score can't be saved."));
         } else {
@@ -156,11 +165,12 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
             response.json(errorResponse("That score doesn't seem to be possible."));
         }
     } catch (e) {
+        console.error(e);
         response.sendStatus(500);
     }
 });
 
-const server = app.listen(config.port, () => console.log(`Server listening on port: ${config.port}`));
+const server = app.listen(config.port, "0.0.0.0", () => console.log(`Server listening on port: ${config.port}`));
 
 const shutdown = () => {
     console.log("Shutting down server");

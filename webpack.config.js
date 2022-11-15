@@ -21,9 +21,13 @@ const index = {
     devtool: mode === "development" ? "source-map" : undefined,
     plugins: [
         new CopyPlugin({
-            patterns: [
-                { from: "assets", to: `${dist}/assets` },
-            ],
+            patterns: [{
+                from: "public",
+                globOptions: {
+                    // HTML is processed through HtmlWebpackPlugin
+                    ignore: ["**/*.html"],
+                },
+            }],
         }),
         new webpack.DefinePlugin({
             "process.env.npm_package_version": JSON.stringify(process.env.npm_package_version),
@@ -32,7 +36,7 @@ const index = {
             filename: "[name].css",
         }),
         new HtmlWebpackPlugin({
-            template: "./html/index.html",
+            template: "./public/index.html",
             scriptLoading: "blocking",
             inject: "body",
         }),

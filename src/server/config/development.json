@@ -4,5 +4,6 @@
     "dbPort": 5432,
     "dbUsername": "user",
     "dbPassword": "password",
-    "dbSsl": false
+    "dbSsl": false,
+    "trustedProxies": []
 }

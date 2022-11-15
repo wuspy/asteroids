@@ -1,5 +1,5 @@
 import { Container } from "@pixi/display";
-import { BatchRenderer, Renderer, AbstractRenderer, autoDetectRenderer } from '@pixi/core';
+import { BatchRenderer, AbstractRenderer, autoDetectRenderer, extensions, ExtensionType } from '@pixi/core';
 import { InteractionManager } from '@pixi/interaction';
 import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, MIN_FPS } from "../core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
@@ -83,7 +83,6 @@ export class AsteroidsGame {
     private readonly _background: HTMLElement;
     private readonly _gameplayContainer: FadeContainer;
     private readonly _dpr: number;
-    private readonly _apiRoot?: string;
     readonly game: CoreAsteroidsGame;
     private _theme!: GameTheme;
     private _token?: GameTokenResponse;
@@ -111,7 +110,6 @@ export class AsteroidsGame {
     constructor(params: {
         containerId: string,
         backgroundId: string,
-        apiRoot?: string,
     }) {
         this._container = document.getElementById(params.containerId)!;
         if (!this._container) {
@@ -125,8 +123,6 @@ export class AsteroidsGame {
         this.game = new CoreAsteroidsGame();
         this._paused = false;
         this._lastStartPressed = false;
-
-        this._apiRoot = params.apiRoot;
         this._loadingGameToken = false;
         this.fetchNextGameToken();
 
@@ -152,9 +148,11 @@ export class AsteroidsGame {
             document.body.appendChild(this.statsDiv);
         }
 
-        Renderer.registerPlugin("batch", BatchRenderer);
-        Renderer.registerPlugin("interaction", InteractionManager);
-        Renderer.registerPlugin("scrollInteraction", ScrollInteractionManager);
+        extensions.add(
+            { type: ExtensionType.RendererPlugin, ref: BatchRenderer, name: "batch" },
+            { type: ExtensionType.RendererPlugin, ref: InteractionManager, name: "interaction" },
+            { type: ExtensionType.RendererPlugin, ref: ScrollInteractionManager, name: "scrollInteraction" },
+        );
         this._renderer = autoDetectRenderer({
             width: this._container.clientWidth,
             height: this._container.clientHeight,
@@ -327,7 +325,7 @@ export class AsteroidsGame {
                 queue: this._uiQueue,
                 events: this._uiEvents,
                 state: this.game.state,
-                enableSave: !!this._token && this.game.enableLogging && !!this._apiRoot,
+                enableSave: !!this._token && this.game.enableLogging,
             });
             this._hudContainer.addChild(this._gameOverScreen);
         });
@@ -426,12 +424,11 @@ export class AsteroidsGame {
             }
         });
         this._uiEvents.on("openSaveScore", this, () => {
-            if (this._token && this.game.log && this._apiRoot && !this._saveScoreModal) {
+            if (this._token && this.game.log && !this._saveScoreModal) {
                 this._saveScoreModal = new SaveScoreModal({
                     queue: this._uiQueue,
                     events: this._uiEvents,
                     token: this._token,
-                    apiRoot: this._apiRoot,
                     log: this.game.log,
                     state: this.game.state,
                 });
@@ -456,11 +453,10 @@ export class AsteroidsGame {
             }
         });
         this._uiEvents.on("openLeaderboard", this, () => {
-            if (this._apiRoot && !this._leaderboardModal) {
+            if (!this._leaderboardModal) {
                 this._leaderboardModal = new LeaderboardModal({
                     queue: this._uiQueue,
                     events: this._uiEvents,
-                    apiRoot: this._apiRoot,
                 });
                 this._hudContainer.addChild(this._leaderboardModal);
                 this._leaderboardModal.fadeIn();
@@ -503,18 +499,16 @@ export class AsteroidsGame {
     }
 
     private fetchNextGameToken(): void {
-        if (this._apiRoot) {
-            this._loadingGameToken = true;
-            getGameToken(this._apiRoot).then((response) => {
-                if (response.ok) {
-                    this._nextToken = response.data;
-                }
-                if (this._startScreen) {
-                    this._startScreen.enableLeaderboard = response.ok;
-                }
-                this._loadingGameToken = false;
-            });
-        }
+        this._loadingGameToken = true;
+        getGameToken().then((response) => {
+            if (response.ok) {
+                this._nextToken = response.data;
+            }
+            if (this._startScreen) {
+                this._startScreen.enableLeaderboard = response.ok;
+            }
+            this._loadingGameToken = false;
+        });
     }
 
     private getRandomTheme(): GameTheme {

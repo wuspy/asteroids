@@ -1,5 +1,4 @@
 import { Container } from "@pixi/display";
-import { Loader } from "@pixi/loaders";
 import { ITextStyle } from "@pixi/text";
 import { TickQueue, EventManager } from "../core/engine";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
@@ -12,14 +11,6 @@ export class AboutMeModal extends Modal {
         events: EventManager<UIEvents>
     }) {
         super({ queue: params.queue });
-        Loader.shared
-            .add("github-64px.webp", "assets/github-64px.webp")
-            .add("linkedin-64px.webp", "assets/linkedin-64px.webp")
-            .add("me.webp", "assets/me.webp")
-            .add("booties.webp", "assets/booties.webp")
-            .add("stormy.webp", "assets/stormy.webp")
-            .add("gk.webp", "assets/gk.webp")
-            .load();
 
         const header = new Container();
         header.flexContainer = true;
@@ -52,7 +43,7 @@ export class AboutMeModal extends Modal {
 
         const avatar = new Image({
             queue: this.queue,
-            resource: "me.webp",
+            url: "/assets/me.webp",
         });
         avatar.layout.style({
             width: 144,
@@ -97,19 +88,19 @@ export class AboutMeModal extends Modal {
             queue: this.queue,
             caption: "Stormy",
             subCaption: "a very fitting name\nbut he's very sweet",
-            resource: "stormy.webp",
+            imageUrl: "/assets/stormy.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "Booties",
             subCaption: "cause her feet look\nlike little booties",
-            resource: "booties.webp",
+            imageUrl: "/assets/booties.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "G.K.",
             subCaption: "it stands for gray\nkitty don't judge me",
-            resource: "gk.webp",
+            imageUrl: "/assets/gk.webp",
         }));
 
         this.addChild(cats);
@@ -119,14 +110,14 @@ export class AboutMeModal extends Modal {
                 queue: this.queue,
                 type: ButtonType.Secondary,
                 text: "GitHub",
-                imageResource: "github-64px.webp",
+                imageUrl: "/assets/github-64px.webp",
                 onClick: () => window.open("https://github.com/wuspy", "_blank"),
             }),
             new Button({
                 queue: this.queue,
                 type: ButtonType.Secondary,
                 text: "LinkedIn",
-                imageResource: "linkedin-64px.webp",
+                imageUrl: "/assets/linkedin-64px.webp",
                 onClick: () => window.open("https://linkedin.com/in/jacob-jordan-0b6831128", "_blank"),
             }),
             new Button({
@@ -155,7 +146,7 @@ class Cat extends Container {
         queue: TickQueue,
         caption: string,
         subCaption: string,
-        resource: string,
+        imageUrl: string,
     }) {
         super();
         this.flexContainer = true;
@@ -165,10 +156,7 @@ class Cat extends Container {
             marginHorizontal: 8,
         });
 
-        const avatar = new Image({
-            queue: params.queue,
-            resource: params.resource,
-        });
+        const avatar = new Image({ queue: params.queue, url: params.imageUrl });
         avatar.layout.style({
             width: 144,
             height: 144,
