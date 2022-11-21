@@ -1,24 +1,6 @@
 import { DisplayObject, IDestroyOptions } from "@pixi/display";
 import { ISize } from "@pixi/math";
-import FlexLayout, { ComputedLayout, MeasureMode } from "./FlexLayout";
-
-declare module "@pixi/display"
-{
-    export interface DisplayObject {
-        _lastMeasuredSize: ISize;
-        _layout?: FlexLayout;
-        get layout(): FlexLayout;
-        get isLayoutChild(): boolean;
-        isLayoutMeasurementDirty(): boolean;
-        onLayoutMeasure(
-            width: number,
-            widthMeasureMode: MeasureMode,
-            height: number,
-            heightMeasureMode: MeasureMode,
-        ): ISize,
-        onLayout(layout: ComputedLayout): void;
-    }
-}
+import FlexLayout, { MeasureMode } from "./FlexLayout";
 
 const displayObject = DisplayObject.prototype;
 
@@ -50,7 +32,7 @@ displayObject.destroy = function (options?: boolean | IDestroyOptions) {
     this._layout = undefined;
 }
 
-displayObject.onLayout = function () { };
+displayObject.onLayoutChange = function () { };
 
 displayObject.isLayoutMeasurementDirty = function(): boolean {
     const bounds = this.getLocalBounds();

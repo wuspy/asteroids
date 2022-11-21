@@ -1,5 +1,5 @@
 import { Container, IDestroyOptions } from "@pixi/display";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { LINE_JOIN } from "@pixi/graphics";
 import { BlurFilter } from "@pixi/filter-blur";
 import { Tickable } from "../core/engine";
@@ -63,7 +63,7 @@ export class ShipDisplay extends Container implements IShipDisplay, Tickable {
         ship.arcTo(0, 0, 15.335 * scale, 16 * scale, 20 * scale);
 
         ship.lineStyle({ width: 0 });
-        ship.beginFill(color, 1, true);
+        ship.beginFill(color, 1);
         ship.moveTo(15.335 * scale, 16 * scale);
         ship.lineTo(20 * scale, 30 * scale);
         ship.lineTo(7 * scale, 16 * scale);

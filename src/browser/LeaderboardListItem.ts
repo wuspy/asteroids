@@ -1,6 +1,6 @@
 import { Container } from "@pixi/display";
 import { HighScoreResponse } from "../core/api";
-import { ScoreText, Text, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, VirtualizedListItem } from "./ui";
+import { Text, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, VirtualizedListItem } from "./ui";
 import { Align, ContainerBackgroundShape  } from "./layout";
 import { GlowFilter } from "@pixi/filter-glow";
 
@@ -21,7 +21,7 @@ export class LeaderboardListItem extends Container implements VirtualizedListIte
         this.selected = false;
         this.flexContainer = true;
         this.interactive = true;
-        this.buttonMode = true;
+        this.cursor = "pointer";
         this.on("pointertap", () => {
             if (this.onClick && this._data && this._index !== undefined) {
                 this.onClick(this._data, this._index);

@@ -1,5 +1,5 @@
 import { PI_2 } from "@pixi/math";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { TickQueue } from "../../core/engine";
 import { LINE_JOIN } from "@pixi/graphics";
 import { OneShotAnimation } from "./OneShotAnimation";

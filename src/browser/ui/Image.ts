@@ -3,7 +3,6 @@ import { Resource, Texture } from "@pixi/core";
 import { Sprite } from "@pixi/sprite";
 import { TickQueue } from "../../core/engine";
 import { FadeContainer } from "./FadeContainer";
-import { ComputedLayout } from "../layout";
 
 export class Image extends FadeContainer {
     private _sprite?: Sprite;
@@ -24,6 +23,7 @@ export class Image extends FadeContainer {
         });
 
         this._tint = params.tint ?? 0xffffff;
+        this._flexContainer = true;
 
         if (texture) {
             this.addSprite(texture);
@@ -45,18 +45,6 @@ export class Image extends FadeContainer {
         this._tint = tint;
         if (this._sprite) {
             this._sprite.tint = tint;
-        }
-    }
-
-    override onLayout(layout: ComputedLayout): void {
-        super.onLayout(layout);
-        if (this._sprite) {
-            if (this._sprite.width !== layout.width) {
-                this._sprite.width = layout.width;
-            }
-            if (this._sprite.height !== layout.height) {
-                this._sprite.height = layout.height;
-            }
         }
     }
 

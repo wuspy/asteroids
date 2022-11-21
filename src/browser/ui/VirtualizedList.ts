@@ -1,11 +1,11 @@
-import { Container, DisplayObject } from "@pixi/display";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Container, DisplayObject, DisplayObjectEvents } from "@pixi/display";
+import { Graphics } from "@pixi/graphics";
+import { EventBoundary, FederatedPointerEvent, FederatedWheelEvent } from "@pixi/events";
 import { clamp, TickQueue, lineSegmentLength } from "../../core/engine";
 import anime from "animejs";
 import { TickableContainer } from "./TickableContainer";
 import { ComputedLayout, drawContainerBackground, FlexDirection, PositionType } from "../layout";
 import { LIST_BACKGROUND } from "./theme";
-import { InteractionEvent, InteractionManager, } from "@pixi/interaction";
 import { Point } from "@pixi/math";
 import { Renderer } from "@pixi/core";
 
@@ -33,7 +33,7 @@ export class VirtualizedList<Data, Item extends VirtualizedListItem<Data>> exten
     private _targetPos: number;
     private _currentHeight: number;
     private _lastTimestamp: number;
-    private _interactionManager?: InteractionManager;
+    private _eventBoundary: EventBoundary;
     private _overscroll: number;
 
     constructor(params: {
@@ -56,7 +56,6 @@ export class VirtualizedList<Data, Item extends VirtualizedListItem<Data>> exten
         this._itemFactory = params.itemFactory;
         this._itemHeight = params.itemHeight;
         this.interactive = true;
-        this.scrollInteractive = true;
         this.flexContainer = true;
         this.backgroundStyle = LIST_BACKGROUND;
         this._scrollCaptured = false;
@@ -73,10 +72,13 @@ export class VirtualizedList<Data, Item extends VirtualizedListItem<Data>> exten
         });
         this.addChild(this._itemContainer);
 
-        this.on("mousewheel", (value: number) => {
-            this.scrollToPosition(Math.floor((this._targetPos - (value * this._itemHeight)) / this._itemHeight) * this._itemHeight);
+        this._eventBoundary = new EventBoundary(this._itemContainer);
+
+        this.on("wheel", (e: FederatedWheelEvent) => {
+            console.log(e.deltaY);
+            this.scrollToPosition(Math.floor((this._targetPos - (e.deltaY * this._itemHeight)) / this._itemHeight) * this._itemHeight);
         });
-        this.on("pointerdown", (e: InteractionEvent) => {
+        this.on("pointerdown", (e: FederatedPointerEvent) => {
             this._pointerDownAt = e.data.global.clone();
             this.proxyInteraction("pointerdown", e);
         });
@@ -88,18 +90,18 @@ export class VirtualizedList<Data, Item extends VirtualizedListItem<Data>> exten
             }
             this._pointerDownAt = undefined;
         };
-        this.on("pointerup", (e: InteractionEvent) => {
+        this.on("pointerup", (e: FederatedPointerEvent) => {
             this.proxyInteraction("pointerup", e);
             if (!this._scrollCaptured) {
                 this.proxyInteraction("pointertap", e);
             }
             pointerUp();
         });
-        this.on("pointerupoutside", (e: InteractionEvent) => {
+        this.on("pointerupoutside", (e: FederatedPointerEvent) => {
             this.proxyInteraction("pointerupoutside", e);
             pointerUp();
         });
-        this.on("pointermove", (e: InteractionEvent) => {
+        this.on("pointermove", (e: FederatedPointerEvent) => {
             if (this._pointerDownAt) {
                 if (!this._scrollCaptured
                     && Math.abs(lineSegmentLength([this._pointerDownAt, e.data.global])) > SCROLL_CAPTURE_THRESHOLD
@@ -176,8 +178,9 @@ export class VirtualizedList<Data, Item extends VirtualizedListItem<Data>> exten
         this._timeline?.tick(timestamp);
     }
 
-    override onLayout(layout: ComputedLayout): void {
-        super.onLayout(layout);
+    // @ts-ignore
+    override onLayoutChange(layout: ComputedLayout): void {
+        super.onLayoutChange(layout);
         if (layout.height !== this._currentHeight) {
             const mask = this.mask as Graphics;
             mask.clear();
@@ -203,13 +206,12 @@ export class VirtualizedList<Data, Item extends VirtualizedListItem<Data>> exten
     }
 
     override render(renderer: Renderer): void {
-        this._interactionManager = renderer.plugins.interaction as InteractionManager;
         super.render(renderer);
     }
 
-    private proxyInteraction(name: string, e: InteractionEvent): DisplayObject | undefined {
+    private proxyInteraction(name: keyof DisplayObjectEvents, e: FederatedPointerEvent): DisplayObject | undefined {
         this._itemContainer.interactiveChildren = true;
-        const hit = this._interactionManager?.hitTest(e.data.global, this._itemContainer);
+        const hit = this._eventBoundary.hitTest(e.clientX, e.clientY);
         hit?.emit(name, e);
         this._itemContainer.interactiveChildren = false;
         return hit;

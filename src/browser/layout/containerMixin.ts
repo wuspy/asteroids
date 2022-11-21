@@ -1,25 +1,7 @@
 import { Renderer } from "@pixi/core";
 import { Container, DisplayObject } from "@pixi/display";
-import { IFillStyleOptions, ILineStyleOptions, SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { IFillStyleOptions, ILineStyleOptions, Graphics } from "@pixi/graphics";
 import { ComputedLayout } from "./FlexLayout";
-
-declare module "@pixi/display"
-{
-    export interface Container {
-        _flexContainer: boolean;
-        _backgroundGraphics?: Graphics;
-        _debugGraphics?: Graphics;
-        _backgroundStyle?: ContainerBackground;
-        _backgroundWidth: number;
-        _backgroundHeight: number;
-        set backgroundStyle(background: ContainerBackground | undefined);
-        get debugLayout(): boolean;
-        set debugLayout(debugLayout: boolean);
-        get flexContainer(): boolean;
-        set flexContainer(flexContainer: boolean);
-        get isLayoutRoot(): boolean;
-    }
-}
 
 export const enum ContainerBackgroundShape {
     Rectangle,
@@ -78,7 +60,7 @@ const _super = {
     removeChildren: container.removeChildren,
     swapChildren: container.swapChildren,
     sortChildren: container.sortChildren,
-    onLayout: container.onLayout,
+    onLayoutChange: container.onLayoutChange,
 };
 
 Object.defineProperties(container, {
@@ -236,8 +218,8 @@ container.render = function (renderer: Renderer) {
     _super.render.call(this, renderer);
 }
 
-container.onLayout = function (layout: ComputedLayout): void {
-    _super.onLayout.call(this, layout);
+container.onLayoutChange = function (layout: ComputedLayout): void {
+    _super.onLayoutChange.call(this, layout);
     const { width, height } = layout;
     if (process.env.NODE_ENV === "development" && this._debugGraphics) {
         // Draw container padding, and the margin and border for all children
@@ -245,7 +227,7 @@ container.onLayout = function (layout: ComputedLayout): void {
         const padding = this.layout.computedPadding;
 
         // Draw padding
-        this._debugGraphics.beginFill(0x3300ff, 0.125, false);
+        this._debugGraphics.beginFill(0x3300ff, 0.125);
         if (padding.top) {
             this._debugGraphics.drawRect(0, 0, width, padding.top);
         }
@@ -270,7 +252,7 @@ container.onLayout = function (layout: ComputedLayout): void {
             const { left: childLeft, top: childTop, width: childWidth, height: childHeight } = child.layout.computedLayout;
 
             // Draw margin
-            this._debugGraphics.beginFill(0xffff00, 0.125, false);
+            this._debugGraphics.beginFill(0xffff00, 0.125);
             if (margin.top) {
                 this._debugGraphics.drawRect(childLeft, childTop - margin.top, childWidth, margin.top);
             }
@@ -289,30 +271,26 @@ container.onLayout = function (layout: ComputedLayout): void {
             this._debugGraphics.lineStyle({
                 color: 0x808080,
                 alpha: 1,
-                width: Math.max(2, border.top),
-                smooth: false,
+                width: Math.max(2, border.top)
             });
             this._debugGraphics.moveTo(childLeft - border.left / 2, childTop - border.top / 2);
             this._debugGraphics.lineTo(childLeft + childWidth + border.right / 2, childTop - border.top / 2);
             this._debugGraphics.lineStyle({
                 color: 0x808080,
                 alpha: 1,
-                width: Math.max(2, border.right),
-                smooth: false,
+                width: Math.max(2, border.right)
             });
             this._debugGraphics.lineTo(childLeft + childWidth + border.right / 2, childTop + childHeight + border.bottom / 2);
             this._debugGraphics.lineStyle({
                 color: 0x808080,
                 alpha: 1,
-                width: Math.max(2, border.bottom),
-                smooth: false,
+                width: Math.max(2, border.bottom)
             });
             this._debugGraphics.lineTo(childLeft - border.left / 2, childTop + childHeight + border.bottom / 2);
             this._debugGraphics.lineStyle({
                 color: 0x808080,
                 alpha: 1,
-                width: Math.max(2, border.left),
-                smooth: false,
+                width: Math.max(2, border.left)
             });
             this._debugGraphics.lineTo(childLeft - border.left / 2, childTop - border.top / 2);
             this._debugGraphics.lineStyle({ width: 0 });

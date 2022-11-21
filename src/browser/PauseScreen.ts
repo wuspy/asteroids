@@ -82,7 +82,7 @@ export class PauseScreen extends FadeContainer {
             }),
         ];
         startControl.interactive = true;
-        startControl.buttonMode = true;
+        startControl.cursor = "pointer";
         startControl.on("pointertap", () => this._events.trigger("resume"));
 
         const buttons = new LinearGroup(FlexDirection.Row, 24, [

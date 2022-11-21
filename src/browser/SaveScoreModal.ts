@@ -78,7 +78,7 @@ export class SaveScoreModal extends Modal {
         });
         this._input.align = "center";
         this._input.maxLength = MAX_PLAYER_NAME_LENGTH;
-        this._input.addEventListener("keydown", (e: KeyboardEvent) => {
+        this._input.addInputEventListener("keydown", (e: KeyboardEvent) => {
             if (e.key === "Enter") {
                 e.preventDefault();
                 this.submit();
@@ -88,7 +88,7 @@ export class SaveScoreModal extends Modal {
             && window.InputEvent
             && typeof InputEvent.prototype.getTargetRanges === "function"
         ) {
-            this._input.addEventListener("beforeinput", (e: InputEvent) => {
+            this._input.addInputEventListener("beforeinput", (e: InputEvent) => {
                 if (e.data) {
                     for (const char of e.data) {
                         if (!isValidPlayerNameCodePoint(char.codePointAt(0)!)) {
@@ -172,7 +172,7 @@ export class SaveScoreModal extends Modal {
                         width: "100%",
                         marginBottom: 32,
                     });
-                    this._passwordInput.addEventListener("keydown", (e: KeyboardEvent) => {
+                    this._passwordInput.addInputEventListener("keydown", (e: KeyboardEvent) => {
                         if (e.key === "Enter") {
                             e.preventDefault();
                             this.submit();

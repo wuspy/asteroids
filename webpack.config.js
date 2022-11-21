@@ -123,17 +123,6 @@ const asteroids = {
             fs: false,
         },
     },
-    optimization: {
-        minimizer: [new TerserPlugin({
-            terserOptions: {
-                mangle: {
-                    properties: {
-                        regex: /^_/,
-                    },
-                },
-            },
-        })],
-    },
 };
 
 module.exports = [

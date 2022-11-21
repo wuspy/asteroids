@@ -1,5 +1,5 @@
 import "@pixi/mixin-cache-as-bitmap";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { LIVES, GameState } from "../../core";
 import { TickQueue } from "../../core/engine";
 import { ShipDisplay } from "../ShipDisplay";
@@ -34,8 +34,7 @@ export class LifeIndicator extends TickableContainer {
             cacheAsBitmap: true,
             fill: {
                 color: UI_BACKGROUND_COLOR,
-                alpha: UI_BACKGROUND_ALPHA,
-                smooth: true
+                alpha: UI_BACKGROUND_ALPHA
             },
         };
 

@@ -1,4 +1,5 @@
-node_modules
-dist
-src/server/config/production.json
+/node_modules
+/dist
+/tools
+/src/server/config/production.json
 .swc

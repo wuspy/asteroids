@@ -1,8 +1,7 @@
-import { Renderer } from "@pixi/core";
+import { Renderer, ISize, utils } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
-import { ISize } from "@pixi/math";
-import { hex2rgb } from "@pixi/utils";
 import { ContainerBackgroundShape, ComputedLayout, MeasureMode } from "../layout";
+import "../layout";
 import { TEXT_INPUT_THEME, FONT_FAMILY } from "./theme";
 
 class _DOMTextInput extends Container {
@@ -76,8 +75,8 @@ class _DOMTextInput extends Container {
             this.setColor();
         }
 
-        this._element.style.left = `${this.worldTransform.tx + renderer.view.offsetLeft}px`;
-        this._element.style.top = `${this.worldTransform.ty + renderer.view.offsetTop}px`;
+        this._element.style.left = `${this.worldTransform.tx + (renderer.view as HTMLCanvasElement).offsetLeft}px`;
+        this._element.style.top = `${this.worldTransform.ty + (renderer.view as HTMLCanvasElement).offsetTop}px`;
 
         if (this._focusNextRender) {
             this._element.focus();
@@ -98,7 +97,8 @@ class _DOMTextInput extends Container {
         this._focusNextRender = true;
     }
 
-    override onLayout(layout: ComputedLayout): void {
+    // @ts-ignore
+    override onLayoutChange(layout: ComputedLayout): void {
         // Calculate world scale
         const scale = { x: this.scale.x, y: this.scale.y };
         let parent = this.parent;
@@ -112,10 +112,12 @@ class _DOMTextInput extends Container {
         this._element.style.fontSize = `${this._fontSize * scale.y}px`;
     }
 
+    // @ts-ignore
     override isLayoutMeasurementDirty(): boolean {
         return this.getElementHeight() !== this._lastElementHeight;
     }
 
+    // @ts-ignore
     override onLayoutMeasure(
         width: number,
         widthMeasureMode: MeasureMode,
@@ -147,7 +149,7 @@ class _DOMTextInput extends Container {
     }
 
     private setColor() {
-        const rgb = (hex2rgb(this._color) as number[]).map((x) => (x * 255).toFixed()).join(",");
+        const rgb = (utils.hex2rgb(this._color) as number[]).map((x) => (x * 255).toFixed()).join(",");
         this._element.style.color = `rgba(${rgb},${this._lastWorldAlpha.toFixed(2)})`;
     }
 }
@@ -230,7 +232,7 @@ export class TextInput extends Container {
         this._domInput.focus();
     }
 
-    addEventListener<K extends keyof HTMLElementEventMap>(
+    addInputEventListener<K extends keyof HTMLElementEventMap>(
         type: K,
         listener: (this: HTMLInputElement, ev: HTMLElementEventMap[K]) => any,
         options?: boolean | AddEventListenerOptions

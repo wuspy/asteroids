@@ -1,5 +1,5 @@
 import { GameObject, TickQueue } from "../../core/engine";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { TickableContainer } from "./TickableContainer";
 
 export class HitAreaDebugContainer extends TickableContainer {
@@ -20,12 +20,11 @@ export class HitAreaDebugContainer extends TickableContainer {
                 this._graphics.lineStyle({
                     width: 2,
                     color: 0xff0000,
-                    alpha: 0.5,
-                    smooth: false
+                    alpha: 0.5
                 });
                 this._graphics.drawRect(object.boundingBox.x, object.boundingBox.y, object.boundingBox.width, object.boundingBox.height);
                 this._graphics.line.alpha = 0;
-                this._graphics.beginFill(0xff0000, 0.5, false);
+                this._graphics.beginFill(0xff0000, 0.5);
                 if (typeof (object.hitArea) === "object") {
                     this._graphics.drawPolygon(object.hitArea);
                 } else {

@@ -1,5 +1,5 @@
 import { Container } from "@pixi/display";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { Text } from "./Text";
 import { Align, JustifyContent, PositionType } from "../layout";
 import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "../../core/engine";
@@ -39,14 +39,14 @@ export class ControlGraphic extends Container {
         text.layout.position = PositionType.Absolute;
 
         const background = new Graphics();
-        background.beginFill(params.background, 1, true);
+        background.beginFill(params.background, 1);
         if (params.type === "stick") {
             const margin = Math.round(params.fontSize * 1.25);
             const radius = Math.max(text.height + margin, text.width + margin) / 2;
             background.drawCircle(radius, radius, radius);
             // Draw a dot on each side to make it more clear this is an analog stick and not a button
             background.endFill();
-            background.beginFill(params.foreground ?? 0, 1, true);
+            background.beginFill(params.foreground ?? 0, 1);
             background.drawCircle(radius, radius * 0.25, radius / 12);
             background.drawCircle(radius, radius * 0.75, radius / 12);
             background.drawCircle(radius * 0.25, radius, radius / 12);

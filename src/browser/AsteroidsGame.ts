@@ -1,6 +1,5 @@
 import { Container } from "@pixi/display";
-import { BatchRenderer, AbstractRenderer, autoDetectRenderer, extensions, ExtensionType } from '@pixi/core';
-import { InteractionManager } from '@pixi/interaction';
+import { autoDetectRenderer, IRenderer } from '@pixi/core';
 import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, MIN_FPS } from "../core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
 import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, random, EventManager } from "../core/engine";
@@ -11,8 +10,8 @@ import { PauseScreen } from "./PauseScreen";
 import { GameOverScreen } from "./GameOverScreen";
 import { Align, JustifyContent, PositionType } from "./layout";
 import Stats from "stats.js";
-import { DashLineShader, SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { FadeContainer, HitAreaDebugContainer, ScrollInteractionManager } from "./ui";
+import { Graphics } from "@pixi/graphics";
+import { FadeContainer, HitAreaDebugContainer } from "./ui";
 import { BackgroundAsteroid } from "./BackgroundAsteroid";
 import { ShipDisplay } from "./ShipDisplay";
 import { ProjectileDisplay } from "./ProjectileDisplay";
@@ -64,7 +63,7 @@ if (process.env.NODE_ENV === "development") {
 
 export class AsteroidsGame {
     private readonly _container: HTMLElement;
-    private readonly _renderer: AbstractRenderer;
+    private readonly _renderer: IRenderer;
     private readonly _stage: Container;
     private readonly _input: InputProvider<typeof controls>;
     private readonly _backgroundContainer: Container;
@@ -148,27 +147,21 @@ export class AsteroidsGame {
             document.body.appendChild(this.statsDiv);
         }
 
-        extensions.add(
-            { type: ExtensionType.RendererPlugin, ref: BatchRenderer, name: "batch" },
-            { type: ExtensionType.RendererPlugin, ref: InteractionManager, name: "interaction" },
-            { type: ExtensionType.RendererPlugin, ref: ScrollInteractionManager, name: "scrollInteraction" },
-        );
         this._renderer = autoDetectRenderer({
             width: this._container.clientWidth,
             height: this._container.clientHeight,
             antialias: false,
             backgroundAlpha: 0,
             powerPreference: "high-performance",
-            forceCanvas: false,
         });
 
         this._dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
         if (this._dpr !== 1) {
-            this._renderer.view.style.transform = this._background.style.transform = `scale(${1 / this._dpr})`;
+            (this._renderer.view as HTMLCanvasElement).style.transform = this._background.style.transform = `scale(${1 / this._dpr})`;
         }
 
-        this._renderer.view.style.position = "absolute";
-        this._container.appendChild(this._renderer.view);
+        (this._renderer.view as HTMLCanvasElement).style.position = "absolute";
+        this._container.appendChild(this._renderer.view as HTMLCanvasElement);
 
         this._uiQueue = new TickQueue();
         this._uiEvents = new EventManager();
@@ -183,7 +176,7 @@ export class AsteroidsGame {
         this._stage.addChild(this._backgroundContainer);
 
         this._cornerBoundsGraphics = new Graphics();
-        this._cornerBoundsGraphics.shader = new DashLineShader();
+        // this._cornerBoundsGraphics.shader = new DashLineShader();
         this._backgroundContainer.addChild(this._cornerBoundsGraphics);
 
         this._absoluteBoundsGraphics = new Graphics();
@@ -617,6 +610,7 @@ export class AsteroidsGame {
 
     private executeResize(): void {
         this._uiEvents.trigger("pause");
+        const canvas = this._renderer.view as HTMLCanvasElement;
         const [nativeWidth, nativeHeight] = [
             this._container.clientWidth * this._dpr,
             this._container.clientHeight * this._dpr,
@@ -638,11 +632,11 @@ export class AsteroidsGame {
             this._stage.scale.set(nativeWidth / this.game.worldSize.width);
         }
         // Position view in center of screen
-        this._renderer.view.style.top = `${Math.round((this._container.clientHeight - this._renderer.view.clientHeight) / 2)}px`;
-        this._renderer.view.style.left = `${Math.round((this._container.clientWidth - this._renderer.view.clientWidth) / 2)}px`;
+        canvas.style.top = `${Math.round((this._container.clientHeight - canvas.clientHeight) / 2)}px`;
+        canvas.style.left = `${Math.round((this._container.clientWidth - canvas.clientWidth) / 2)}px`;
         // Resize background to view
-        this._background.style.top = this._renderer.view.style.top;
-        this._background.style.left = this._renderer.view.style.left;
+        this._background.style.top = canvas.style.top;
+        this._background.style.left = canvas.style.left;
         this._background.style.width = `${this._renderer.view.width}px`;
         this._background.style.height = `${this._renderer.view.height}px`;
         // Resize HUD

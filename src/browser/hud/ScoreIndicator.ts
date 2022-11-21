@@ -31,7 +31,6 @@ export class ScoreIndicator extends TickableContainer {
             fill: {
                 color: UI_BACKGROUND_COLOR,
                 alpha: UI_BACKGROUND_ALPHA,
-                smooth: true,
             },
         };
 

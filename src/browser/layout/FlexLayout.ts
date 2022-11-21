@@ -503,7 +503,7 @@ export default class FlexLayout {
                     this._displayObject.position.set(layout.left, layout.top);
                 }
             }
-            this._displayObject.onLayout(layout);
+            this._displayObject.onLayoutChange(layout);
             this._node.setHasNewLayout(false);
         }
         for (const child of this._children) {

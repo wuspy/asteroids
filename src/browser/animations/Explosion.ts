@@ -1,5 +1,5 @@
 import { DEG_TO_RAD } from "@pixi/math";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { random, TickQueue } from "../../core/engine";
 import { OneShotAnimation } from "./OneShotAnimation";
 
@@ -56,7 +56,7 @@ export class Explosion extends OneShotAnimation {
             change: () => {
                 this._graphics.clear();
                 for (const particle of this._particles.filter((particle) => particle.radius > 0.2)) {
-                    this._graphics.beginFill(this._color, 1, true);
+                    this._graphics.beginFill(this._color, 1);
                     this._graphics.drawCircle(particle.x, particle.y, particle.radius);
                     this._graphics.endFill();
                 }

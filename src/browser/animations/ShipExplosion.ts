@@ -1,5 +1,5 @@
 import { Explosion, ExplosionParams } from "./Explosion";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { DEG_TO_RAD } from "@pixi/math";
 import { LINE_JOIN } from "@pixi/graphics";
 import { random } from "../../core/engine";

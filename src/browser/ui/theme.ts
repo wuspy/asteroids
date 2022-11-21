@@ -1,4 +1,4 @@
-import { IFillStyleOptions, ILineStyleOptions } from "@pixi/graphics-smooth";
+import { IFillStyleOptions, ILineStyleOptions } from "@pixi/graphics";
 import { ContainerBackground, ContainerBackgroundShape } from "../layout";
 
 // UI theme is constant and does not change with game theme

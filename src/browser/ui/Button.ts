@@ -1,5 +1,5 @@
 import { GlowFilter } from "@pixi/filter-glow";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { TickQueue } from "../../core/engine";
 import { Text } from "./Text";
 import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection, PositionType } from "../layout";
@@ -117,7 +117,7 @@ export class Button extends TickableContainer {
         this._activeGraphics.alpha = 0;
         this._activeGraphics.visible = false;
         this.interactive = true;
-        this.buttonMode = true;
+        this.cursor = "pointer";
 
         this.on("pointerover", () => { this._hover = true; });
         this.on("pointerout", () => { this._hover = false; });

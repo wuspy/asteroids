@@ -1,7 +1,5 @@
-import { Container } from "@pixi/display";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { Layout } from "yoga-layout-wasm";
-import { ContainerBackgroundShape } from "../layout";
 import { UI_DIVIDER_COLOR } from "./theme";
 
 export const enum DividerDirection {
@@ -30,8 +28,9 @@ export class Divider extends Graphics {
         }
     }
 
-    override onLayout(layout: Layout): void {
-        super.onLayout(layout);
+    // @ts-ignore
+    override onLayoutChange(layout: Layout): void {
+        super.onLayoutChange(layout);
         this.clear();
         this.beginFill(UI_DIVIDER_COLOR);
         this.drawRect(

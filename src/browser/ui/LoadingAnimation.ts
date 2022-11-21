@@ -1,4 +1,4 @@
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { TickQueue } from "../../core/engine";
 import { TickableContainer } from "./TickableContainer";
 import { Align, JustifyContent, PositionType } from "../layout";

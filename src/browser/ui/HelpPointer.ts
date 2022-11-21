@@ -1,6 +1,6 @@
 import anime from "animejs";
 import { Container } from "@pixi/display";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { LINE_JOIN } from "@pixi/graphics";
 import { DEG_TO_RAD, PI_2 } from "@pixi/math";
 import { Renderer } from "@pixi/core";

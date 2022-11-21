@@ -1,4 +1,4 @@
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { Tickable } from "../core/engine";
 import { IProjectileDisplay, Projectile, PROJECTILE_LIFETIME, UFO, Ship } from "../core";
 import { GameTheme } from "./GameTheme";
@@ -6,7 +6,7 @@ import { IDestroyOptions } from "@pixi/display";
 
 const GEOMETRY = (() => {
     const graphics = new Graphics();
-    graphics.beginFill(0xffffff, 1, true);
+    graphics.beginFill(0xffffff, 1);
     graphics.drawCircle(0, 0, 5);
     graphics.endFill();
     return graphics.geometry;

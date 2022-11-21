@@ -45,10 +45,12 @@ export class RevealText extends TickableContainer {
         }, 0)
     }
 
+    // @ts-ignore
     override isLayoutMeasurementDirty(): boolean {
         return false;
     }
 
+    // @ts-ignore
     override onLayoutMeasure(width: number, widthMeasureMode: MeasureMode, height: number, heightMeasureMode: MeasureMode): ISize {
         return {
             width: this._text.width + this._leftBracket.width + this._rightBracket.width,

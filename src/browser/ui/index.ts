@@ -1,7 +1,6 @@
 export * from "./TickableContainer";
 export * from "./FadeContainer";
 export * from "./HitAreaDebugContainer";
-export * from "./ScrollInteractionManager";
 export * from "./Image";
 export * from "./Button";
 export * from "./LinearGroup";

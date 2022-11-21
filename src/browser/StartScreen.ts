@@ -1,6 +1,6 @@
 import { Container } from "@pixi/display";
 import { DEG_TO_RAD } from "@pixi/math";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Graphics } from "@pixi/graphics";
 import { BlurFilter } from "@pixi/filter-blur";
 import { GlowFilter } from "@pixi/filter-glow";
 import { AlphaFilter } from "@pixi/filter-alpha";
@@ -91,7 +91,7 @@ export class StartScreen extends FadeContainer {
             direction: "horizontal",
         });
         startControl.interactive = true;
-        startControl.buttonMode = true;
+        startControl.cursor = "pointer";
         startControl.on("pointertap", () => this._events.trigger("start"));
         startControl.layout.margin = 24;
         bottomControlsContainer.addChild(startControl);
