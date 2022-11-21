@@ -1,13 +1,10 @@
 import { Assets } from "@pixi/assets";
-import { Resource, Texture } from "@pixi/core";
 import { Sprite } from "@pixi/sprite";
 import { TickQueue } from "../../core/engine";
 import { FadeContainer } from "./FadeContainer";
-import { ComputedLayout } from "../layout";
 
 export class Image extends FadeContainer {
-    private _sprite?: Sprite;
-    private _tint: number;
+    private _sprite: Sprite;
 
     constructor(params: {
         queue: TickQueue,
@@ -23,14 +20,18 @@ export class Image extends FadeContainer {
             keepVisible: true,
         });
 
-        this._tint = params.tint ?? 0xffffff;
+        this.flexContainer = true;
+
+        this._sprite = new Sprite();
+        this._sprite.tint = params.tint ?? 0xffffff;
+        this.addChild(this._sprite);
 
         if (texture) {
-            this.addSprite(texture);
+            this._sprite.texture = texture;
         } else {
             Assets.load(params.url).then((texture) => {
                 if (!this.destroyed) {
-                    this.addSprite(texture);
+                    this._sprite.texture = texture;
                     this.fadeIn();
                 }
             });
@@ -38,32 +39,10 @@ export class Image extends FadeContainer {
     }
 
     get tint(): number {
-        return this._tint;
+        return this._sprite.tint;
     }
 
     set tint(tint: number) {
-        this._tint = tint;
-        if (this._sprite) {
-            this._sprite.tint = tint;
-        }
-    }
-
-    override onLayout(layout: ComputedLayout): void {
-        super.onLayout(layout);
-        if (this._sprite) {
-            if (this._sprite.width !== layout.width) {
-                this._sprite.width = layout.width;
-            }
-            if (this._sprite.height !== layout.height) {
-                this._sprite.height = layout.height;
-            }
-        }
-    }
-
-    private addSprite(texture: Texture<Resource>) {
-        this.backgroundStyle = undefined;
-        this._sprite = new Sprite(texture);
-        this._sprite.tint = this._tint;
-        this.addChild(this._sprite);
+        this._sprite.tint = tint;
     }
 }

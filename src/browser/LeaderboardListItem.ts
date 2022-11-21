@@ -1,6 +1,6 @@
 import { Container } from "@pixi/display";
 import { HighScoreResponse } from "../core/api";
-import { ScoreText, Text, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, VirtualizedListItem } from "./ui";
+import { Text, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR, VirtualizedListItem } from "./ui";
 import { Align, ContainerBackgroundShape  } from "./layout";
 import { GlowFilter } from "@pixi/filter-glow";
 
