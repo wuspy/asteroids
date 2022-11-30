@@ -24,7 +24,7 @@ import {
 } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { DynamicGameObject, random, CoreGameObjectParams, Vec2, IGameObjectDisplay } from "./engine";
+import { DynamicGameObject, CoreGameObjectParams, Vec2, IGameObjectDisplay } from "./engine";
 import { DEG_TO_RAD } from "@pixi/math";
 import { Projectile } from "./Projectile";
 
@@ -89,10 +89,10 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             if (this._hyperspaceCountdown >= HYPERSPACE_DELAY / 2 && this._hyperspaceCountdown - elapsed < HYPERSPACE_DELAY / 2) {
                 // We're in the middle of the hyperspace delay, the ship is invisible, so find a new location and move the ship to it
                 this.stop();
-                this.rotation = random(0, 360, true) * DEG_TO_RAD;
+                this.rotation = this._random(0, 360) * DEG_TO_RAD;
                 this.position.set(
-                    random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2, true),
-                    random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2, true),
+                    this._random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2),
+                    this._random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2),
                 );
                 this.display?.onHyperspace();
             }
@@ -169,6 +169,7 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             state: this.state,
             queue: this.queue,
             worldSize: this.worldSize,
+            random: this._random,
             position: {
                 x: this.x + 36 * this.sinRotation,
                 y: this.y - 36 * this.cosRotation,

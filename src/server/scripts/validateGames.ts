@@ -18,12 +18,12 @@ if (isNaN(offset) || isNaN(limit)) {
     const start = performance.now();
     for (const game of games) {
         stdout.write(`  - Game #${game.id} [v${game.version}]...`);
-        const valid = validateAsteroidsGame(game, true);
-        if (valid) {
+        const result = validateAsteroidsGame(game, true);
+        if (result.success) {
             stdout.write("  OK\n");
             passed++;
         } else {
-            stdout.write("  FAILED\n");
+            stdout.write(`  FAILED (${result.error})\n`);
             failed++;
         }
     }

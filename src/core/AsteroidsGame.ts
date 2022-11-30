@@ -18,7 +18,7 @@ import {
 } from "./constants";
 import { GameState, GameStatus } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { random, TickQueue, EventManager, InputState, GameLog } from "./engine";
+import { urandom, TickQueue, EventManager, InputState, GameLog, RandomFn } from "./engine";
 import { UFO } from "./UFO";
 import { controls, inputLogConfig } from "./input";
 
@@ -36,6 +36,7 @@ export class AsteroidsGame {
     private _logger?: GameLog<typeof controls>;
     private _lastFirePressed: boolean;
     private _lastHyperspacePressed: boolean;
+    private _random: RandomFn;
 
     enableLogging: boolean;
 
@@ -45,6 +46,7 @@ export class AsteroidsGame {
         this.enableLogging = false;
         this.events = new EventManager();
         this.queue = new TickQueue();
+        this._random = urandom; // Default to global unseeded random
 
         this.state = {
             level: 1,
@@ -120,6 +122,7 @@ export class AsteroidsGame {
             queue: this.queue,
             events: this.events,
             worldSize: this.worldSize,
+            random: this._random,
         });
         this.state.status = GameStatus.Running;
         this.events.trigger("started");
@@ -184,6 +187,13 @@ export class AsteroidsGame {
 
     get log(): Uint8Array | undefined {
         return this._logger?.log;
+    }
+
+    set random(random: RandomFn) {
+        if (this.state.status !== GameStatus.Init) {
+            throw new Error("Cannot set seeded random function on an already started game");
+        }
+        this._random = random;
     }
 
     tick(elapsedMs: number, input: InputState<typeof controls>): void {
@@ -316,7 +326,7 @@ export class AsteroidsGame {
 
         if (this.state.timestamp >= this._nextUFOSpawn) {
             // Decide which type of UFO to generate
-            const randomPercent = random(1, 100, true);
+            const randomPercent = this._random(1, 100);
             let currentChance = 0;
             const type = Object.entries(UFO_DISTRIBUTION)
                 // Find what the distribution is at the current score
@@ -333,6 +343,7 @@ export class AsteroidsGame {
                 events: this.events,
                 queue: this.queue,
                 worldSize: this.worldSize,
+                random: this._random,
                 type,
             }));
             this.setNextUFOSpawn();
@@ -360,6 +371,7 @@ export class AsteroidsGame {
                     worldSize: this.worldSize,
                     events: this.events,
                     queue: this.queue,
+                    random: this._random,
                 });
             }
         } else if (asteroids.length === 0) {
@@ -391,6 +403,7 @@ export class AsteroidsGame {
             queue: this.queue,
             events: this.events,
             worldSize: this.worldSize,
+            random: this._random,
             invulnerable,
             position: {
                 x: this.worldSize.width / 2,
@@ -400,7 +413,7 @@ export class AsteroidsGame {
     }
 
     private setNextUFOSpawn(): void {
-        this._nextUFOSpawn = this.state.timestamp + random(UFO_SPAWN_TIME[0] * 1000, UFO_SPAWN_TIME[1] * 1000, true);
+        this._nextUFOSpawn = this.state.timestamp + this._random(UFO_SPAWN_TIME[0] * 1000, UFO_SPAWN_TIME[1] * 1000);
     }
 
     private addScore(increase: number): void {

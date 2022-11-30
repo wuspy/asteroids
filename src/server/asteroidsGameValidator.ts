@@ -1,5 +1,5 @@
 import { AsteroidsGame, inputLogConfig, GameState, GameStatus } from "../core";
-import { seedRandom, parseGameLog } from "../core/engine";
+import { createRandom, parseGameLog } from "../core/engine";
 
 const [V_MAJOR, V_MINOR, V_PATCH] = process.env.npm_package_version!.split(".");
 
@@ -64,9 +64,12 @@ export const validateAsteroidsGame = (request: GameValidatorRequest, allowVersio
     });
 
     try {
-        if (!seedRandom(request.randomSeed)) {
-            return { success: false, error: GameValidatorError.InvalidRandomSeed };
-        }
+        game.random = createRandom(request.randomSeed);
+    } catch (e) {
+        return { success: false, error: GameValidatorError.InvalidRandomSeed };
+    }
+
+    try {
         const parser = parseGameLog(request.log, inputLogConfig);
         let frame = parser.next();
         if (frame.done) {
@@ -108,6 +111,7 @@ export const validateAsteroidsGame = (request: GameValidatorRequest, allowVersio
             smallUfosDestroyed,
         };
     } catch (e) {
+        console.log(e);
         return {
             success: false,
             error: GameValidatorError.LogParseError,

@@ -12,21 +12,21 @@ import {
 } from "./constants";
 import { DEG_TO_RAD, ISize, Rectangle } from "@pixi/math";
 import {
-    random,
     GameObject,
     findUnoccupiedPosition,
     TickQueue,
     EventManager,
     CoreGameObjectParams,
     Vec2,
-    IGameObjectDisplay
+    IGameObjectDisplay,
+    RandomFn
 } from "./engine";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
 
 // Generates a random angle that isn't within +/-15deg of horizontal or vertical, to prevent
 // an asteroid from being stuck near the screen margin.
-export const generateAsteroidAngle = (useSeededRandom: boolean) => (random(15, 75, useSeededRandom) + 90 * random(0, 3, useSeededRandom)) * DEG_TO_RAD;
+export const generateAsteroidAngle = (random: RandomFn) => (random(15, 75) + 90 * random(0, 3)) * DEG_TO_RAD;
 
 export interface AsteroidDestroyOptions {
     hit: boolean;
@@ -66,7 +66,7 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
         if (this.state.ship
             && !this.state.ship.powerupRemaining
             && this._generation === 2
-            && random(0, 1000, true) <= ASTEROID_POWERUP_SPAWN_CHANCE * 1000
+            && this._random(0, 1000) <= ASTEROID_POWERUP_SPAWN_CHANCE * 1000
         ) {
             this.hasPowerup = true;
         } else {
@@ -85,7 +85,7 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
             ),
             objectSize: { width: boundingBox.width * 2, height: boundingBox.height * 2 },
             obstacles: obstacles.filter((obstacle) => obstacle !== this).map((obstacle) => obstacle.boundingBox),
-            useSeededRandom: true,
+            random: this._random,
         });
         // Since we found free location twice the size of the asteroid, move the initial locaiton away
         // from the direction it's traveling so that it can appear to generate close to obstacles
@@ -107,20 +107,21 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
             let lastAngle = -15;
             const asteroids = [];
             for (let i = 0; i < ASTEROID_CHILDREN_COUNT; i++) {
-                let angle = generateAsteroidAngle(true);
+                let angle = generateAsteroidAngle(this._random);
                 // Ensure this child is at leat 15deg apart from the last one
                 while (Math.abs(angle - lastAngle) < 15 * DEG_TO_RAD) {
-                    angle = generateAsteroidAngle(true);
+                    angle = generateAsteroidAngle(this._random);
                 }
                 lastAngle = angle;
                 const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
-                const speed = random(ASTEROID_GENERATION_SPEEDS[generation][0], ASTEROID_GENERATION_SPEEDS[generation][1], true);
-                const distance = random(this.boundingBox.width / 8, this.boundingBox.width / 4, true);
+                const speed = this._random(ASTEROID_GENERATION_SPEEDS[generation][0], ASTEROID_GENERATION_SPEEDS[generation][1]);
+                const distance = this._random(this.boundingBox.width / 8, this.boundingBox.width / 4);
                 asteroids.push(new Asteroid({
                     state: this.state,
                     events: this.events,
                     queue: this.queue,
                     worldSize: this.worldSize,
+                    random: this._random,
                     model: this._model,
                     generation,
                     position: {
@@ -142,6 +143,7 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
         queue: TickQueue,
         events: EventManager<GameEvents>,
         worldSize: ISize,
+        random: RandomFn,
     }): void {
         const count = Math.min(
             MAX_ASTEROID_COUNT,
@@ -149,7 +151,7 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
         );
         const modelNumbers = [];
         for (let i = 0; i <= count; i++) {
-            modelNumbers.push(random(0, ASTEROID_HITAREAS.length - 1, true));
+            modelNumbers.push(params.random(0, ASTEROID_HITAREAS.length - 1));
         }
         const obstacles: GameObject[] = [...params.state.asteroids, ...params.state.ufos];
         if (params.state.ship) {
@@ -158,8 +160,8 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
         const asteroids: Asteroid[] = [];
         for (let i = 0; i < count; i++) {
             const modelNumber = modelNumbers[i];
-            const angle = generateAsteroidAngle(true);
-            const speed = random(ASTEROID_GENERATION_SPEEDS[0][0], ASTEROID_GENERATION_SPEEDS[0][1], true);
+            const angle = generateAsteroidAngle(params.random);
+            const speed = params.random(ASTEROID_GENERATION_SPEEDS[0][0], ASTEROID_GENERATION_SPEEDS[0][1]);
             const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
             asteroids.push(new Asteroid({
                 ...params,

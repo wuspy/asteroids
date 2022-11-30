@@ -14,6 +14,7 @@ import {
 } from "./math";
 import { EventManager, EventMap } from "./EventManager";
 import { TickQueue } from "./TickQueue";
+import { RandomFn } from "./random";
 
 export const enum WrapMode {
     None = 0,
@@ -34,6 +35,7 @@ export interface GameObjectParams<State, Events extends EventMap<keyof Events>> 
     queue: TickQueue;
     queuePriority: number;
     worldSize: ISize;
+    random: RandomFn;
     hitArea: HitArea;
     wrapMode?: WrapMode;
     position?: Vec2;
@@ -50,6 +52,7 @@ export type CoreGameObjectParams<State, Events extends EventMap<keyof Events>> =
         | "queue"
         | "queue"
         | "worldSize"
+        | "random"
     >;
 
 export abstract class GameObject<State = any, DestroyOptions = any, Events extends EventMap<keyof Events> = object> {
@@ -61,6 +64,7 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
     readonly worldSize: Readonly<ISize>;
     readonly position: ObservablePoint;
     readonly velocity: Vec2;
+    protected readonly _random: RandomFn;
     wrapMode: WrapMode;
     rotationSpeed: number;
     private _rotation: number;
@@ -78,6 +82,7 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
         this.queue = params.queue;
         this.queuePriority = params.queuePriority;
         this.worldSize = params.worldSize;
+        this._random = params.random;
         this._ignoreNextPositionChange = false;
         this.position = new ObservablePoint(this.onPositionChange, this, params.position?.x || 0, params.position?.y || 0);
         this.wrapMode = params.wrapMode ?? WrapMode.Both;

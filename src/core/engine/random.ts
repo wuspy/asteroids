@@ -1,42 +1,32 @@
 const [J, K] = [24, 55];
 const MAX = 2147483647;
-let history: number[];
 
-export const random = (min: number, max: number, useSeededRandom: boolean): number => {
-    let value;
-    if (useSeededRandom) {
-        if (!history) {
-            throw new Error("Seeded random not initialized");
-        }
-        const Sj = history[J - 1];
-        const Sk = history.pop()!;
-        const S0 = Sj ^ Sk;
-        history.unshift(S0);
-        value = S0 / MAX;
-    } else {
-        value = Math.random();
-    }
-    return Math.floor(value * (max - min + 1)) + min;
-}
+export type RandomFn = (min: number, max: number) => number;
+
+// The global unseeded random
+export const urandom: RandomFn = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 export const createRandomSeed = (): number[] => {
     const history = [];
     for (let i = 0; i < K; i++) {
-        history.push(random(0, MAX, false));
+        history.push(urandom(0, MAX));
     }
     return history;
-}
+};
 
-export const initRandom = (): number[] => {
-    const seed = createRandomSeed();
-    seedRandom(seed);
-    return seed;
-}
-
-export const seedRandom = (seed: number[]): boolean => {
+// Creates a seeded random function
+export const createRandom = (seed: number[]): RandomFn => {
     if (seed.length === K && seed.reduce((valid, x) => valid && x <= MAX, true)) {
-        history = [...seed];
-        return true;
+        const history = [...seed];
+        return (min, max) => {
+            const Sj = history[J - 1];
+            const Sk = history.pop()!;
+            const S0 = Sj ^ Sk;
+            history.unshift(S0);
+            const value = S0 / MAX;
+            return Math.floor(value * (max - min + 1)) + min;
+        };
+    } else {
+        throw new Error("Invalid random seed");
     }
-    return false;
-}
+};

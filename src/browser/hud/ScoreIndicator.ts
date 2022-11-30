@@ -3,7 +3,7 @@ import { TickQueue } from "../../core/engine";
 import { ScoreText, Text, TickableContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR } from "../ui";
 import { ContainerBackgroundShape } from "../layout";
 import { PopAnimation } from "../animations";
-import { ITextStyle, TextStyle } from "@pixi/text";
+import { Sprite } from "@pixi/sprite";
 
 export class ScoreIndicator extends TickableContainer {
     private readonly _state: GameState;
@@ -46,11 +46,7 @@ export class ScoreIndicator extends TickableContainer {
             // The reason we need to update the layout manually here is so we can position the animation
             // in case the number of digits, and therefore the score position, has changed
             this.layout.update();
-            const animation = new ScoreAnimation({
-                queue: this.queue,
-                score: this._state.score,
-                textStyle: this._text.scoreText.style,
-            });
+            const animation = new ScoreAnimation(this.queue, this._text.scoreText);
             animation.layout.excluded = true;
             animation.position.set(
                 this._text.x + this._text.scoreText.x + this._text.scoreText.width / 2,
@@ -63,18 +59,13 @@ export class ScoreIndicator extends TickableContainer {
 }
 
 class ScoreAnimation extends PopAnimation {
-    constructor(params: {
-        queue: TickQueue,
-        score: number,
-        textStyle: TextStyle | Partial<ITextStyle>
-    }) {
-        const text = new Text(params.score.toFixed(), params.textStyle);
+    constructor(queue: TickQueue, target: Text) {
+        const text = new Sprite(target.texture);
         text.anchor.set(0.5);
         text.alpha = 0.8;
-        text.cacheAsBitmap = true;
 
         super({
-            queue: params.queue,
+            queue,
             target: text,
             scale: 2,
             duration: 250,

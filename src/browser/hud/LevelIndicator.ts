@@ -1,5 +1,5 @@
 import { GameState } from "../../core";
-import { random, TickQueue } from "../../core/engine";
+import { urandom, TickQueue } from "../../core/engine";
 import { GameTheme } from "../GameTheme";
 import { Text, TickableContainer } from "../ui";
 
@@ -44,7 +44,7 @@ export class LevelIndicator extends TickableContainer {
                     if ((LEVEL_CHANGE_ANIMATION_DURATION - this._levelChangeAnimationCountdown) * MAX_DIGITS / LEVEL_CHANGE_ANIMATION_DURATION >= i + 1) {
                         text += this._lastLevel.toFixed().padStart(MAX_DIGITS, "0")[i];
                     } else {
-                        text += CHARS[random(0, CHARS.length - 1, false)];
+                        text += CHARS[urandom(0, CHARS.length - 1)];
                     }
                 }
                 this._text.text = text;

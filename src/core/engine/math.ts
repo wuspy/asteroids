@@ -1,5 +1,5 @@
 import { ISize, IPointData, Rectangle, Polygon, PI_2 } from "@pixi/math";
-import { random } from "./random";
+import { RandomFn } from "./random";
 
 export const PI_1_2 = Math.PI / 2;
 
@@ -192,9 +192,12 @@ export const findUnoccupiedPosition = (params: {
     bounds: Rectangle,
     objectSize: ISize,
     obstacles: Rectangle[],
-    useSeededRandom: boolean,
+    random: RandomFn,
 }): Vec2 => {
-    const margin: ISize = { width: params.objectSize.width / 2, height: params.objectSize.height / 2 };
+    const margin: ISize = {
+        width: params.objectSize.width / 2,
+        height: params.objectSize.height / 2,
+    };
     const object = new Rectangle(
         -margin.width,
         -margin.height,
@@ -205,8 +208,8 @@ export const findUnoccupiedPosition = (params: {
     locationSearch:
     for (let i = 0; i < 1000; i++) {
         const location: Vec2 = {
-            x: random(params.bounds.left, params.bounds.right, params.useSeededRandom),
-            y: random(params.bounds.top, params.bounds.bottom, params.useSeededRandom)
+            x: params.random(params.bounds.left, params.bounds.right),
+            y: params.random(params.bounds.top, params.bounds.bottom)
         };
         object.translate(location.x, location.y);
         for (const obstacle of params.obstacles) {

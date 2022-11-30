@@ -3,7 +3,7 @@ import { BatchRenderer, AbstractRenderer, autoDetectRenderer, extensions, Extens
 import { InteractionManager } from '@pixi/interaction';
 import { AsteroidsGame as CoreAsteroidsGame, controls, GameStatus, wasdMapping, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, MIN_FPS } from "../core";
 import { LifeIndicator, ScoreIndicator, LevelIndicator } from "./hud";
-import { clamp, initRandom, seedRandom, InputProvider, GameObject, TickQueue, random, EventManager } from "../core/engine";
+import { clamp, InputProvider, GameObject, TickQueue, EventManager, createRandom, createRandomSeed, urandom } from "../core/engine";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { StartScreen } from "./StartScreen";
 import { AlphaFilter } from "@pixi/filter-alpha";
@@ -303,17 +303,17 @@ export class AsteroidsGame {
 
             if (this._nextToken) {
                 try {
-                    seedRandom(decodeIntArray(this._nextToken.randomSeed));
+                    this.game.random = createRandom(decodeIntArray(this._nextToken.randomSeed));
                     this.game.enableLogging = true;
                     this._token = this._nextToken;
                     this._nextToken = undefined;
                 } catch (e) {
-                    initRandom();
+                    this.game.random = createRandom(createRandomSeed());
                     this._nextToken = this._token = undefined;
                     this.game.enableLogging = false;
                 }
             } else {
-                initRandom();
+                this.game.random = createRandom(createRandomSeed());
                 this._token = undefined;
                 this.game.enableLogging = false;
             }
@@ -512,7 +512,7 @@ export class AsteroidsGame {
     }
 
     private getRandomTheme(): GameTheme {
-        return GAME_THEMES[random(0, GAME_THEMES.length - 1, false)];
+        return GAME_THEMES[urandom(0, GAME_THEMES.length - 1)];
     }
 
     private applyTheme(theme: GameTheme): void {

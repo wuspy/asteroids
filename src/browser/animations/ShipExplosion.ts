@@ -2,7 +2,7 @@ import { Explosion, ExplosionParams } from "./Explosion";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { DEG_TO_RAD } from "@pixi/math";
 import { LINE_JOIN } from "@pixi/graphics";
-import { random } from "../../core/engine";
+import { urandom } from "../../core/engine";
 
 interface Shrapnel {
     x: number;
@@ -23,12 +23,12 @@ export class ShipExplosion extends Explosion {
         super(params);
         this._shrapnel = [];
         for (let i = 0; i < 8; i++) {
-            const angle = random(0, 360, false) * DEG_TO_RAD;
-            const rotation = random(0, 360, false) * DEG_TO_RAD;
+            const angle = urandom(0, 360) * DEG_TO_RAD;
+            const rotation = urandom(0, 360) * DEG_TO_RAD;
             const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
-            const startRadius = random(params.diameter / 20, params.diameter / 10, false);
-            const endRadius = random(params.diameter / 4, params.diameter / 2, false);
-            const length = random(params.diameter / 16, params.diameter / 8, false);
+            const startRadius = urandom(params.diameter / 20, params.diameter / 10);
+            const endRadius = urandom(params.diameter / 4, params.diameter / 2);
+            const length = urandom(params.diameter / 16, params.diameter / 8);
             const graphics = new Graphics();
             graphics.lineStyle({
                 width: 3,
@@ -42,7 +42,7 @@ export class ShipExplosion extends Explosion {
                 x: startRadius * sin,
                 y: startRadius * -cos,
                 rotation,
-                endRotation: rotation + [-1,1][random(0, 1, false)] * random(90, 420, false) * DEG_TO_RAD,
+                endRotation: rotation + [-1,1][urandom(0, 1)] * urandom(90, 420) * DEG_TO_RAD,
                 opacity: 1,
                 endX: endRadius * sin,
                 endY: endRadius * -cos,
@@ -60,7 +60,7 @@ export class ShipExplosion extends Explosion {
             easing: "linear",
         }, 0).add({
             targets: this._shrapnel,
-            duration: () => random(params.maxDuration / 2, params.maxDuration / 1.5, false),
+            duration: () => urandom(params.maxDuration / 2, params.maxDuration / 1.5),
             opacity: 0,
             easing: 'easeInQuad',
         }, 0);

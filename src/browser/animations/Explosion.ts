@@ -1,6 +1,6 @@
 import { DEG_TO_RAD } from "@pixi/math";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { random, TickQueue } from "../../core/engine";
+import { urandom, TickQueue } from "../../core/engine";
 import { OneShotAnimation } from "./OneShotAnimation";
 
 interface Particle {
@@ -27,7 +27,7 @@ export class Explosion extends OneShotAnimation {
         super({
             ...params,
             defaultAnimeParams: {
-                duration: random(params.maxDuration / 1.5, params.maxDuration, false)
+                duration: urandom(params.maxDuration / 1.5, params.maxDuration)
             },
         });
         this._color = params.color;
@@ -35,14 +35,14 @@ export class Explosion extends OneShotAnimation {
         this._graphics = new Graphics();
         this.addChild(this._graphics);
         for (let i = 0; i < params.diameter / 6; i++) {
-            const angle = random(0, 360, false) * DEG_TO_RAD;
+            const angle = urandom(0, 360) * DEG_TO_RAD;
             const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
-            const startRadius = random(params.diameter / 50, params.diameter / 10, false);
-            const endRadius = random(params.diameter / 6, params.diameter / 2, false);
+            const startRadius = urandom(params.diameter / 50, params.diameter / 10);
+            const endRadius = urandom(params.diameter / 6, params.diameter / 2);
             this._particles.push({
                 x: startRadius * sin,
                 y: startRadius * -cos,
-                radius: random(params.diameter / 36, params.diameter / 18, false),
+                radius: urandom(params.diameter / 36, params.diameter / 18),
                 endX: endRadius * sin,
                 endY: endRadius * -cos,
             });

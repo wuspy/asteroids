@@ -1,7 +1,7 @@
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { ISize, Rectangle } from "@pixi/math";
-import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, random, TickQueue, Vec2 } from "../core/engine";
+import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, TickQueue, urandom, Vec2 } from "../core/engine";
 import { ASTEROID_GENERATION_COUNT, ASTEROID_HITAREAS, GameState, GameEvents, generateAsteroidAngle } from "../core";
 import { GameTheme } from "./GameTheme";
 
@@ -38,7 +38,7 @@ export class BackgroundAsteroid extends GameObject<GameState, undefined, GameEve
     private _model: number;
     private _generation: number;
 
-    private constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
+    private constructor(params: Omit<CoreGameObjectParams<GameState, GameEvents>, "random"> & {
         theme: GameTheme;
         obstacles: GameObject[];
         velocity: Vec2;
@@ -47,6 +47,7 @@ export class BackgroundAsteroid extends GameObject<GameState, undefined, GameEve
     }) {
         super({
             ...params,
+            random: urandom,
             position: { x: 0, y: 0 },
             queuePriority: 100,
             hitArea: HITAREAS[params.generation],
@@ -73,7 +74,7 @@ export class BackgroundAsteroid extends GameObject<GameState, undefined, GameEve
             bounds: new Rectangle(0, 0, this.worldSize.width, this.worldSize.height),
             objectSize: { width: boundingBox.width * 2, height: boundingBox.height * 2 },
             obstacles: obstacles.filter((obstacle) => obstacle !== this).map((obstacle) => obstacle.boundingBox),
-            useSeededRandom: false,
+            random: urandom,
         });
         this.position.copyFrom(position);
     }
@@ -89,11 +90,11 @@ export class BackgroundAsteroid extends GameObject<GameState, undefined, GameEve
         const modelNumbers = [];
         const generationNumbers = [];
         for (let i = 0; i < params.count; i++) {
-            modelNumbers.push(random(0, ASTEROID_HITAREAS.length - 1, false));
-            generationNumbers.push(random(0, ASTEROID_GENERATION_COUNT - 1, false));
+            modelNumbers.push(urandom(0, ASTEROID_HITAREAS.length - 1));
+            generationNumbers.push(urandom(0, ASTEROID_GENERATION_COUNT - 1));
         }
         // All background asteroids move with the same speed and direction
-        const angle = generateAsteroidAngle(false);
+        const angle = generateAsteroidAngle(urandom);
         const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
         const velocity = {
             x: 20 * sin,
