@@ -17,7 +17,7 @@ export class EventManager<Events extends EventMap<keyof Events>> {
 
     off<K extends keyof Events>(event: K, callback: Events[K], thisArg: any = undefined): void {
         if (this._callbacks[event]) {
-            this._callbacks[event] = this._callbacks[event]!.filter(([cb, ta]) => cb !== callback && ta !== thisArg);
+            this._callbacks[event] = this._callbacks[event]!.filter(([cb, ta]) => cb !== callback || ta !== thisArg);
         }
     }
 
