@@ -277,19 +277,19 @@ export class AsteroidsGame {
         });
         this._backgroundAsteroids.forEach((asteroid) => this._backgroundContainer.addChild(asteroid.display));
 
-        this.game.events.on("shipCreated", this, (ship) =>
+        this.game.events.on("shipCreated", (ship) =>
             this._gameplayContainer.addChild(new ShipDisplay(ship, this._theme))
         );
-        this.game.events.on("asteroidsCreated", this, (asteroids) => asteroids.forEach((asteroid) =>
+        this.game.events.on("asteroidsCreated", (asteroids) => asteroids.forEach((asteroid) =>
             this._gameplayContainer.addChild(new AsteroidDisplay(asteroid, this._theme))
         ));
-        this.game.events.on("projectileCreated", this, (projectile) =>
+        this.game.events.on("projectileCreated", (projectile) =>
             this._gameplayContainer.addChild(new ProjectileDisplay(projectile, this._theme))
         );
-        this.game.events.on("ufoCreated", this, (ufo) =>
+        this.game.events.on("ufoCreated", (ufo) =>
             this._gameplayContainer.addChild(new UFODisplay(ufo, this._theme))
         );
-        this.game.events.on("beforeStart", this, () => {
+        this.game.events.on("beforeStart", () => {
             // Remove anything that may be remaining in the gameplay container (animations, etc)
             for (let i = this._gameplayContainer.children.length - 1; i >= 0; i--) {
                 this._gameplayContainer.children[i].destroy();
@@ -320,7 +320,7 @@ export class AsteroidsGame {
             this.fetchNextGameToken();
             this._gameplayContainer.show();
         });
-        this.game.events.on("finished", this, () => {
+        this.game.events.on("finished", () => {
             this._gameOverScreen = new GameOverScreen({
                 queue: this._uiQueue,
                 events: this._uiEvents,
@@ -329,10 +329,10 @@ export class AsteroidsGame {
             });
             this._hudContainer.addChild(this._gameOverScreen);
         });
-        this.game.events.on("reset", this, () => {
+        this.game.events.on("reset", () => {
             this._paused = false;
         })
-        this._uiEvents.on("start", this, () => {
+        this._uiEvents.on("start", () => {
             if (this._aboutModal || this._leaderboardModal || this._saveScoreModal) {
                 return;
             }
@@ -352,7 +352,7 @@ export class AsteroidsGame {
                 });
             }
         });
-        this._uiEvents.on("pause", this, () => {
+        this._uiEvents.on("pause", () => {
             if (this.game.state.status === GameStatus.Running && !this._paused) {
                 this._paused = true;
                 if (!this._pauseScreen) {
@@ -367,7 +367,7 @@ export class AsteroidsGame {
                 }
             }
         });
-        this._uiEvents.on("resume", this, () => {
+        this._uiEvents.on("resume", () => {
             if (this.game.state.status === GameStatus.Running && this._paused) {
                 if (this._pauseScreen) {
                     const pauseScreen = this._pauseScreen;
@@ -381,7 +381,7 @@ export class AsteroidsGame {
                 }
             }
         });
-        this._uiEvents.on("quit", this, () => {
+        this._uiEvents.on("quit", () => {
             if (this._pauseScreen) {
                 const pauseScreen = this._pauseScreen;
                 this._pauseScreen = undefined;
@@ -398,7 +398,7 @@ export class AsteroidsGame {
                 });
             }
         });
-        this._uiEvents.on("openAbout", this, () => {
+        this._uiEvents.on("openAbout", () => {
             if (!this._aboutModal) {
                 this._aboutModal = new AboutMeModal({
                     queue: this._uiQueue,
@@ -411,7 +411,7 @@ export class AsteroidsGame {
                 this._startScreen && this._startScreen.fadeOut();
             }
         });
-        this._uiEvents.on("closeAbout", this, () => {
+        this._uiEvents.on("closeAbout", () => {
             if (this._aboutModal) {
                 const modal = this._aboutModal;
                 this._aboutModal = undefined;
@@ -423,7 +423,7 @@ export class AsteroidsGame {
                 this._pauseScreen && this._pauseScreen.fadeIn();
             }
         });
-        this._uiEvents.on("openSaveScore", this, () => {
+        this._uiEvents.on("openSaveScore", () => {
             if (this._token && this.game.log && !this._saveScoreModal) {
                 this._saveScoreModal = new SaveScoreModal({
                     queue: this._uiQueue,
@@ -437,7 +437,7 @@ export class AsteroidsGame {
                 this._gameOverScreen && this._gameOverScreen.fadeOut(0.6);
             }
         });
-        this._uiEvents.on("closeSaveScore", this, (saved) => {
+        this._uiEvents.on("closeSaveScore", (saved) => {
             if (this._saveScoreModal) {
                 const modal = this._saveScoreModal;
                 this._saveScoreModal = undefined;
@@ -452,7 +452,7 @@ export class AsteroidsGame {
                 }
             }
         });
-        this._uiEvents.on("openLeaderboard", this, () => {
+        this._uiEvents.on("openLeaderboard", () => {
             if (!this._leaderboardModal) {
                 this._leaderboardModal = new LeaderboardModal({
                     queue: this._uiQueue,
@@ -465,7 +465,7 @@ export class AsteroidsGame {
                 this._startScreen && this._startScreen.fadeOut();
             }
         });
-        this._uiEvents.on("closeLeaderboard", this, () => {
+        this._uiEvents.on("closeLeaderboard", () => {
             if (this._leaderboardModal) {
                 const modal = this._leaderboardModal;
                 this._leaderboardModal = undefined;
@@ -483,7 +483,6 @@ export class AsteroidsGame {
     }
 
     destroy(): void {
-        this.game.destroy();
         if (this._nextAnimationFrameId) {
             window.cancelAnimationFrame(this._nextAnimationFrameId);
             this._nextAnimationFrameId = undefined;

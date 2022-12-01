@@ -66,7 +66,7 @@ export class StartScreen extends FadeContainer {
         this.addChild(this._controlLayoutContainer);
         this._controlPointers = [];
 
-        params.inputProvider.events.on("mappingChanged", this, this.onMappingChanged);
+        params.inputProvider.events.on("mappingChanged", this.onMappingChanged, this);
 
         const ship = ShipDisplay.createModel(this._theme.foregroundColor);
         const shipShadow = new Graphics(ship.geometry);

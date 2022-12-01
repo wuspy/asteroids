@@ -65,13 +65,13 @@ export class AsteroidsGame {
         this._lastFirePressed = false;
         this._lastHyperspacePressed = false;
 
-        this.events.on("shipCreated", this, (ship) => {
+        this.events.on("shipCreated", (ship) => {
             if (this.state.ship) {
                 throw new Error("Multiple ships created");
             }
             this.state.ship = ship;
         });
-        this.events.on("shipDestroyed", this, () => {
+        this.events.on("shipDestroyed", () => {
             this.state.ship = undefined;
             if (this.state.lives) {
                 this.state.lives--;
@@ -81,30 +81,24 @@ export class AsteroidsGame {
             }
         });
 
-        this.events.on("asteroidsCreated", this, (asteroids) => this.addGameObjects("asteroids", ...asteroids));
-        this.events.on("asteroidDestroyed", this, (asteroid, hit, scored) => {
+        this.events.on("asteroidsCreated", (asteroids) => this.addGameObjects("asteroids", ...asteroids));
+        this.events.on("asteroidDestroyed", (asteroid, hit, scored) => {
             if (scored) {
                 this.addScore(asteroid.score);
             }
             this.removeGameObject("asteroids", asteroid);
         });
 
-        this.events.on("ufoCreated", this, (ufo) => this.addGameObjects("ufos", ufo));
-        this.events.on("ufoDestroyed", this, (ufo, hit, scored) => {
+        this.events.on("ufoCreated", (ufo) => this.addGameObjects("ufos", ufo));
+        this.events.on("ufoDestroyed", (ufo, hit, scored) => {
             if (scored) {
                 this.addScore(ufo.score);
             }
             this.removeGameObject("ufos", ufo);
         });
 
-        this.events.on("projectileCreated", this, (projectile) => this.addGameObjects("projectiles", projectile));
-        this.events.on("projectileDestroyed", this, (projectile) => this.removeGameObject("projectiles", projectile));
-    }
-
-    destroy(): void {
-        this.reset();
-        this.queue.clear();
-        this.events.offThis(this);
+        this.events.on("projectileCreated", (projectile) => this.addGameObjects("projectiles", projectile));
+        this.events.on("projectileDestroyed", (projectile) => this.removeGameObject("projectiles", projectile));
     }
 
     start(): void {
