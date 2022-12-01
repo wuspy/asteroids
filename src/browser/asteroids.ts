@@ -3,12 +3,9 @@ import { AsteroidsGame } from "./AsteroidsGame";
 import { initYoga } from "./layout";
 
 (async () => {
-    await Assets.init({
-        basePath: "/assets/",
-    });
     Assets.backgroundLoad([
-        "github-64px.webp",
-        "linkedin-64px.webp",
+        "/assets/github-64px.webp",
+        "/assets/linkedin-64px.webp",
     ]);
     await initYoga();
 
