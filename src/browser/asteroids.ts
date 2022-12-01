@@ -3,8 +3,13 @@ import { AsteroidsGame } from "./AsteroidsGame";
 import { initYoga } from "./layout";
 
 (async () => {
-    Assets.load("/assets/github-64px.webp");
-    Assets.load("/assets/linkedin-64px.webp");
+    await Assets.init({
+        basePath: "/assets/",
+    });
+    Assets.backgroundLoad([
+        "github-64px.webp",
+        "linkedin-64px.webp",
+    ]);
     await initYoga();
 
     document.getElementById("loader")?.remove();

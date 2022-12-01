@@ -43,7 +43,7 @@ export class AboutMeModal extends Modal {
 
         const avatar = new Image({
             queue: this.queue,
-            url: "/assets/me.webp",
+            url: "me.webp",
         });
         avatar.layout.style({
             width: 144,
@@ -88,19 +88,19 @@ export class AboutMeModal extends Modal {
             queue: this.queue,
             caption: "Stormy",
             subCaption: "a very fitting name\nbut he's very sweet",
-            imageUrl: "/assets/stormy.webp",
+            imageUrl: "stormy.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "Booties",
             subCaption: "cause her feet look\nlike little booties",
-            imageUrl: "/assets/booties.webp",
+            imageUrl: "booties.webp",
         }));
         cats.addChild(new Cat({
             queue: this.queue,
             caption: "G.K.",
             subCaption: "it stands for gray\nkitty don't judge me",
-            imageUrl: "/assets/gk.webp",
+            imageUrl: "gk.webp",
         }));
 
         this.addChild(cats);
@@ -110,14 +110,14 @@ export class AboutMeModal extends Modal {
                 queue: this.queue,
                 type: ButtonType.Secondary,
                 text: "GitHub",
-                imageUrl: "/assets/github-64px.webp",
+                imageUrl: "github-64px.webp",
                 onClick: () => window.open("https://github.com/wuspy", "_blank"),
             }),
             new Button({
                 queue: this.queue,
                 type: ButtonType.Secondary,
                 text: "LinkedIn",
-                imageUrl: "/assets/linkedin-64px.webp",
+                imageUrl: "linkedin-64px.webp",
                 onClick: () => window.open("https://linkedin.com/in/jacob-jordan-0b6831128", "_blank"),
             }),
             new Button({
