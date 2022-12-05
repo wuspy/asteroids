@@ -24,11 +24,8 @@ export class Explosion extends OneShotAnimation {
     private readonly _graphics: Graphics;
 
     constructor(params: ExplosionParams) {
-        super({
-            ...params,
-            defaultAnimeParams: {
-                duration: urandom(params.maxDuration / 1.5, params.maxDuration)
-            },
+        super(params.queue, {
+            duration: urandom(params.maxDuration / 1.5, params.maxDuration)
         });
         this._color = params.color;
         this._particles = [];

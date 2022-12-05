@@ -24,7 +24,7 @@ import {
 } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { DynamicGameObject, CoreGameObjectParams, Vec2, IGameObjectDisplay } from "./engine";
+import { DynamicGameObject, CoreGameObjectParams, Vec2, GameObjectObserver } from "./engine";
 import { DEG_TO_RAD } from "@pixi/math";
 import { Projectile } from "./Projectile";
 
@@ -35,14 +35,14 @@ export interface ShipDestroyOptions {
     hit: boolean;
 }
 
-export interface IShipDisplay extends IGameObjectDisplay<ShipDestroyOptions> {
+export interface ShipObserver extends GameObjectObserver<ShipDestroyOptions> {
     onHyperspace(): void;
     onPowerupStart(): void;
     onPowerupEnd(): void;
 }
 
 export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameEvents> {
-    override display?: IShipDisplay;
+    override observer?: ShipObserver;
     accelerationAmount: number;
     rotationAmount: number;
     private _invulnerableRemaining!: number;
@@ -94,7 +94,7 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
                     this._random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2),
                     this._random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2),
                 );
-                this.display?.onHyperspace();
+                this.observer?.onHyperspace();
             }
             this._hyperspaceCountdown = Math.max(0, this._hyperspaceCountdown - elapsed);
         }
@@ -106,7 +106,7 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         if (this._powerupRemaining) {
             this._powerupRemaining = Math.max(0, this._powerupRemaining - elapsed);
             if (this._powerupRemaining === 0) {
-                this.display?.onPowerupEnd();
+                this.observer?.onPowerupEnd();
             }
         }
 
@@ -249,7 +249,7 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
 
     startPowerup(): void {
         this._powerupRemaining = SHIP_POWERUP_DURATION;
-        this.display?.onPowerupStart();
+        this.observer?.onPowerupStart();
     }
 
     get powerupRemaining(): number {

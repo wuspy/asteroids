@@ -1,4 +1,4 @@
-import yoga, { YogaWasm } from "yoga-layout-wasm";
+import yoga, { YogaWasm } from "@wuspy/yoga-layout-wasm";
 
 let instance: YogaWasm | undefined;
 

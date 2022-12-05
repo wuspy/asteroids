@@ -29,7 +29,7 @@ export class AsteroidsGame {
     readonly state: GameState;
     readonly events: EventManager<GameEvents>;
     readonly worldSize: ISize;
-    private readonly queue: TickQueue;
+    readonly queue: TickQueue;
     private _nextLevelCountdown: number;
     private _respawnCountdown: number;
     private _nextUFOSpawn: number;
@@ -73,8 +73,9 @@ export class AsteroidsGame {
         });
         this.events.on("shipDestroyed", () => {
             this.state.ship = undefined;
-            if (this.state.lives) {
+            if (this.state.lives && this.state.status === GameStatus.Running) {
                 this.state.lives--;
+                this.events.trigger("livesChanged", this.state.lives);
                 if (this.state.lives) {
                     this._respawnCountdown = RESPAWN_DELAY;
                 }
@@ -191,7 +192,7 @@ export class AsteroidsGame {
     }
 
     tick(elapsedMs: number, input: InputState<typeof controls>): void {
-        if (this.state.status === GameStatus.Init || this.state.status === GameStatus.Destroyed) {
+        if (this.state.status === GameStatus.Init) {
             return;
         }
 
@@ -367,6 +368,7 @@ export class AsteroidsGame {
                     queue: this.queue,
                     random: this._random,
                 });
+                this.events.trigger("levelChanged", this.state.level);
             }
         } else if (asteroids.length === 0) {
             this._nextLevelCountdown = NEXT_LEVEL_DELAY;
@@ -416,8 +418,10 @@ export class AsteroidsGame {
             && Math.floor((this.state.score + increase) / EXTRA_LIFE_AT_SCORE) > Math.floor(this.state.score / EXTRA_LIFE_AT_SCORE)
         ) {
             this.state.lives = Math.min(LIVES, this.state.lives + Math.ceil(increase / EXTRA_LIFE_AT_SCORE));
+            this.events.trigger("livesChanged", this.state.lives);
         }
         this.state.score += increase;
+        this.events.trigger("scoreChanged", this.state.score);
     }
 
     private checkShipCollisions() {

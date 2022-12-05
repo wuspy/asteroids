@@ -18,8 +18,8 @@ import {
     EventManager,
     CoreGameObjectParams,
     Vec2,
-    IGameObjectDisplay,
-    RandomFn
+    RandomFn,
+    GameObjectObserver
 } from "./engine";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
@@ -34,10 +34,9 @@ export interface AsteroidDestroyOptions {
     createChildren: boolean;
 }
 
-export type IAsteroidDisplay = IGameObjectDisplay<AsteroidDestroyOptions>;
+export type AsteroidObserver = GameObjectObserver<AsteroidDestroyOptions>;
 
 export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, GameEvents> {
-    override display?: IAsteroidDisplay;
     private _model: number;
     private _generation: number;
     readonly hasPowerup: boolean;
@@ -101,7 +100,7 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
         super.destroy(options);
         const generation = this._generation + 1;
         const createChildren = options.createChildren && generation < ASTEROID_GENERATION_COUNT;
-        this.events.trigger("asteroidDestroyed", this, options.hit, options.scored, createChildren);
+        this.events.trigger("asteroidDestroyed", this, options.hit, options.scored);
 
         if (createChildren) {
             let lastAngle = -15;

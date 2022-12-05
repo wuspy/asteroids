@@ -9,13 +9,13 @@ export class ShipSpawnAnimation extends OneShotAnimation {
     length: number;
     opacity: number;
 
-    constructor(params: {
+    constructor({ queue, color, diameter }: {
         queue: TickQueue,
         color: number,
         diameter: number,
     }) {
-        super({ ...params, defaultAnimeParams: { duration: 1000 } });
-        this.radius = params.diameter / 2;
+        super(queue, { duration: 1000 });
+        this.radius = diameter / 2;
         this.length = 0;
         this.opacity = 0.8;
 
@@ -30,15 +30,15 @@ export class ShipSpawnAnimation extends OneShotAnimation {
         this.timeline.add({
             targets: this,
             keyframes: [
-                { length: 20, radius: params.diameter, opacity: 0.8 },
-                { length: 0, radius: params.diameter * 1.5, opacity: 0 },
+                { length: 20, radius: diameter, opacity: 0.8 },
+                { length: 0, radius: diameter * 1.5, opacity: 0 },
             ],
             easing: "easeOutBack",
             change: () => {
                 graphics.clear();
                 graphics.lineStyle({
                     width: 1,
-                    color: params.color,
+                    color,
                     alpha: this.opacity,
                     join: LINE_JOIN.BEVEL,
                 });

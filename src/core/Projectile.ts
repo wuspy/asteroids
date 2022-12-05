@@ -1,5 +1,5 @@
 import { PROJECTILE_LIFETIME, QUEUE_PRIORITIES } from "./constants";
-import { CoreGameObjectParams, GameObject, IGameObjectDisplay, Vec2 } from "./engine";
+import { CoreGameObjectParams, GameObject, GameObjectObserver, Vec2 } from "./engine";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
 
@@ -7,11 +7,10 @@ export interface ProjectileDestroyOptions {
     hit: boolean;
 }
 
-export type IProjectileDisplay = IGameObjectDisplay<ProjectileDestroyOptions>;
+export type ProjectileObserver = GameObjectObserver<ProjectileDestroyOptions>;
 
 export class Projectile extends GameObject<GameState, ProjectileDestroyOptions, GameEvents> {
     private readonly _creationTime: number;
-    override display?: IProjectileDisplay;
     private _from: GameObject;
 
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {

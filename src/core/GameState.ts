@@ -7,7 +7,6 @@ export const enum GameStatus {
     Init,
     Running,
     Finished,
-    Destroyed,
 }
 
 export interface GameState {

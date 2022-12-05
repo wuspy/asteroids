@@ -12,6 +12,7 @@
         "noImplicitOverride": true,
         "forceConsistentCasingInFileNames": true,
         "importHelpers": true,
+        "jsx": "react-jsx"
     },
     "exclude": [
         "node_modules"

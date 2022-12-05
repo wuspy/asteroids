@@ -13,7 +13,7 @@ import {
     atan2,
 } from "./math";
 import { EventManager, EventMap } from "./EventManager";
-import { TickQueue } from "./TickQueue";
+import { Tickable, TickQueue } from "./TickQueue";
 import { RandomFn } from "./random";
 
 export const enum WrapMode {
@@ -21,12 +21,6 @@ export const enum WrapMode {
     Vertical = 0b01,
     Horizontal = 0b10,
     Both = WrapMode.Vertical | WrapMode.Horizontal
-}
-
-export interface IGameObjectDisplay<DestroyOptions> {
-    gameObjectDestroyed(options: DestroyOptions): void;
-    get position(): ObservablePoint;
-    set rotation(rotation: number);
 }
 
 export interface GameObjectParams<State, Events extends EventMap<keyof Events>> {
@@ -44,6 +38,12 @@ export interface GameObjectParams<State, Events extends EventMap<keyof Events>> 
     rotationSpeed?: number;
 }
 
+export interface GameObjectObserver<DestroyOptions> extends Tickable {
+    onDestroy(options: DestroyOptions): void;
+    position: ObservablePoint;
+    set rotation(rotation: number);
+}
+
 export type CoreGameObjectParams<State, Events extends EventMap<keyof Events>> =
     Pick<
         GameObjectParams<State, Events>,
@@ -56,7 +56,7 @@ export type CoreGameObjectParams<State, Events extends EventMap<keyof Events>> =
     >;
 
 export abstract class GameObject<State = any, DestroyOptions = any, Events extends EventMap<keyof Events> = object> {
-    display?: IGameObjectDisplay<DestroyOptions>;
+    observer?: GameObjectObserver<DestroyOptions>;
     readonly state: Readonly<State>;
     readonly events: EventManager<Events>
     readonly queue: TickQueue;
@@ -104,6 +104,7 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
         if (this.velocity.x || this.velocity.y) {
             this.translate(this.velocity.x * elapsed, this.velocity.y * elapsed);
         }
+        this.observer?.tick(timestamp, elapsed);
     }
 
     // Returns true if this object's hitarea collides with another
@@ -125,7 +126,10 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
     }
 
     destroy(options: DestroyOptions) {
-        this.display?.gameObjectDestroyed(options);
+        if (this.observer) {
+            this.observer.onDestroy(options);
+            this.observer = undefined;
+        }
         this.events.offThis(this);
         this.queue.remove(this.queuePriority, this);
     }
@@ -147,7 +151,7 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
         this._sinRotation = Math.sin(this._rotation);
         this._cosRotation = Math.cos(this._rotation);
         this.updateHitarea();
-        this.display && (this.display.rotation = this._rotation);
+        this.observer && (this.observer.rotation = this._rotation);
     }
 
     get sinRotation(): number {
@@ -243,7 +247,7 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
             }
         }
         this.updateHitarea();
-        this.display?.position.copyFrom(this.position);
+        this.observer?.position.copyFrom(this.position);
     }
 
     /**

@@ -1,6 +1,6 @@
 import { DisplayObject, IDestroyOptions } from "@pixi/display";
 import { ISize } from "@pixi/math";
-import FlexLayout, { ComputedLayout, MeasureMode } from "./FlexLayout";
+import FlexLayout, { ComputedLayout, FlexLayoutProps, MeasureMode } from "./FlexLayout";
 
 declare module "@pixi/display"
 {
@@ -9,6 +9,7 @@ declare module "@pixi/display"
         _layout?: FlexLayout;
         get layout(): FlexLayout;
         get isLayoutChild(): boolean;
+        set layoutStyle(style: Partial<FlexLayoutProps>);
         isLayoutMeasurementDirty(): boolean;
         onLayoutMeasure(
             width: number,
@@ -16,7 +17,7 @@ declare module "@pixi/display"
             height: number,
             heightMeasureMode: MeasureMode,
         ): ISize,
-        onLayout(layout: ComputedLayout): void;
+        onLayoutChange(layout: ComputedLayout): void;
     }
 }
 
@@ -37,6 +38,12 @@ Object.defineProperties(displayObject, {
             return this._layout;
         },
     },
+    layoutStyle: {
+        set(this: DisplayObject, props: Partial<FlexLayoutProps>) {
+            // TODO does not reset already applied styles
+            this.layout.style(props);
+        },
+    },
     isLayoutChild: {
         get(this: DisplayObject): boolean {
             return !!this.parent && this.parent.flexContainer && !this.layout.excluded;
@@ -46,11 +53,13 @@ Object.defineProperties(displayObject, {
 
 displayObject.destroy = function (options?: boolean | IDestroyOptions) {
     _super.destroy.call(this, options);
-    this._layout?.destroy();
-    this._layout = undefined;
+    if (this._layout) {
+        this._layout.destroy();
+        this._layout = undefined;
+    }
 }
 
-displayObject.onLayout = function () { };
+displayObject.onLayoutChange = function () { };
 
 displayObject.isLayoutMeasurementDirty = function(): boolean {
     const bounds = this.getLocalBounds();

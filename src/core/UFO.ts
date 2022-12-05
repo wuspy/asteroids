@@ -2,7 +2,7 @@ import { DEG_TO_RAD } from "@pixi/math";
 import { UFOType, UFO_HITAREAS, UFO_SCORES, UFO_SPEEDS, UFO_PROJECTILE_SPEEDS, QUEUE_PRIORITIES, UFO_INACCURACY, UFO_FIRE_INTERVALS, UFO_SHIFT_INTERVALS, UFO_SHIFT_AMOUNTS, UFO_HARD_INACCURACY_SCORE } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { atan2, calculateVelocityToIntercept, CoreGameObjectParams, GameObject, IGameObjectDisplay, WrapMode } from "./engine";
+import { atan2, calculateVelocityToIntercept, CoreGameObjectParams, GameObject, GameObjectObserver, WrapMode } from "./engine";
 import { Projectile } from "./Projectile";
 
 export interface UFODestroyOptions {
@@ -10,10 +10,9 @@ export interface UFODestroyOptions {
     scored: boolean;
 }
 
-export type IUFODisplay = IGameObjectDisplay<UFODestroyOptions>;
+export type UFOObserver = GameObjectObserver<UFODestroyOptions>;
 
 export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
-    override display?: IUFODisplay;
     private _type: UFOType;
     private _nextFireTime!: number;
     private _nextYShift?: number;

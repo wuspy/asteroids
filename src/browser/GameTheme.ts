@@ -1,3 +1,5 @@
+import { urandom } from "../core/engine";
+
 export interface GameTheme {
     background: string;
     backgroundColor: number;
@@ -63,3 +65,5 @@ export const GAME_THEMES: readonly GameTheme[] = [
         background: "linear-gradient(30deg, #1d0002, #2a0c3e)",
     },
 ] as const;
+
+export const getRandomTheme = () => GAME_THEMES[urandom(0, GAME_THEMES.length - 1)];

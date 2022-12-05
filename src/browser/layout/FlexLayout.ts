@@ -1,5 +1,5 @@
 import { DisplayObject } from "@pixi/display";
-import yoga, { Value, Node, Layout } from "yoga-layout-wasm";
+import yoga, { Value, Node, Layout } from "@wuspy/yoga-layout-wasm";
 import getYoga from "./getYoga";
 
 export const enum FlexDirection {
@@ -78,15 +78,15 @@ export interface FlexLayoutProps {
     marginBottom: Value;
     marginLeft: Value;
     marginRight: Value;
-    marginHorizontal: Value;
-    marginVertical: Value;
+    marginX: Value;
+    marginY: Value;
     margin: Value;
     paddingTop: Value;
     paddingBottom: Value;
     paddingLeft: Value;
     paddingRight: Value;
-    paddingHorizontal: Value;
-    paddingVertical: Value;
+    paddingX: Value;
+    paddingY: Value;
     padding: Value;
     position: PositionType;
     top: Value;
@@ -100,6 +100,7 @@ export interface FlexLayoutProps {
     minWidth: Value;
     minHeight: Value;
     originAtCenter: boolean;
+    excluded: boolean;
 }
 
 export default class FlexLayout {
@@ -331,11 +332,11 @@ export default class FlexLayout {
         this._node.setMargin(yoga.EDGE_RIGHT, margin);
     }
 
-    set marginVertical(margin: Value) {
+    set marginY(margin: Value) {
         this._node.setMargin(yoga.EDGE_VERTICAL, margin);
     }
 
-    set marginHorizontal(margin: Value) {
+    set marginX(margin: Value) {
         this._node.setMargin(yoga.EDGE_HORIZONTAL, margin);
     }
 
@@ -375,11 +376,11 @@ export default class FlexLayout {
         this._node.setPadding(yoga.EDGE_RIGHT, padding);
     }
 
-    set paddingVertical(padding: Value) {
+    set paddingY(padding: Value) {
         this._node.setPadding(yoga.EDGE_VERTICAL, padding);
     }
 
-    set paddingHorizontal(padding: Value) {
+    set paddingX(padding: Value) {
         this._node.setPadding(yoga.EDGE_HORIZONTAL, padding);
     }
 
@@ -503,7 +504,7 @@ export default class FlexLayout {
                     this._displayObject.position.set(layout.left, layout.top);
                 }
             }
-            this._displayObject.onLayout(layout);
+            this._displayObject.onLayoutChange(layout);
             this._node.setHasNewLayout(false);
         }
         for (const child of this._children) {

@@ -94,7 +94,8 @@ const GAMEPAD_AXIS_INDEX: { [Key in GamepadAxisName]: number } = {
 export interface InputProviderEvents<Controls extends readonly string[]> {
     gamepadConnected: (gamepad: Gamepad) => void;
     gamepadDisconnected: (gamepad: Gamepad) => void;
-    mappingChanged: (mapping: InputMapping<Controls>) => void;
+    mappingChanged: (mapping: Readonly<InputMapping<Controls>>) => void;
+    poll: (state: Readonly<InputState<Controls>>, lastState: Readonly<InputState<Controls>>) => void;
 }
 
 export const createEmptyInput = <Controls extends readonly string[]>(controls: Controls): InputState<Controls> =>
@@ -102,18 +103,20 @@ export const createEmptyInput = <Controls extends readonly string[]>(controls: C
 
 export class InputProvider<Controls extends readonly string[]> {
     deadzone: number;
-    private _initialState: InputState<Controls>;
+    private readonly _initialState: Readonly<InputState<Controls>>;
+    private _lastState: InputState<Controls>;
     private _keyState: { [Key in string]: boolean };
     private _gamepad: Gamepad | null;
     private _mapping: InputMapping<Controls>;
     private _events: EventManager<InputProviderEvents<Controls>>;
 
-    constructor(controls: Controls, deadzone?: number) {
+    constructor(controls: Controls, mapping: InputMapping<Controls>, deadzone?: number) {
         this.deadzone = deadzone ?? DEFAULT_DEADZONE;
-        this._mapping = {};
+        this._mapping = mapping;
         this._keyState = {};
         this._gamepad = null;
         this._initialState = createEmptyInput(controls);
+        this._lastState = { ...this._initialState };
         this._events = new EventManager();
         window.addEventListener("keydown", this.onKeyDown);
         window.addEventListener("keyup", this.onKeyUp);
@@ -188,6 +191,8 @@ export class InputProvider<Controls extends readonly string[]> {
                 this.applyDigitalInput(mapping, pressed, state);
             }
         }
+        this._events.trigger("poll", state, this._lastState);
+        this._lastState = state;
         return state;
     }
 

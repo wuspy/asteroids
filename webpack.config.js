@@ -7,6 +7,7 @@ const HtmlInlineCssPlugin = require("html-inline-css-webpack-plugin").default;
 const CircularDependencyPlugin = require("circular-dependency-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const mode = process.env.NODE_ENV === "production" ? "production" : "development";
 const dist = path.resolve(__dirname, "dist");
@@ -68,12 +69,12 @@ const index = {
         ],
     },
     resolve: {
-        extensions: [".ts", ".tsx", ".js", ".scss"],
+        extensions: [".ts", ".tsx", ".js", ".jsx", ".scss"],
     },
 };
 
 const asteroids = {
-    entry: "./src/browser/asteroids.ts",
+    entry: "./src/browser/asteroids.tsx",
     target: ["web", "es6"],
     output: {
         filename: "asteroids.js",
@@ -96,9 +97,12 @@ const asteroids = {
         }),
         new CopyPlugin({
             patterns: [
-                "node_modules/yoga-layout-wasm/dist/yoga.wasm",
+                "node_modules/@wuspy/yoga-layout-wasm/dist/yoga.wasm",
             ],
         }),
+        ...(mode === "production" ? [
+            new BundleAnalyzerPlugin(),
+        ] : [])
     ],
     module: {
         rules: [{
@@ -116,7 +120,7 @@ const asteroids = {
         ],
     },
     resolve: {
-        extensions: [".tsx", ".ts", ".js"],
+        extensions: [".tsx", ".ts", ".js", ".jsx"],
         alias: {
             // path/fs required for yoga-layout-wasm
             path: false,
