@@ -1,11 +1,11 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { HighScoreResponse } from "../core/api";
 import { ApiErrorType, ApiResponse, getHighScores } from "./api";
 import { useApp } from "./AppContext";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { LeaderboardListItem, LEADERBOARD_LIST_ITEM_HEIGHT } from "./LeaderboardListItem";
 import { Container, Text } from "./react-pixi";
-import { Divider, DividerDirection, FONT_STYLE, LoadingAnimation, Modal, ModalCloseButton, UI_FOREGROUND_COLOR, VirtualizedList } from "./ui";
+import { Divider, DividerDirection, FONT_STYLE, LoadingAnimation, Modal, ModalCloseButton, UI_FOREGROUND_COLOR, VirtualizedList, VirtualizedListActions } from "./ui";
 
 interface PlaceholderProps {
     loading: boolean;
@@ -39,11 +39,17 @@ const formatTime = (duration: number) => {
     return `${Math.floor(seconds / 60).toFixed(0)}m ${(seconds % 60).toFixed(0)}s`;
 };
 
-export const LeaderboardModal = () => {
-    const { leaderboardOpen, renderer, dispatch } = useApp();
+export interface LeaderboardProps {
+    open: boolean;
+    onClose: () => void;
+    selectedId?: number;
+}
+
+export const LeaderboardModal = ({ open, onClose, selectedId }: LeaderboardProps) => {
+    const { renderer } = useApp();
     const [items, setItems] = useState<ApiResponse<HighScoreResponse[]> | "loading">();
     const [selectedIndex, setSelectedIndex] = useState(0);
-    const onClose = () => dispatch("closeLeaderboard");
+    const listActions = useRef<VirtualizedListActions>(null);
 
     const isLoaded = typeof items === "object" && items.ok;
     const isError = typeof items === "object" && !items.ok;
@@ -51,7 +57,7 @@ export const LeaderboardModal = () => {
     useLayoutEffect(() => {
         let isMounted = true;
 
-        if (leaderboardOpen) {
+        if (open) {
             if (!isLoaded) {
                 setItems("loading");
                 getHighScores().then(response => isMounted && setItems(response));
@@ -62,13 +68,27 @@ export const LeaderboardModal = () => {
                     setSelectedIndex(0);
                     setItems(undefined);
                 }
-            }, isLoaded ? 5000 : 200);
+            }, 200);
         }
 
         return () => {
             isMounted = false;
         };
-    }, [leaderboardOpen, isLoaded]);
+    }, [open, isLoaded]);
+
+    useLayoutEffect(() => {
+        if (open && isLoaded && selectedId) {
+            const selectedIndex = items.data.findIndex(item => item.id === selectedId);
+            if (selectedIndex !== -1) {
+                setSelectedIndex(selectedIndex);
+                setTimeout(() => {
+                    if (listActions.current) {
+                        listActions.current.scrollToIndex(selectedIndex, true, true);
+                    }
+                }, 150);
+            }
+        }
+    }, [open, isLoaded, selectedId]);
 
     let content;
     if (isLoaded && items.data.length) {
@@ -90,6 +110,7 @@ export const LeaderboardModal = () => {
                 overscroll={12}
                 itemHeight={LEADERBOARD_LIST_ITEM_HEIGHT}
                 interactionManager={renderer.plugins.interaction}
+                actions={listActions}
                 layoutStyle={{
                     width: 400,
                     height: "100%",
@@ -193,7 +214,8 @@ export const LeaderboardModal = () => {
     }
 
     return (
-        <Modal open={leaderboardOpen}
+        <Modal
+            open={open}
             headerTitle="Leaderboard"
             headerRightContent={<ModalCloseButton onClick={onClose} />}
         >

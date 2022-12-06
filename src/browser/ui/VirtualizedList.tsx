@@ -6,10 +6,17 @@ import { LIST_BACKGROUND } from "./theme";
 import { InteractionEvent, InteractionManager, } from "@pixi/interaction";
 import { Point } from "@pixi/math";
 import { Container, ContainerProps, Graphics, RefType } from "../react-pixi";
-import { ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { ReactNode, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { useTick } from "../AppContext";
 
 const SCROLL_CAPTURE_THRESHOLD = 10;
+
+export interface VirtualizedListActions {
+    scrollToPosition: (pos: number, blocking: boolean) => void;
+    scrollToPositionImmediate: (pos: number) => void;
+    scrollToIndex: (index: number, blocking: boolean, middle?: boolean) => void;
+    scrollToIndexImmediate: (index: number, middle?: boolean) => void;
+}
 
 export interface VirtualizedListProps<Data> extends ContainerProps {
     interactionManager: InteractionManager;
@@ -17,6 +24,7 @@ export interface VirtualizedListProps<Data> extends ContainerProps {
     data: readonly Data[];
     itemHeight: number;
     overscroll?: number;
+    actions?: React.Ref<VirtualizedListActions>; // forwardRef doesn't play nice with generic components
 }
 
 export const VirtualizedList = <Data extends any>({
@@ -25,6 +33,7 @@ export const VirtualizedList = <Data extends any>({
     data,
     itemHeight,
     overscroll = 0,
+    actions,
     ...props
 }: VirtualizedListProps<Data>) => {
     const root = useRef<RefType<typeof Container>>(null);
@@ -33,10 +42,11 @@ export const VirtualizedList = <Data extends any>({
 
     const pointerDownAt = useRef<Point>();
     const scrollCaptured = useRef<boolean>(false);
-    const targetPosition = useRef(0);
+    const targetPosition = useRef(-overscroll);
     const lastTimestamp = useRef(0);
+    const [isBlockingMove, setIsBlockingMove] = useState(false);
 
-    const [position, setPosition] = useState(0);
+    const [position, setPosition] = useState(-overscroll);
     const [height, setHeight] = useState(0);
     const anim = useRef<anime.AnimeTimelineInstance>();
 
@@ -55,52 +65,70 @@ export const VirtualizedList = <Data extends any>({
         hit?.emit(name, e);
         itemContainer.current!.interactiveChildren = false;
         return hit;
-    }
+    };
 
-    const getMaxScrollPosition = (height: number) =>
+    const getMaxScrollPosition = () =>
         Math.max(Math.ceil((data.length * itemHeight - height + overscroll) / itemHeight) * itemHeight, 0);
 
     const scrollToPositionImmediate = (pos: number) => {
         if (isNaN(height) || data.length === 0) {
             return;
         }
-        pos = clamp(pos, getMaxScrollPosition(height), -overscroll);
+        pos = clamp(pos, getMaxScrollPosition(), -overscroll);
         targetPosition.current = pos;
         anim.current = undefined;
         setPosition(pos);
-    }
+    };
 
-    const scrollToPosition = (pos: number) => {
-        if (isNaN(height) || data.length === 0) {
+    const scrollToPosition = (pos: number, blocking: boolean) => {
+        if (isNaN(height) || data.length === 0 || (!blocking && isBlockingMove)) {
             return;
         }
-        targetPosition.current = clamp(pos, getMaxScrollPosition(height), -overscroll);
+        targetPosition.current = clamp(pos, getMaxScrollPosition(), -overscroll);
         if (position !== targetPosition.current) {
+            setIsBlockingMove(blocking);
             const target = { position };
             anim.current = anime.timeline({
                 autoplay: false,
                 easing: "easeOutQuart",
                 complete: () => {
                     anim.current = undefined;
+                    setIsBlockingMove(false);
+                    setPosition(targetPosition.current);
                 },
             }).add({
                 targets: target,
                 position: targetPosition.current,
-                duration: 250,
+                duration: blocking ? Math.sqrt(Math.abs(position - targetPosition.current)) * 36 : 250,
                 change: () => setPosition(target.position),
             });
             anim.current.tick(lastTimestamp.current);
         }
+    };
+
+    const getIndexPosition = (index: number, middle?: boolean): number => {
+        if (middle) {
+            return getIndexPosition(index - Math.round(height / itemHeight / 2) + 1, false);
+        } else {
+            return index * itemHeight;
+        }
     }
 
-    const scrollToIndexImmediate = (index: number) =>
-        scrollToPositionImmediate(index * itemHeight);
+    const scrollToIndexImmediate = (index: number, middle?: boolean) =>
+        scrollToPositionImmediate(getIndexPosition(index, middle));
 
-    const scrollToIndex = (index: number) =>
-        scrollToPosition(index * itemHeight);
+    const scrollToIndex = (index: number, blocking: boolean, middle?: boolean) =>
+        scrollToPosition(getIndexPosition(index, middle), blocking);
+
+    useImperativeHandle(actions, () => ({
+        scrollToPosition,
+        scrollToIndexImmediate,
+        scrollToIndex,
+        scrollToPositionImmediate,
+    }));
 
     const onMousewheel = (value: number) => {
-        scrollToPosition(Math.floor((targetPosition.current - (value * itemHeight)) / itemHeight) * itemHeight);
+        scrollToPosition(Math.floor((targetPosition.current - (value * itemHeight)) / itemHeight) * itemHeight, false);
     };
 
     const onPointerdown = (e: InteractionEvent) => {
@@ -112,7 +140,11 @@ export const VirtualizedList = <Data extends any>({
         if (scrollCaptured.current) {
             scrollCaptured.current = false;
             // Align closest item with top of list
-            scrollToIndex(Math.round(position / itemHeight));
+            if (overscroll && position < -overscroll / 2) {
+                scrollToPosition(-overscroll, false);
+            } else {
+                scrollToIndex(Math.round(position / itemHeight), false);
+            }
         }
         pointerDownAt.current = undefined;
     };
@@ -184,7 +216,7 @@ export const VirtualizedList = <Data extends any>({
         {...props}
         ref={root}
         flexContainer
-        interactive
+        interactive={!isBlockingMove}
         scrollInteractive
         backgroundStyle={LIST_BACKGROUND}
         onLayoutChange={onLayoutChange}

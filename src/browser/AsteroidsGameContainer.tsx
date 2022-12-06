@@ -3,7 +3,6 @@ import { GameStatus } from "../core";
 import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { Align, JustifyContent, PositionType } from "./layout";
-import { AboutMeModal } from "./AboutMeModal";
 import { Container } from "./react-pixi";
 import { LevelIndicator, LifeIndicator, ScoreIndicator } from "./hud";
 import { BoundsGraphics } from "./BoundsGraphics";
@@ -14,7 +13,6 @@ import { BackgroundAsteroidsContainer } from "./BackgroundAsteroidsContainer";
 import { PauseScreen } from "./PauseScreen";
 import { GameplayContainer } from "./gameplay";
 import { GameOverScreen } from "./GameOverScreen";
-import { LeaderboardModal } from "./LeaderboardModal";
 
 const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
@@ -109,8 +107,6 @@ export const AsteroidsGameContainer = () => {
                 <StartScreen />
                 <PauseScreen />
                 <GameOverScreen />
-                <AboutMeModal />
-                <LeaderboardModal />
             </Container>
         </Container>
     </>;

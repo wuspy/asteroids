@@ -80,7 +80,6 @@ function setValue(instance: DisplayObject, prop: string, value: any) {
 // get diff between 2 objects
 // https://github.com/facebook/react/blob/97e2911/packages/react-dom/src/client/ReactDOMFiberComponent.js#L546
 export function diffProperties<Props extends AnyProps>(lastProps: Props, nextProps: Props): UpdatePayload<Props> | null {
-    const start = performance.now();
     let updatePayload: UpdatePayload<Props> | null = null;
 
     // Check for delete properties

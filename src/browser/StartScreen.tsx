@@ -5,12 +5,16 @@ import { Align, FlexDirection, PositionType } from "./layout";
 import { Button, ButtonType, FadeContainer } from "./ui";
 import { StartControl } from "./StartControl";
 import { GameStatus } from "../core";
+import { LeaderboardModal } from "./LeaderboardModal";
+import { AboutMeModal } from "./AboutMeModal";
 
 // TODO
 export const StartScreen = (props: ContainerProps) => {
-    const { game, aboutOpen, leaderboardOpen, nextToken, dispatch } = useApp();
+    const { game, nextToken, dispatch } = useApp();
     const gameInit = game.state.status === GameStatus.Init;
     const [visible, setVisible] = useState(gameInit);
+    const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+    const [aboutOpen, setAboutOpen] = useState(false);
 
     useEffect(() => setVisible(gameInit), [gameInit]);
 
@@ -25,10 +29,12 @@ export const StartScreen = (props: ContainerProps) => {
         }
     }, visible && !aboutOpen && !leaderboardOpen);
 
-    const onAboutClick = () => dispatch("openAbout");
-    const onLeaderboardClick = () => dispatch("openLeaderboard");
+    const onAboutClick = () => setAboutOpen(true);
+    const onAboutClose = () => setAboutOpen(false);
+    const onLeaderboardClick = () => setLeaderboardOpen(true);
+    const onLeaderboardClose = () => setLeaderboardOpen(false);
 
-    return (
+    return <>
         <FadeContainer
             {...props}
             visible={visible && !aboutOpen && !leaderboardOpen}
@@ -63,5 +69,7 @@ export const StartScreen = (props: ContainerProps) => {
                 </Container>
             </Container>
         </FadeContainer>
-    );
+        <LeaderboardModal open={leaderboardOpen} onClose={onLeaderboardClose} />
+        <AboutMeModal open={aboutOpen} onClose={onAboutClose} />
+    </>;
 };

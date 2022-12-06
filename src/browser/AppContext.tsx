@@ -19,8 +19,6 @@ export interface AppState {
     input: InputProvider<typeof controls>;
     quit: boolean;
     paused: boolean;
-    aboutOpen: boolean;
-    leaderboardOpen: boolean;
     token: GameTokenResponse | null;
     nextToken: GameTokenResponse | null;
     nextTokenLoading: boolean;
@@ -29,10 +27,6 @@ export interface AppState {
 export type AppAction =
     | "pause"
     | "resume"
-    | "closeAbout"
-    | "openAbout"
-    | "openLeaderboard"
-    | "closeLeaderboard"
     | "start"
     | "finished"
     | "quit"
@@ -122,14 +116,6 @@ const reducer: Reducer<AppState, AppAction> = (state, action): AppState => {
                 }
             case "finished":
                 return { ...state };
-            case "openAbout":
-                return { ...state, aboutOpen: true };
-            case "closeAbout":
-                return { ...state, aboutOpen: false };
-            case "openLeaderboard":
-                return { ...state, leaderboardOpen: true };
-            case "closeLeaderboard":
-                return { ...state, leaderboardOpen: false };
             case "quit":
                 return { ...state, quit: true };
             case "reset":
@@ -182,8 +168,6 @@ export const AppProvider = ({ children, value }: AppProviderProps) => {
             theme: getRandomTheme(),
             paused: false,
             quit: false,
-            aboutOpen: false,
-            leaderboardOpen: false,
             token: null,
             nextToken: null,
             nextTokenLoading: true,

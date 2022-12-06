@@ -42,12 +42,13 @@ const headerTextStyle: Partial<ITextStyle> = {
 const onGithubClick = () => window.open("https://github.com/wuspy", "_blank");
 const onLinkedinClick = () => window.open("https://linkedin.com/in/jacob-jordan-0b6831128", "_blank");
 
-export const AboutMeModal = () => {
-    const { aboutOpen, dispatch } = useApp();
+export interface AboutMeModalProps {
+    open: boolean;
+    onClose: () => void;
+}
 
-    const onClose = () => dispatch("closeAbout");
-
-    return <Modal open={aboutOpen} padding={24} layoutStyle={{ width: 700 }}>
+export const AboutMeModal = ({ open, onClose }: AboutMeModalProps) =>
+    <Modal open={open} padding={24} layoutStyle={{ width: 700 }}>
         <Container
             flexContainer
             layoutStyle={{ flexDirection: FlexDirection.Column, width: "100%", marginBottom: 24 }}
@@ -105,4 +106,3 @@ export const AboutMeModal = () => {
             />
         </Container>
     </Modal>;
-};

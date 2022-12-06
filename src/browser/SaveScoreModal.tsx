@@ -1,5 +1,5 @@
 import { Container, RefType, Text } from "./react-pixi";
-import { MIN_PLAYER_NAME_LENGTH, MAX_PLAYER_NAME_LENGTH, isValidPlayerNameCodePoint } from "../core/api";
+import { MIN_PLAYER_NAME_LENGTH, MAX_PLAYER_NAME_LENGTH, isValidPlayerNameCodePoint, GameResponse } from "../core/api";
 import { ApiErrorType, saveGame } from "./api";
 import { Align, FlexDirection } from "./layout";
 import { Button, ButtonType, FONT_STYLE, Modal, ModalCloseButton, TextInput } from "./ui";
@@ -11,7 +11,7 @@ const DEFAULT_INFO_TEXT = `${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH}
 export interface SaveScoreModalProps {
     open: boolean;
     onClose: () => void;
-    onSaved: () => void;
+    onSaved: (game: GameResponse) => void;
 }
 
 export const SaveScoreModal = ({ open, onClose, onSaved }: SaveScoreModalProps) => {
@@ -52,7 +52,7 @@ export const SaveScoreModal = ({ open, onClose, onSaved }: SaveScoreModalProps) 
         setSaving(false);
 
         if (response.ok) {
-            onSaved();
+            onSaved(response.data);
         } else if (response.error === ApiErrorType.HttpError && response.status === 401) {
             if (needsPassword) {
                 setPasswordInfoText("Incorrect password.");
