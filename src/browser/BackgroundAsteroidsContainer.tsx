@@ -172,7 +172,7 @@ export const BackgroundAsteroidsContainer = () => {
                 );
             }
         }
-    }, [game.worldSize]);
+    }, [game.worldSize.width, game.worldSize.height]);
 
     return <Container ref={container} />;
 }
