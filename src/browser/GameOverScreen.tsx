@@ -55,7 +55,6 @@ export const GameOverScreen = (props: ContainerProps) => {
         setSavedScoreId(undefined);
         setSaveScoreOpen(false);
         if (gameOver) {
-            game.state.score = 13660;
             scoreGlowFilter.outerStrength = 0;
             setAnim(anime.timeline({ autoplay: false })
                 .add({
