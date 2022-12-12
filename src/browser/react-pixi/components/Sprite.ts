@@ -4,5 +4,5 @@ import { PixiComponent, PixiContainerProps } from "../element";
 export type SpriteProps = PixiContainerProps<PixiSprite>;
 
 export const Sprite = PixiComponent<SpriteProps, PixiSprite>("Sprite", {
-    create: () => new PixiSprite(),
+    create: ({ texture }) => new PixiSprite(texture),
 });
