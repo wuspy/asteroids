@@ -1,24 +1,41 @@
-import { Container } from "@pixi/display";
-import { OneShotAnimation } from "./OneShotAnimation";
+import { Texture } from "@pixi/core";
 import { TickQueue } from "../../core/engine";
+import { Sprite } from "@pixi/sprite";
+import anime from "animejs";
+import { IDestroyOptions } from "@pixi/display";
 
-export class PopAnimation extends OneShotAnimation {
-    constructor({ queue, target, scale, duration }: {
+export class PopAnimation extends Sprite {
+    private readonly _timeline: anime.AnimeTimelineInstance;
+    private readonly _queue: TickQueue;
+
+    constructor({ queue, texture, scale, duration }: {
         queue: TickQueue,
-        target: Container,
+        texture: Texture,
         scale: number,
         duration: number,
     }) {
-        super(queue, { duration, easing: "linear" });
+        super(texture);
+        this._queue = queue;
 
-        this.addChild(target);
-        this.timeline.add({
-            targets: target,
+        this._timeline = anime.timeline({
+            duration,
+            easing: "linear",
+            autoplay: false,
+            complete: () => this.destroy(),
+        }).add({
+            targets: this,
             alpha: 0,
         }, 0).add({
-            targets: target.scale,
+            targets: this.scale,
             x: scale,
             y: scale,
         }, 0);
+
+        queue.add(100, this._timeline.tick, this._timeline);
+    }
+
+    override destroy(options?: boolean | IDestroyOptions) {
+        super.destroy(options);
+        this._queue.remove(this._timeline.tick, this._timeline);
     }
 }

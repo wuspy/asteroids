@@ -1,34 +1,39 @@
-export interface Tickable {
-    tick(timestamp: number, elapsed: number): void;
-}
+export type TickFn = (timestamp: number, elapsed: number) => void;
 
-export class TickQueue implements Tickable {
+export class TickQueue {
     private _priorities: number[];
-    private _items: Partial<{ [Key: number]: Tickable[] }>;
+    private _items: Partial<{ [Key: number]: [TickFn, any][] }>;
 
     constructor() {
         this._items = [];
         this._priorities = [];
     }
 
-    add(priority: number, ...items: Tickable[]): void {
+    add(priority: number, callback: TickFn, thisArg: any = undefined): void {
+        const loc = this.findItem(callback, thisArg);
+        if (loc) {
+            if (loc[0] === priority) {
+                console.warn("TickQueue.add: handler already in queue at same priority", callback, thisArg);
+                return;
+            } else {
+                console.warn(`TickQueue.add: moving existing handler from priority ${loc[0]} to ${priority}`, callback, thisArg);
+                this._items[loc[0]]!.splice(loc[1], 1);
+            }
+        }
         if (this._items[priority]) {
-            this._items[priority]!.push(...items);
+            this._items[priority]!.push([callback, thisArg]);
         } else {
-            this._items[priority] = items;
+            this._items[priority] = [[callback, thisArg]];
             this.insertPriority(priority);
         }
     }
 
-    remove(priority: number, ...items: Tickable[]): void {
-        if (!this._items[priority]) {
-            return;
-        }
-        for (const item of items) {
-            const i = this._items[priority]!.indexOf(item);
-            if (i !== -1) {
-                this._items[priority]!.splice(i, 1);
-            }
+    remove(callback: TickFn, thisArg: any = undefined): void {
+        const loc = this.findItem(callback, thisArg);
+        if (loc) {
+            this._items[loc[0]]!.splice(loc[1], 1);
+        } else {
+            console.warn("TickQueue.remove: handler was not in queue", callback, thisArg);
         }
     }
 
@@ -38,11 +43,22 @@ export class TickQueue implements Tickable {
     }
 
     tick(timestamp: number, elapsed: number): void {
-        this._priorities.forEach((priority) => this._items[priority]!.forEach((item) => item.tick(timestamp, elapsed)));
+        this._priorities.forEach((priority) => this._items[priority]!.forEach(([cb, ta]) => cb.call(ta, timestamp, elapsed)));
     }
 
     get length(): number {
         return this._priorities.reduce((count, priority) => count + this._items[priority]!.length, 0);
+    }
+
+    private findItem(item: TickFn, thisArg: any): [number, number] | undefined {
+        let i;
+        for (const priority of this._priorities) {
+            i = this._items[priority]!.findIndex(([cb, ta]) => cb === item && ta === thisArg);
+            if (i !== -1) {
+                return [priority, i];
+            }
+        }
+        return undefined;
     }
 
     private insertPriority(priority: number): void {

@@ -19,7 +19,6 @@ import {
     CoreGameObjectParams,
     Vec2,
     RandomFn,
-    GameObjectObserver
 } from "./engine";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
@@ -33,8 +32,6 @@ export interface AsteroidDestroyOptions {
     scored: boolean;
     createChildren: boolean;
 }
-
-export type AsteroidObserver = GameObjectObserver<AsteroidDestroyOptions>;
 
 export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, GameEvents> {
     private _model: number;

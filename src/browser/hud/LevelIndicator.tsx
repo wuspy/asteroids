@@ -23,7 +23,6 @@ export const LevelIndicator = (props: LevelIndicatorProps) => {
             countdown.current = ANIMATION_DURATION;
             lastLevel.current = game.state.level;
         } else if (countdown.current) {
-            textRef.current!.cacheAsBitmap = false;
             let text = "LVL ";
             countdown.current = Math.max(0, countdown.current - elapsed);
             if ((countdown.current * 1000) % 50 < 25) {
@@ -36,8 +35,6 @@ export const LevelIndicator = (props: LevelIndicatorProps) => {
                 }
                 textRef.current!.text = text;
             }
-        } else {
-            textRef.current!.cacheAsBitmap = true;
         }
     });
 

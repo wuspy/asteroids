@@ -34,6 +34,7 @@ const MAX_ELAPSED_MS = 1000 / MIN_FPS;
 
     extensions.add(
         { type: ExtensionType.RendererPlugin, ref: BatchRenderer, name: "batch" },
+        // { type: ExtensionType.RendererPlugin, ref: ParticleRenderer, name: "particle" },
         { type: ExtensionType.RendererPlugin, ref: InteractionManager, name: "interaction" },
         { type: ExtensionType.RendererPlugin, ref: ScrollInteractionManager, name: "scrollInteraction" },
     );

@@ -1,7 +1,7 @@
 import { Container } from "@pixi/display";
 import { AbstractRenderer } from "@pixi/core";
 import { createContext, Dispatch, ReactNode, Reducer, useContext, useEffect, useLayoutEffect, useReducer, useRef } from "react";
-import { clamp, createRandom, createRandomSeed, InputProvider, InputProviderEvents, Tickable, TickQueue } from "../core/engine";
+import { clamp, createRandom, createRandomSeed, InputProvider, InputProviderEvents, TickFn, TickQueue } from "../core/engine";
 import { AsteroidsGame, controls, GameEvents, GameStatus, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, wasdMapping } from "../core";
 import { GameTheme, getRandomTheme } from "./GameTheme";
 import { decodeIntArray, GameTokenResponse } from "../core/api";
@@ -240,9 +240,9 @@ export const useTick = (type: "app" | "game", callback: (timestamp: number, elap
 
     useLayoutEffect(() => {
         if (enabled) {
-            const dispatch: Tickable = { tick: (timestamp, elapsed) => ref.current!(timestamp, elapsed) };
+            const dispatch: TickFn = (timestamp, elapsed) => ref.current!(timestamp, elapsed);
             queue.add(TICK_PRIORITY, dispatch)
-            return () => queue.remove(TICK_PRIORITY, dispatch);
+            return () => queue.remove(dispatch);
         }
     }, [queue, enabled]);
 };

@@ -2,7 +2,7 @@ import { DisplayObject } from "@pixi/display";
 import { Point, ObservablePoint, IPoint, IPointData } from "@pixi/math";
 import deepEqual from "fast-deep-equal";
 
-export type PointLike = IPointData | [number, number];
+export type PointLike = IPointData | [number, number] | number;
 export type AnyProps = Record<string, any>;
 export type UpdatePayload<Props extends AnyProps> = Partial<Readonly<{[Key in keyof Props]: [Props[Key] | undefined, Props[Key] | undefined]}>>;
 
@@ -10,6 +10,7 @@ export type UpdatePayload<Props extends AnyProps> = Partial<Readonly<{[Key in ke
  * Allowed formats:
  *  { x: number, y: number }
  *  [number, number]
+ *  number
  */
 function parsePoint(value: PointLike): IPointData {
     if (Array.isArray(value)) {
@@ -19,6 +20,10 @@ function parsePoint(value: PointLike): IPointData {
             }
         }
         return { x: value[0], y: value[1] };
+    }
+
+    if (typeof value === "number") {
+        return { x: value, y: value };
     }
 
     if (process.env.NODE_ENV === "development") {

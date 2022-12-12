@@ -75,6 +75,7 @@
         "@pixi/math": "^6.5.8",
         "@pixi/mixin-cache-as-bitmap": "^6.5.8",
         "@pixi/mixin-get-global-position": "^6.5.8",
+        "@pixi/particle-emitter": "5.0.7",
         "@pixi/sprite": "^6.5.8",
         "@pixi/text": "^6.5.8",
         "@wuspy/yoga-layout-wasm": "https://github.com/wuspy/yoga-layout-wasm",

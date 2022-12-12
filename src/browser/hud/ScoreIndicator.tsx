@@ -24,7 +24,6 @@ export const ScoreIndicator = (props: ScoreIndicatorProps) => {
         backgroundStyle={{
             shape: ContainerBackgroundShape.Rectangle,
             cornerRadius: 12,
-            cacheAsBitmap: true,
             fill: {
                 color: UI_BACKGROUND_COLOR,
                 alpha: UI_BACKGROUND_ALPHA,

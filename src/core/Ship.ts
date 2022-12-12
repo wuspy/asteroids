@@ -24,7 +24,7 @@ import {
 } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { DynamicGameObject, CoreGameObjectParams, Vec2, GameObjectObserver } from "./engine";
+import { DynamicGameObject, CoreGameObjectParams, Vec2 } from "./engine";
 import { DEG_TO_RAD } from "@pixi/math";
 import { Projectile } from "./Projectile";
 
@@ -35,14 +35,10 @@ export interface ShipDestroyOptions {
     hit: boolean;
 }
 
-export interface ShipObserver extends GameObjectObserver<ShipDestroyOptions> {
-    onHyperspace(): void;
-    onPowerupStart(): void;
-    onPowerupEnd(): void;
-}
-
 export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameEvents> {
-    override observer?: ShipObserver;
+    onHyperspace?(oldPosition: Vec2, oldRotation: number, newPosition: Vec2, newRotation: number): void;
+    onPowerupStart?(): void;
+    onPowerupEnd?(): void;
     accelerationAmount: number;
     rotationAmount: number;
     private _invulnerableRemaining!: number;
@@ -89,12 +85,14 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             if (this._hyperspaceCountdown >= HYPERSPACE_DELAY / 2 && this._hyperspaceCountdown - elapsed < HYPERSPACE_DELAY / 2) {
                 // We're in the middle of the hyperspace delay, the ship is invisible, so find a new location and move the ship to it
                 this.stop();
+                const oldPosition = { x: this.position.x, y: this.position.y };
+                const oldRotation = this.rotation;
                 this.rotation = this._random(0, 360) * DEG_TO_RAD;
                 this.position.set(
                     this._random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2),
                     this._random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2),
                 );
-                this.observer?.onHyperspace();
+                this.onHyperspace && this.onHyperspace(oldPosition, oldRotation, this.position, this.rotation);
             }
             this._hyperspaceCountdown = Math.max(0, this._hyperspaceCountdown - elapsed);
         }
@@ -106,7 +104,7 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         if (this._powerupRemaining) {
             this._powerupRemaining = Math.max(0, this._powerupRemaining - elapsed);
             if (this._powerupRemaining === 0) {
-                this.observer?.onPowerupEnd();
+                this.onPowerupEnd && this.onPowerupEnd();
             }
         }
 
@@ -249,7 +247,7 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
 
     startPowerup(): void {
         this._powerupRemaining = SHIP_POWERUP_DURATION;
-        this.observer?.onPowerupStart();
+        this.onPowerupStart && this.onPowerupStart();
     }
 
     get powerupRemaining(): number {

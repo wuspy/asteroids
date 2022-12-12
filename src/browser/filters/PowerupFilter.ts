@@ -1,7 +1,6 @@
 import { GlitchFilter } from "@pixi/filter-glitch";
-import { Tickable } from "../../core/engine";
 
-export class PowerupFilter extends GlitchFilter implements Tickable {
+export class PowerupFilter extends GlitchFilter {
     private _elapsed: number;
 
     constructor(strength = 1) {

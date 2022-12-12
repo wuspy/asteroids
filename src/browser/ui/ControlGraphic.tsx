@@ -162,7 +162,6 @@ export const ControlGraphic = ({ type, control, fontSize, background, foreground
             <Graphics ref={graphics} />
             <Text
                 ref={text}
-                cacheAsBitmap
                 layoutStyle={{ position: PositionType.Absolute }}
                 style={{ ...FONT_STYLE, fontSize, fontWeight: "bold", fill: foreground }}
                 text={(type === "key" && control in KEY_LABELS ? KEY_LABELS[control] : control).toUpperCase()}

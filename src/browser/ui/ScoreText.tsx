@@ -5,7 +5,6 @@ import "@pixi/mixin-cache-as-bitmap";
 import { TickQueue } from "../../core/engine";
 import { PopAnimation } from "../animations";
 import { useApp } from "../AppContext";
-import { Sprite } from "@pixi/sprite";
 
 const DIGITS = 7;
 
@@ -42,16 +41,14 @@ export const ScoreText = ({ animate, score, zeroAlpha, style, ...props }: ScoreT
 
 class ScoreAnimation extends PopAnimation {
     constructor(queue: TickQueue, source: PixiText) {
-        const sprite = new Sprite(source.texture);
-        sprite.anchor.set(0.5);
-        sprite.alpha = 0.8;
-
         super({
             queue,
-            target: sprite,
+            texture: source.texture,
             scale: 2,
             duration: 250,
         });
+        this.anchor.set(0.5);
+        this.alpha = 0.8;
         this.layout.excluded = true;
         this.position.set(
             source.x + source.width / 2,
