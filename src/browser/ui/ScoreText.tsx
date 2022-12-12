@@ -1,7 +1,6 @@
 import { ComponentProps, useLayoutEffect, useMemo, useRef } from "react";
 import { Container, RefType, Text } from "../react-pixi";
 import { ITextStyle, TextStyle, Text as PixiText } from "@pixi/text";
-import "@pixi/mixin-cache-as-bitmap";
 import { TickQueue } from "../../core/engine";
 import { PopAnimation } from "../animations";
 import { useApp } from "../AppContext";

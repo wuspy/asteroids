@@ -31,14 +31,9 @@ export interface ContainerBackground {
     fill?: IFillStyleOptions,
     stroke?: ILineStyleOptions;
     cornerRadius?: number;
-    cacheAsBitmap?: boolean;
 }
 
 export const drawContainerBackground = (graphics: Graphics, background: ContainerBackground, width: number, height: number) => {
-    const cacheAsBitmap = background.cacheAsBitmap && "cacheAsBitmap" in graphics;
-    if (cacheAsBitmap) {
-        (graphics as any).cacheAsBitmap = false;
-    }
     const { shape, fill, stroke, cornerRadius } = background;
     if (fill) {
         graphics.beginTextureFill(fill);
@@ -57,9 +52,6 @@ export const drawContainerBackground = (graphics: Graphics, background: Containe
     }
     if (fill) {
         graphics.endFill();
-    }
-    if (cacheAsBitmap) {
-        (graphics as any).cacheAsBitmap = true;
     }
 };
 
@@ -114,7 +106,11 @@ Object.defineProperties(container, {
         },
         set(this: Container, debugLayout: boolean) {
             if (process.env.NODE_ENV === "development") {
-                if (debugLayout && this._flexContainer && !this._debugGraphics) {
+                if (!this._flexContainer) {
+                    console.error("Cannot set debugLayout on a non-flex container");
+                    return;
+                }
+                if (debugLayout && !this._debugGraphics) {
                     this._debugGraphics = new Graphics();
                     this._debugGraphics.layout.excluded = true;
                     this._debugGraphics.zIndex = Number.MAX_SAFE_INTEGER;
