@@ -465,7 +465,7 @@ export default class FlexLayout {
     }
 
     set minWidth(minWidth: Value) {
-        this._node.setMinHeight(minWidth);
+        this._node.setMinWidth(minWidth);
     }
 
     get minHeight(): Value {
