@@ -6,4 +6,3 @@ export * from "./Asteroid";
 export * from "./UFO";
 export * from "./constants";
 export * from "./AsteroidsGame";
-export * from "./input";

@@ -2,6 +2,8 @@ import { ISize } from "@pixi/math";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
 import {
+    controls,
+    inputLogConfig,
     LIVES,
     NEXT_LEVEL_DELAY,
     RESPAWN_DELAY,
@@ -20,7 +22,6 @@ import { GameState, GameStatus } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { urandom, TickQueue, EventManager, InputState, GameLog, RandomFn } from "./engine";
 import { UFO } from "./UFO";
-import { controls, inputLogConfig } from "./input";
 
 const WORLD_AREA_PX = WORLD_AREA * 1000000;
 const MAX_ELAPSED_MS = 1000 / MIN_FPS;

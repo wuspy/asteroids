@@ -4,6 +4,8 @@ import { FONT_STYLE, MODAL_BACKGROUND } from "./theme";
 import { Divider, DividerDirection } from "./Divider";
 import { FadeContainer } from "./FadeContainer";
 import { Container, Text } from "../react-pixi";
+import { useInputEvent } from "../AppContext";
+import { ModalCloseButton } from "./ModalCloseButton";
 
 export interface ModalProps extends Omit<
     ComponentProps<typeof FadeContainer>,
@@ -14,13 +16,13 @@ export interface ModalProps extends Omit<
     | "flexContainer"
 > {
     open: boolean;
-    headerTitle?: string;
-    headerRightContent?: ReactNode;
+    onRequestClose: () => void;
+    header?: string;
     padding?: number;
 }
 
-export const Modal = ({ children, open, headerTitle, headerRightContent, padding = 16, ...props }: ModalProps) => {
-    const header = (headerTitle || headerRightContent) && <>
+export const Modal = ({ children, open, onRequestClose, header, padding = 16, ...props }: ModalProps) => {
+    const headerContent = header && <>
         <Container
             flexContainer
             layoutStyle={{
@@ -30,14 +32,20 @@ export const Modal = ({ children, open, headerTitle, headerRightContent, padding
             }}
         >
             <Text
-                text={headerTitle}
+                text={header}
                 style={{ ...FONT_STYLE, fontSize: 32 }}
-                layoutStyle={headerRightContent ? { marginRight: padding } : undefined}
+                layoutStyle={{ marginRight: padding }}
             />
-            {headerRightContent}
+            <ModalCloseButton onClick={onRequestClose} />
         </Container>
         <Divider direction={DividerDirection.Horizontal} margin={padding} />
     </>;
+
+    useInputEvent("poll", (state, prevState) => {
+        if (state.back && !prevState.back) {
+            onRequestClose();
+        }
+    }, open);
 
     return <FadeContainer
         {...props}
@@ -53,7 +61,7 @@ export const Modal = ({ children, open, headerTitle, headerRightContent, padding
             padding,
         }}
     >
-        {header}
+        {headerContent}
         {children}
     </FadeContainer>;
 };

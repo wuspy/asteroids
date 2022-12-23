@@ -2,10 +2,11 @@ import { Container } from "@pixi/display";
 import { AbstractRenderer } from "@pixi/core";
 import { createContext, Dispatch, ReactNode, Reducer, useContext, useEffect, useLayoutEffect, useReducer, useRef } from "react";
 import { clamp, createRandom, createRandomSeed, InputProvider, InputProviderEvents, TickFn, TickQueue } from "../core/engine";
-import { AsteroidsGame, controls, GameEvents, GameStatus, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO, wasdMapping } from "../core";
+import { AsteroidsGame, GameEvents, GameStatus, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "../core";
 import { GameTheme, getRandomTheme } from "./GameTheme";
 import { decodeIntArray, GameTokenResponse } from "../core/api";
 import { getGameToken } from "./api";
+import { controls, wasdMapping } from "./input";
 
 export interface AppState {
     queue: TickQueue;

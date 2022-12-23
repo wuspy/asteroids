@@ -5,7 +5,7 @@ import { useApp } from "./AppContext";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { LeaderboardListItem, LEADERBOARD_LIST_ITEM_HEIGHT } from "./LeaderboardListItem";
 import { Container, Text } from "./react-pixi";
-import { Divider, DividerDirection, FONT_STYLE, LoadingAnimation, Modal, ModalCloseButton, UI_FOREGROUND_COLOR, VirtualizedList, VirtualizedListActions } from "./ui";
+import { Divider, DividerDirection, FONT_STYLE, LoadingAnimation, Modal, UI_FOREGROUND_COLOR, VirtualizedList, VirtualizedListActions } from "./ui";
 
 interface PlaceholderProps {
     loading: boolean;
@@ -216,8 +216,8 @@ export const LeaderboardModal = ({ open, onClose, selectedId }: LeaderboardProps
     return (
         <Modal
             open={open}
-            headerTitle="Leaderboard"
-            headerRightContent={<ModalCloseButton onClick={onClose} />}
+            header="Leaderboard"
+            onRequestClose={onClose}
         >
             <Container flexContainer layoutStyle={{ width: 800, height: 390 }}>
                 {content}

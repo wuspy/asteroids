@@ -111,12 +111,18 @@ export const SaveScoreModal = ({ open, onClose, onSaved }: SaveScoreModalProps) 
         </>
         : null;
 
+    const onRequestClose = () => {
+        if (!saving) {
+            onClose();
+        }
+    };
+
     return (
         <Modal
             open={open}
+            onRequestClose={onRequestClose}
             onFadeOutComplete={onFadeOutComplete}
-            headerTitle="Enter a Name"
-            headerRightContent={<ModalCloseButton onClick={onClose} />}
+            header="Enter a Name"
         >
             <Container
                 flexContainer

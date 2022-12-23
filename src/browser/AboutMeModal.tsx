@@ -3,7 +3,6 @@ import { ITextStyle } from "@pixi/text";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { Image, Button, Modal, ButtonType, FONT_STYLE } from "./ui";
 import { Container, Text } from "./react-pixi";
-import { useApp } from "./AppContext";
 
 interface CatProps extends ComponentProps<typeof Container> {
     imageUrl: string;
@@ -48,15 +47,15 @@ export interface AboutMeModalProps {
 }
 
 export const AboutMeModal = ({ open, onClose }: AboutMeModalProps) =>
-    <Modal open={open} padding={24} layoutStyle={{ width: 700 }}>
+    <Modal open={open} onRequestClose={onClose} padding={24} layoutStyle={{ width: 700 }}>
         <Container
             flexContainer
             layoutStyle={{ flexDirection: FlexDirection.Column, width: "100%", marginBottom: 24 }}
         >
             <Container flexContainer layoutStyle={{ marginTop: 4, marginBottom: 12 }}>
-                <Text text="Hi!" style={headerTextStyle}/>
-                <Text text="👋" style={headerTextStyle} layoutStyle={{ marginX: 10 }}/>
-                <Text text="I'm Jacob." style={headerTextStyle}/>
+                <Text text="Hi!" style={headerTextStyle} />
+                <Text text="👋" style={headerTextStyle} layoutStyle={{ marginX: 10 }} />
+                <Text text="I'm Jacob." style={headerTextStyle} />
             </Container>
             <Text
                 text={"Thanks for checking out my\nsite and my little game :)"}
@@ -79,9 +78,9 @@ export const AboutMeModal = ({ open, onClose }: AboutMeModalProps) =>
             style={{ ...FONT_STYLE, fontSize: 20, lineHeight: 24, wordWrap: true }}
         />
         <Container flexContainer layoutStyle={{ marginY: 32, justifyContent: JustifyContent.SpaceAround }}>
-            <Cat name="Stormy" caption={"a very fitting name\nbut he's very sweet"} imageUrl="/assets/stormy.webp"/>
-            <Cat name="Booties" caption={"cause her feet look\nlike little booties"} imageUrl="/assets/booties.webp"/>
-            <Cat name="G.K." caption={"it stands for gray\nkitty don't judge me"} imageUrl="/assets/gk.webp"/>
+            <Cat name="Stormy" caption={"a very fitting name\nbut he's very sweet"} imageUrl="/assets/stormy.webp" />
+            <Cat name="Booties" caption={"cause her feet look\nlike little booties"} imageUrl="/assets/booties.webp" />
+            <Cat name="G.K." caption={"it stands for gray\nkitty don't judge me"} imageUrl="/assets/gk.webp" />
         </Container>
         <Container flexContainer layoutStyle={{ alignSelf: Align.Center }}>
             <Button

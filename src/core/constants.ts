@@ -1,5 +1,5 @@
 import { Polygon } from "@pixi/math";
-import "./engine";
+import { InputLogConfig, InputMappingType } from "./engine";
 
 /**
  * Constants and types that configure core gameplay mechanics.
@@ -18,6 +18,19 @@ import "./engine";
     asteroid: 2,
     projectile: 3,
 } as const;
+
+/**
+ * Game control types
+ */
+export const controls = ["start", "fire", "hyperspace", "turn", "thrust"] as const;
+
+export const inputLogConfig: InputLogConfig<typeof controls> = {
+    fire: { code: 255, type: InputMappingType.Digital },
+    hyperspace: { code: 254, type: InputMappingType.Digital },
+    start: { code: 253, type: InputMappingType.Digital },
+    turn: { code: 252, type: InputMappingType.Analog },
+    thrust: { code: 251, type: InputMappingType.Analog },
+}
 
 /**
  * The minimum FPS the game will run at before it starts slowing down.
