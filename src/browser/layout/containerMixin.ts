@@ -9,9 +9,11 @@ declare module "@pixi/display"
     export interface Container {
         _flexContainer: boolean;
         _backgroundGraphics?: Graphics;
-        _debugGraphics?: Graphics;
         _backgroundStyle?: ContainerBackground;
         _backgroundSize?: ISize;
+        _backgroundGraphicsHandler: (layout: ComputedLayout) => void;
+        _debugGraphics?: Graphics;
+        _debugGraphicsHandler: (layout: ComputedLayout) => void;
         set backgroundStyle(background: ContainerBackground | undefined);
         get debugLayout(): boolean;
         set debugLayout(debugLayout: boolean);
@@ -68,7 +70,6 @@ const _super = {
     removeChildren: container.removeChildren,
     swapChildren: container.swapChildren,
     sortChildren: container.sortChildren,
-    onLayoutChange: container.onLayoutChange,
 };
 
 Object.defineProperties(container, {
@@ -115,9 +116,11 @@ Object.defineProperties(container, {
                     this._debugGraphics.layout.excluded = true;
                     this._debugGraphics.zIndex = Number.MAX_SAFE_INTEGER;
                     this.addChild(this._debugGraphics);
+                    this.addListener("layout", this._debugGraphicsHandler);
                 } else if (!debugLayout && this._debugGraphics) {
                     this._debugGraphics.destroy();
                     this._debugGraphics = undefined;
+                    this.removeListener("layout", this._debugGraphicsHandler);
                 }
             }
         },
@@ -135,10 +138,12 @@ Object.defineProperties(container, {
                 this._backgroundGraphics.layout.excluded = true;
                 this.addChildAt(this._backgroundGraphics, 0);
                 this._backgroundSize = { width: 0, height: 0 };
+                this.addListener("layout", this._backgroundGraphicsHandler);
             } else if (!background && this._backgroundGraphics) {
                 this._backgroundGraphics.destroy();
                 this._backgroundGraphics = undefined;
                 this._backgroundSize = undefined;
+                this.removeListener("layout", this._backgroundGraphicsHandler);
             } else if (background && this._backgroundGraphics) {
                 const { width, height } = this.layout.computedLayout;
                 if (width && height) {
@@ -232,15 +237,22 @@ container.render = function (renderer: Renderer) {
     _super.render.call(this, renderer);
 }
 
-container.onLayoutChange = function (layout: ComputedLayout): void {
-    _super.onLayoutChange.call(this, layout);
+container._backgroundGraphicsHandler = function (layout: ComputedLayout) {
     const { width, height } = layout;
-    if (this._backgroundStyle && (width !== this._backgroundSize!.width || height !== this._backgroundSize!.height)) {
+    if (width !== this._backgroundSize!.width || height !== this._backgroundSize!.height) {
         this._backgroundGraphics!.clear();
-        drawContainerBackground(this._backgroundGraphics!, this._backgroundStyle, width, height);
+        drawContainerBackground(this._backgroundGraphics!, this._backgroundStyle!, width, height);
         this._backgroundSize = { width, height };
     }
-    if (process.env.NODE_ENV === "development" && this._debugGraphics) {
+}
+
+if (process.env.NODE_ENV === "development") {
+    container._debugGraphicsHandler = function (layout: ComputedLayout) {
+        const { width, height } = layout;
+        if (!this._debugGraphics) {
+            return;
+        }
+
         // Draw container padding, and the margin and border for all children
         this._debugGraphics.clear();
         const padding = this.layout.computedPadding;
@@ -320,3 +332,4 @@ container.onLayoutChange = function (layout: ComputedLayout): void {
         }
     }
 }
+

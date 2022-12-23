@@ -1,10 +1,9 @@
 import { Text } from "@pixi/text";
 import { ISize } from "@pixi/math";
 import { MeasureMode } from "./FlexLayout";
+import { DisplayObject } from "@pixi/display";
 
-const text = Text.prototype;
-
-text.onLayoutMeasure = function (
+Text.prototype.onLayoutMeasure = function (
     width: number,
     widthMeasureMode: MeasureMode,
     height: number,
@@ -13,11 +12,6 @@ text.onLayoutMeasure = function (
     this.style.wordWrapWidth = this.style.wordWrap && widthMeasureMode !== MeasureMode.Undefined
         ? width / this.scale.x
         : undefined;
-    this.updateText(true);
-    const bounds = this.getLocalBounds();
-    const scale = this.scale;
-    return this._lastMeasuredSize = {
-        width: bounds.width * scale.x,
-        height: bounds.height * scale.y,
-    };
+
+    return DisplayObject.prototype.onLayoutMeasure.call(this, width, widthMeasureMode, height, heightMeasureMode);
 }

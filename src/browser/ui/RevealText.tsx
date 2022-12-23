@@ -18,8 +18,6 @@ export const RevealText = ({ text, style, duration, revealed, ...props}: RevealT
     const [anim, setAnim] = useState<anime.AnimeTimelineInstance>();
     const [wasRevealed, setWasRevealed] = useState(revealed);
 
-    const isLayoutDirty = () => true;
-
     const onLayoutMeasure = () => {
         return {
             width: textRef.current!.width + leftBracketRef.current!.width + rightBracketRef.current!.width,
@@ -63,7 +61,7 @@ export const RevealText = ({ text, style, duration, revealed, ...props}: RevealT
     useTick("app", (timestamp) => anim!.tick(timestamp), !!anim);
 
     return (
-        <Container {...props} flexContainer={false} onLayoutMeasure={onLayoutMeasure} isLayoutMeasurementDirty={isLayoutDirty}>
+        <Container {...props} flexContainer={false} onLayoutMeasure={onLayoutMeasure}>
             <Text ref={textRef} text={` ${text} `} style={style} />
             <Text ref={leftBracketRef} text={"["} style={style} />
             <Text ref={rightBracketRef} text={"]"} style={style} />

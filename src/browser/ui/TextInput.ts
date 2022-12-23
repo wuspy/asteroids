@@ -1,8 +1,9 @@
 import { Renderer } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
+import { AlphaFilter } from "@pixi/filter-alpha";
 import { ISize } from "@pixi/math";
 import { hex2rgb } from "@pixi/utils";
-import { ContainerBackgroundShape, ComputedLayout, MeasureMode } from "../layout";
+import { ContainerBackgroundShape, MeasureMode } from "../layout";
 import { PixiComponent, PixiContainerProps } from "../react-pixi/element";
 import { applyDefaultProps } from "../react-pixi/props";
 import { TEXT_INPUT_THEME, FONT_STYLE } from "./theme";
@@ -15,7 +16,6 @@ class DOMTextInput extends Container {
     private _fontSize: number;
     private _lastWorldAlpha: number;
     private _color: number;
-    private _lastElementHeight: number;
     private _focusNextRender: boolean;
 
     /**
@@ -32,7 +32,6 @@ class DOMTextInput extends Container {
         this.respectAlphaFilter = false;
         this._lastWorldAlpha = 0;
         this._color = props.color;
-        this._lastElementHeight = 0;
         this._focusNextRender = false;
         this.element = document.createElement("input");
         this.element.type = "text";
@@ -44,6 +43,20 @@ class DOMTextInput extends Container {
         this.setColor();
         this._inputAppended = false;
         this._fontSize = props.fontSize;
+
+        this.addListener("layout", () => {
+            // Calculate world scale
+            const scale = { x: this.scale.x, y: this.scale.y };
+            let parent = this.parent;
+            while (parent) {
+                scale.x *= parent.scale.x;
+                scale.y *= parent.scale.y;
+                parent = parent.parent;
+            }
+            // Set HTML input size
+            this.element.style.width = `${Math.round(this.layout.computedLayout.width * scale.x)}px`;
+            this.element.style.fontSize = `${this._fontSize * scale.y}px`;
+        });
     }
 
     override render(renderer: Renderer): void {
@@ -60,9 +73,7 @@ class DOMTextInput extends Container {
             while (parent) {
                 if (parent.filters) {
                     for (const filter of parent.filters) {
-                        // @ts-expect-error
-                        if ("alpha" in filter && typeof filter.alpha == "number") {
-                            // @ts-expect-error
+                        if (filter instanceof AlphaFilter) {
                             alpha *= filter.alpha;
                         }
                     }
@@ -98,33 +109,13 @@ class DOMTextInput extends Container {
         this._focusNextRender = true;
     }
 
-    override onLayoutChange(layout: ComputedLayout): void {
-        // Calculate world scale
-        const scale = { x: this.scale.x, y: this.scale.y };
-        let parent = this.parent;
-        while (parent) {
-            scale.x *= parent.scale.x;
-            scale.y *= parent.scale.y;
-            parent = parent.parent;
-        }
-        // Set HTML input size
-        this.element.style.width = `${Math.round(this.layout.computedLayout.width * scale.x)}px`;
-        this.element.style.fontSize = `${this._fontSize * scale.y}px`;
-    }
-
-    override isLayoutMeasurementDirty(): boolean {
-        return this.getElementHeight() !== this._lastElementHeight;
-    }
-
     override onLayoutMeasure(
         width: number,
         widthMeasureMode: MeasureMode,
         height: number,
         heightMeasureMode: MeasureMode
     ): ISize {
-        const elementHeight = this.getElementHeight();
-        this._lastElementHeight = elementHeight;
-        return { width: 0, height: elementHeight };
+        return { width: 0, height: this.getElementHeight() };
     }
 
     override destroy(options?: boolean | IDestroyOptions): void {

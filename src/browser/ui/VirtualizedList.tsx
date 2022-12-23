@@ -1,4 +1,4 @@
-import { Container as PixiContainer, DisplayObject } from "@pixi/display";
+import { DisplayObject } from "@pixi/display";
 import { clamp, lineSegmentLength } from "../../core/engine";
 import anime from "animejs";
 import { ComputedLayout, drawContainerBackground, FlexDirection, PositionType } from "../layout";
@@ -179,8 +179,7 @@ export const VirtualizedList = <Data extends any>({
         root.current!.cursor = hit ? hit.cursor : "auto";
     };
 
-    const onLayoutChange = (layout: ComputedLayout) => {
-        PixiContainer.prototype.onLayoutChange.call(root.current!, layout);
+    const onLayout = (layout: ComputedLayout) => {
         if (layout.height !== height) {
             mask.current!.clear();
             drawContainerBackground(
@@ -219,7 +218,7 @@ export const VirtualizedList = <Data extends any>({
         interactive={!isBlockingMove}
         scrollInteractive
         backgroundStyle={LIST_BACKGROUND}
-        onLayoutChange={onLayoutChange}
+        on:layout={onLayout}
         on:pointerup={onPointerup}
         on:pointerupoutside={onPointerupoutside}
         on:pointerdown={onPointerdown}

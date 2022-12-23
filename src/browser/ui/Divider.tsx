@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 import { ComputedLayout, FlexLayoutProps } from "../layout";
 import { UI_DIVIDER_COLOR } from "./theme";
 import { Graphics, GraphicsProps, RefType } from "../react-pixi";
@@ -15,9 +15,10 @@ export interface DividerProps extends GraphicsProps {
 
 export const Divider = ({direction, margin = 0, ...props}: DividerProps) => {
     const g = useRef<RefType<typeof Graphics>>(null);
+    const lastSize = useRef({ width: 0, height: 0});
 
-    const onLayoutChange = useCallback((layout: ComputedLayout) => {
-        if (g.current) {
+    const onLayout = (layout: ComputedLayout) => {
+        if (g.current && (lastSize.current.width !== layout.width || lastSize.current.height !== layout.height)) {
             g.current.clear();
             g.current.beginFill(UI_DIVIDER_COLOR);
             g.current.drawRect(
@@ -27,8 +28,9 @@ export const Divider = ({direction, margin = 0, ...props}: DividerProps) => {
                 direction === DividerDirection.Vertical ? layout.height : 2
             );
             g.current.endFill();
+            lastSize.current = { width: layout.width, height: layout.height };
         }
-    }, [direction]);
+    };
 
     const layoutStyle: Partial<FlexLayoutProps> = direction === DividerDirection.Horizontal
         ? {
@@ -45,7 +47,7 @@ export const Divider = ({direction, margin = 0, ...props}: DividerProps) => {
     return <Graphics
         {...props}
         ref={g}
-        onLayoutChange={onLayoutChange}
+        on:layout={onLayout}
         layoutStyle={{ ...layoutStyle, ...props.layoutStyle }}
     />
 };

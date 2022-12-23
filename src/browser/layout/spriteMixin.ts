@@ -2,9 +2,7 @@ import { Sprite } from "@pixi/sprite";
 import { ISize } from "@pixi/math";
 import { MeasureMode } from "./FlexLayout";
 
-const sprite = Sprite.prototype;
-
-sprite.onLayoutMeasure = function (
+Sprite.prototype.onLayoutMeasure = function (
     width: number,
     widthMeasureMode: MeasureMode,
     height: number,

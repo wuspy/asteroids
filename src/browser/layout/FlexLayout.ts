@@ -486,7 +486,7 @@ export default class FlexLayout {
                 for (const child of this._children) {
                     child.prepareLayout();
                 }
-            } else if (this._displayObject.isLayoutMeasurementDirty()) {
+            } else {
                 this._node.markDirty();
             }
         }
@@ -505,7 +505,7 @@ export default class FlexLayout {
                     this._displayObject.position.set(layout.left, layout.top);
                 }
             }
-            this._displayObject.onLayoutChange(layout);
+            this._displayObject.emit("layout", layout);
             this._node.setHasNewLayout(false);
         }
         for (const child of this._children) {
