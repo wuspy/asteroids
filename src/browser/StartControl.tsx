@@ -4,29 +4,29 @@ import { useMemo } from "react";
 import { useApp, useTick } from "./AppContext";
 import { FlexDirection } from "./layout";
 import { ContainerProps } from "./react-pixi"
-import { ControlDescription, getControlGraphicParamsFromMapping } from "./ui";
+import { ControlDescription } from "./ui";
 
 export interface StartControlProps extends ContainerProps {
+    color: number;
     resume?: boolean;
 }
 
 export const StartControl = ({ resume = false, ...props }: StartControlProps) => {
-    const { input, theme } = useApp();
+    const { theme } = useApp();
 
     const glowFilter = useMemo(() => new GlowFilter({
-        innerStrength: 0,
-        outerStrength: 0,
+        innerStrength: 0.25,
+        outerStrength: 0.25,
         distance: 24,
         color: theme.foregroundColor,
     }), [theme.foregroundColor]);
 
     const anim = useMemo(() =>
-        anime.timeline({
+        anime({
             autoplay: false,
             loop: true,
             direction: "alternate",
-        }).add({
-            easing: "linear",
+            easing: "easeInOutSine",
             duration: 1500,
             targets: glowFilter,
             outerStrength: 2.5,
@@ -40,13 +40,11 @@ export const StartControl = ({ resume = false, ...props }: StartControlProps) =>
     return (
         <ControlDescription
             {...props}
-            {...getControlGraphicParamsFromMapping("start", input.mapping)!}
+            control="start"
             interactive
             buttonMode
             filters={[glowFilter]}
-            foreground={theme.foregroundContrastColor}
-            background={theme.foregroundColor}
-            fontSize={32}
+            size={32}
             beforeLabel="Press"
             afterLabel={resume ? "to resume" : "to play"}
             direction={FlexDirection.Row}

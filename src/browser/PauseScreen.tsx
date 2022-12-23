@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { GlowFilter } from "@pixi/filter-glow";
 import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
-import { FadeContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, RevealText, Button, ButtonType, FONT_STYLE } from "./ui";
+import { FadeContainer, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, RevealText, Button, ButtonType, FONT_STYLE, UI_FOREGROUND_COLOR } from "./ui";
 import { ChromaticAbberationFilter } from "./filters";
 import { Container, ContainerProps } from "./react-pixi";
 import { StartControl } from "./StartControl";
@@ -71,7 +71,7 @@ export const PauseScreen = (props: ContainerProps) => {
                 layoutStyle={{ margin: 24, marginBottom: 18 }}
                 filters={titleFilters}
             />
-            <StartControl resume on:pointertap={onResume} />
+            <StartControl color={UI_FOREGROUND_COLOR} resume on:pointertap={onResume} />
             <Container flexContainer layoutStyle={{ margin: 24, marginTop: 36 }}>
                 <Button type={ButtonType.Danger} text="Quit" onClick={onQuit} />
             </Container>

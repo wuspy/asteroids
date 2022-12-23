@@ -1,9 +1,10 @@
-import { Container, Graphics, Text } from "../react-pixi";
-import { Align, JustifyContent, PositionType } from "../layout";
+import { Container, Text } from "../react-pixi";
+import { Align, ContainerBackgroundShape, JustifyContent } from "../layout";
 import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "../../core/engine";
-import { ComponentProps, useLayoutEffect, useRef } from "react";
+import { ComponentProps, useMemo } from "react";
+import { controls } from "../input";
 import { FONT_STYLE } from "./theme";
-import { RefType } from "../react-pixi";
+import { useApp } from "../AppContext";
 
 export type ControlType = "key" | "button" | "trigger" | "stick";
 
@@ -22,15 +23,15 @@ const isMappingForControl = <Controls extends readonly string[]>(
     analogValue?: number,
 ) => control === mapping.control && (analogValue === undefined || !("value" in mapping) || mapping.value === analogValue);
 
-export const getControlGraphicParamsFromMapping = <Controls extends readonly string[]>(
+const findControlValues = <Controls extends readonly string[]>(
     control: Controls[number],
     inputMapping: InputMapping<Controls>,
     analogValue?: number,
-): { type: ControlType, control: string } | undefined => {
+): [ControlType?, string?] => {
     if (inputMapping.keys) {
         for (const [key, mapping] of Object.entries(inputMapping.keys)) {
             if (isMappingForControl(control, mapping, analogValue)) {
-                return { type: "key", control: key };
+                return ["key", key];
             }
         }
     }
@@ -89,7 +90,7 @@ export const getControlGraphicParamsFromMapping = <Controls extends readonly str
                         type = "key";
                         break;
                 }
-                return { type: type!, control: buttonName! };
+                return [type!, buttonName!];
             }
         }
     }
@@ -107,65 +108,92 @@ export const getControlGraphicParamsFromMapping = <Controls extends readonly str
                         axisName = "RS";
                         break;
                 }
-                return { type: "stick", control: axisName };
+                return ["stick", axisName];
             }
         }
     }
+    return [undefined, undefined];
 }
+
+const capitalizeFirstLetter = (string: string) => string.charAt(0).toLocaleUpperCase() + string.slice(1);
 
 export interface ControlGraphicProps extends ComponentProps<typeof Container> {
-    type: ControlType;
-    control: string;
-    fontSize: number;
-    background: number;
-    foreground: number;
+    control: typeof controls[number];
+    analogValue?: number;
+    size: number;
+    color: number;
 }
 
-export const ControlGraphic = ({ type, control, fontSize, background, foreground, ...props }: ControlGraphicProps) => {
-    const graphics = useRef<RefType<typeof Graphics>>(null);
-    const text = useRef<RefType<typeof Text>>(null);
+export const ControlGraphic = ({
+    control,
+    analogValue,
+    size,
+    color,
+    ...props
+}: ControlGraphicProps) => {
+    const { input } = useApp();
 
-    useLayoutEffect(() => {
-        const t = text.current!, g = graphics.current!;
-        g.beginFill(background, 1, true);
-        if (type === "stick") {
-            const margin = Math.round(fontSize * 1.25);
-            const radius = Math.max(t.height + margin, t.width + margin) / 2;
-            g.drawCircle(radius, radius, radius);
-            // Draw a dot on each side to make it more clear this is an analog stick and not a button
-            g.endFill();
-            g.beginFill(foreground ?? 0, 1, true);
-            g.drawCircle(radius, radius * 0.25, radius / 12);
-            g.drawCircle(radius, radius * 0.75, radius / 12);
-            g.drawCircle(radius * 0.25, radius, radius / 12);
-            g.drawCircle(radius * 0.75, radius, radius / 12);
-        } else if (type === "button") {
-            const margin = Math.round(fontSize * 0.67);
-            const radius = Math.max(t.height + margin, t.width + margin);
-            g.drawCircle(radius, radius, radius);
-        } else { // trigger and key
-            const margin = Math.round(fontSize * 0.5);
-            const height = t.height + margin;
-            // Make sure the container width isn't narrower than the height, otherwise single letter
-            // keys will look off
-            const width = Math.max(height, t.width + margin);
-            g.drawRoundedRect(0, 0, width, height, height * 0.2);
-        }
-    }, [type, control, fontSize, background, foreground]);
+    // This filter was designed to make the graphic glow when the associated input
+    // is pressed, however enabling it for first time causes a severe hang in Chrome at
+    // getUniformLocation in ShaderSystem.generateProgram.
+    // The amount of time it hangs also depends on the values of distance and quality.
 
-    return (
-        <Container
-            {...props}
-            flexContainer
-            layoutStyle={{ ...props.layoutStyle, alignItems: Align.Center, justifyContent: JustifyContent.Center }}
-        >
-            <Graphics ref={graphics} />
-            <Text
-                ref={text}
-                layoutStyle={{ position: PositionType.Absolute }}
-                style={{ ...FONT_STYLE, fontSize, fontWeight: "bold", fill: foreground }}
-                text={(type === "key" && control in KEY_LABELS ? KEY_LABELS[control] : control).toUpperCase()}
-            />
-        </Container>
+    // const glowFilter = useMemo(() => {
+    //     const filter = new GlowFilter({
+    //         outerStrength: 2.5,
+    //         innerStrength: 0,
+    //         distance: 10,
+    //         quality: 0.5,
+    //         color,
+    //     });
+    //     filter.enabled = false;
+    //     return filter;
+    // }, [color]);
+
+    const [type, name] = useMemo(() =>
+        findControlValues(control, input.mapping!, analogValue),
+        [control, analogValue, input.mapping]
     );
+
+    // useInputEvent("poll", (state) => {
+    //     glowFilter.enabled = analogValue
+    //         ? Math.abs(analogValue - state[control]) < 1
+    //         : !!state[control];
+    // });
+
+    if (!name) {
+        return null;
+    } else if (type === "key") {
+        return (
+            <Container
+                {...props}
+                flexContainer
+                layoutStyle={{
+                    ...props.layoutStyle,
+                    height: size,
+                    minWidth: size,
+                    paddingX: size * 0.25,
+                    alignItems: Align.Center,
+                    justifyContent: JustifyContent.Center,
+                }}
+                backgroundStyle={{
+                    shape: ContainerBackgroundShape.Rectangle,
+                    cornerRadius: size * 0.2,
+                    stroke: {
+                        width: 2,
+                        color,
+                        alpha: 1,
+                    },
+                }}
+            >
+                <Text
+                    style={{ ...FONT_STYLE, fontSize: size * 0.66, fontWeight: "bold", fill: color }}
+                    text={capitalizeFirstLetter(type === "key" && name in KEY_LABELS ? KEY_LABELS[name] : name)}
+                />
+            </Container>
+        );
+    } else {
+        // TODO
+        return null;
+    }
 };

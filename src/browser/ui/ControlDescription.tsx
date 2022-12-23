@@ -1,31 +1,32 @@
 import { Align, FlexDirection } from "../layout";
-import { ControlGraphic, ControlType } from "./ControlGraphic";
-import { Container, ContainerProps, Text } from "../react-pixi";
+import { ControlGraphic } from "./ControlGraphic";
+import { Container, ContainerProps, RefType, Text } from "../react-pixi";
 import { FONT_STYLE } from "./theme";
+import { ForwardedRef, forwardRef } from "react";
+import { controls } from "../input";
+
 
 export interface ControlDescriptionProps extends ContainerProps {
-    type: ControlType;
-    control: string;
-    background: number;
-    foreground: number;
+    control: typeof controls[number];
+    analogValue?: number;
+    color: number;
     beforeLabel?: string;
     afterLabel?: string;
-    fontSize: number;
+    size: number;
     direction: FlexDirection;
 }
 
-export const ControlDescription = ({
-    type,
+export const ControlDescription = forwardRef(({
     control,
-    background,
-    foreground,
+    analogValue,
+    color,
     beforeLabel,
     afterLabel,
     direction,
-    fontSize,
+    size,
     ...props
-}: ControlDescriptionProps) => {
-    const margin = Math.round(fontSize * (direction === FlexDirection.Column ? 0.3 : 0.5));
+}: ControlDescriptionProps, ref: ForwardedRef<RefType<typeof Container>>) => {
+    const margin = Math.round(size * (direction === FlexDirection.Column ? 0.3 : 0.4));
     const controlGraphicLayout = direction === FlexDirection.Column
         ? {
             marginTop: beforeLabel ? margin : 0,
@@ -37,29 +38,29 @@ export const ControlDescription = ({
         };
 
     const beforeText = beforeLabel
-        ? <Text text={beforeLabel} style={{ ...FONT_STYLE, fontSize, fill: background }} />
+        ? <Text text={beforeLabel} style={{ ...FONT_STYLE, fontSize: size, fill: color }} />
         : null;
 
     const afterText = afterLabel
-        ? <Text text={afterLabel} style={{ ...FONT_STYLE, fontSize, fill: background }} />
+        ? <Text text={afterLabel} style={{ ...FONT_STYLE, fontSize: size, fill: color }} />
         : null;
 
     return (
         <Container
             {...props}
+            ref={ref}
             flexContainer
             layoutStyle={{ ...props.layoutStyle, alignItems: Align.Center, flexDirection: direction }}
         >
             {beforeText}
             <ControlGraphic
-                type={type}
                 control={control}
-                background={background}
-                foreground={foreground}
-                fontSize={fontSize * 0.75}
+                analogValue={analogValue}
+                color={color}
+                size={size}
                 layoutStyle={controlGraphicLayout}
             />
             {afterText}
         </Container>
     );
-};
+});

@@ -5,6 +5,7 @@ export * from "./Button";
 export * from "./Divider";
 export * from "./Modal";
 export * from "./ModalCloseButton";
+export * from "./Pointer";
 export * from "./VirtualizedList";
 export * from "./TextInput";
 export * from "./RevealText";

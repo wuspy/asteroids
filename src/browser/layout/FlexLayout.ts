@@ -116,6 +116,7 @@ export default class FlexLayout {
         const yoga = getYoga();
         const config = yoga.Config.create();
         config.setUseWebDefaults(true);
+        config.setPointScaleFactor(10);
         this._node = yoga.Node.createWithConfig(config);
         this._displayObject = displayObject;
         this._children = [];
