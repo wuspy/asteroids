@@ -1,10 +1,10 @@
-import { ComponentProps } from "react";
+import { useEffect } from "react";
 import { ITextStyle } from "@pixi/text";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { Image, Button, Modal, ButtonType, FONT_STYLE } from "./ui";
-import { Container, Text } from "./react-pixi";
+import { Container, ContainerProps, Text } from "./react-pixi";
 
-interface CatProps extends ComponentProps<typeof Container> {
+interface CatProps extends ContainerProps {
     imageUrl: string;
     name: string;
     caption: string;
@@ -46,8 +46,12 @@ export interface AboutMeModalProps {
     onClose: () => void;
 }
 
-export const AboutMeModal = ({ open, onClose }: AboutMeModalProps) =>
-    <Modal open={open} onRequestClose={onClose} padding={24} layoutStyle={{ width: 700 }}>
+export const AboutMeModal = ({ open, onClose }: AboutMeModalProps) => {
+    useEffect(() => {
+        document.getElementById("branding")!.style.visibility = open ? "hidden" : "visible";
+    }, [open]);
+
+    return <Modal open={open} onRequestClose={onClose} padding={24} layoutStyle={{ width: 700 }}>
         <Container
             flexContainer
             layoutStyle={{ flexDirection: FlexDirection.Column, width: "100%", marginBottom: 24 }}
@@ -105,3 +109,4 @@ export const AboutMeModal = ({ open, onClose }: AboutMeModalProps) =>
             />
         </Container>
     </Modal>;
+};
