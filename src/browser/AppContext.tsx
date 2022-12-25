@@ -46,9 +46,6 @@ const performResize = (state: AppState): void => {
         container.clientHeight * dpr,
     ];
     const aspectRatio = nativeWidth / nativeHeight;
-    if (process.env.NODE_ENV === "development") {
-        console.log("Aspect ratio changed", aspectRatio);
-    }
     game.aspectRatio = clamp(aspectRatio, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO);
     // Scale world based on new screen size and aspect ratio
     if (aspectRatio > MAX_ASPECT_RATIO) {
@@ -69,6 +66,15 @@ const performResize = (state: AppState): void => {
     background.style.left = renderer.view.style.left;
     background.style.width = `${renderer.view.width}px`;
     background.style.height = `${renderer.view.height}px`;
+    if (process.env.NODE_ENV === "development") {
+        console.log(
+            `Aspect Ratio\t${aspectRatio.toPrecision(5)}\n` +
+            `DPR\t\t${dpr.toPrecision(5)}\n` +
+            `Stage\t\t{ x: ${renderer.view.width.toPrecision(5)}, y: ${renderer.view.height.toPrecision(5)} }\n` +
+            `Game\t\t{ x: ${game.worldSize.width.toPrecision(5)}, y: ${game.worldSize.height.toPrecision(5)} }\n` +
+            `Scale\t\t{ x: ${stage.scale.x.toPrecision(5)}, y: ${stage.scale.y.toPrecision(5)} }`
+        );
+    }
 };
 
 export type ThunkAction = (
