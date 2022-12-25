@@ -1,4 +1,4 @@
-import { ForwardedRef, forwardRef, useEffect, useMemo, useState } from "react";
+import { ForwardedRef, forwardRef, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { KawaseBlurFilter } from "@pixi/filter-kawase-blur";
 import anime from "animejs";
@@ -14,6 +14,7 @@ export interface FadeContainerProps extends ContainerProps {
     fadeInAmount?: number;
     fadeOutAmount?: number;
     blur?: number;
+    filterPadding?: number;
     onFadeInComplete?: () => void;
     onFadeOutComplete?: () => void;
 }
@@ -30,6 +31,7 @@ export const FadeContainer = forwardRef(({
     fadeInAmount = 1,
     fadeOutAmount = 0,
     blur = 8,
+    filterPadding = blur,
     onFadeInComplete,
     onFadeOutComplete,
     filters: otherFilters,
@@ -50,6 +52,10 @@ export const FadeContainer = forwardRef(({
 
     const [anim, setAnim] = useState<anime.AnimeTimelineInstance>();
     const [wasVisible, setWasVisible] = useState(visible);
+
+    useLayoutEffect(() => {
+        blurFilter.padding = alphaFilter.padding = filterPadding;
+    }, [filterPadding]);
 
     useEffect(() => {
         if (process.env.NODE_ENV === "development" && fadeInAmount <= fadeOutAmount) {

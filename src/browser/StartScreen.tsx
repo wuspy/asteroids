@@ -45,6 +45,7 @@ export const StartScreen = (props: ContainerProps) => {
         setFadeInDelay(withDelay ? 500 : 0);
         setVisible(true);
         if (withDelay) {
+            setBottomControlsVisible(false);
             setTimeout(() => setBottomControlsVisible(true), 1500);
         } else {
             setBottomControlsVisible(true);
@@ -53,7 +54,6 @@ export const StartScreen = (props: ContainerProps) => {
 
     const hide = () => {
         setVisible(false);
-        setBottomControlsVisible(false);
     };
 
     const onAboutClick = () => {
@@ -204,11 +204,12 @@ export const StartScreen = (props: ContainerProps) => {
             <FadeContainer
                 flexContainer
                 fadeInDuration={500}
-                fadeOutDuration={500}
+                fadeOutDuration={0}
                 keepMounted
                 keepPixiVisible
                 visible={bottomControlsVisible}
                 blur={0}
+                filterPadding={24}
                 skew={[-0.02, 0.02]}
                 layoutStyle={{
                     flexDirection: FlexDirection.Column,
