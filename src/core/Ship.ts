@@ -25,7 +25,7 @@ import {
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
 import { DynamicGameObject, CoreGameObjectParams, Vec2 } from "./engine";
-import { DEG_TO_RAD } from "@pixi/math";
+import { DEG_TO_RAD } from "@pixi/core";
 import { Projectile } from "./Projectile";
 
 const HYPERSPACE_COOLDOWN_MS = HYPERSPACE_COOLDOWN * 1000;

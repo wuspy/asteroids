@@ -1,4 +1,4 @@
-import { DEG_TO_RAD } from "@pixi/math";
+import { DEG_TO_RAD } from "@pixi/core";
 import { ComponentProps, useCallback, useRef } from "react";
 import { Container, Graphics, RefType } from "../react-pixi";
 import { Align, JustifyContent } from "../layout";

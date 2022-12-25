@@ -1,5 +1,6 @@
 import { Container, ContainerProps, RefType, Sprite } from "./react-pixi";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FederatedPointerEvent } from "@pixi/events";
 import { useApp, useInputEvent } from "./AppContext";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { Button, ButtonType, ControlDescription, FadeContainer, Pointer } from "./ui";
@@ -31,6 +32,8 @@ export const StartScreen = (props: ContainerProps) => {
             setTimeout(() => dispatch("start"), 1000);
         }
     };
+
+    const onStartClick = (e: FederatedPointerEvent) => e.button === 0 && onStart();
 
     useInputEvent("poll", (state, lastState) => {
         if (state.start && !lastState.start) {
@@ -217,7 +220,7 @@ export const StartScreen = (props: ContainerProps) => {
                     color={theme.foregroundColor}
                     alpha={theme.foregroundAlpha}
                     layoutStyle={{ margin: 24 }}
-                    on:pointertap={onStart}
+                    on:pointertap={onStartClick}
                 />
                 <Container flexContainer layoutStyle={{ flexDirection: FlexDirection.Column, alignItems: Align.Center }}>
                     <Container flexContainer>

@@ -1,4 +1,4 @@
-import { DEG_TO_RAD } from "@pixi/math";
+import { DEG_TO_RAD } from "@pixi/core";
 import { UFOType, UFO_HITAREAS, UFO_SCORES, UFO_SPEEDS, UFO_PROJECTILE_SPEEDS, QUEUE_PRIORITIES, UFO_INACCURACY, UFO_FIRE_INTERVALS, UFO_SHIFT_INTERVALS, UFO_SHIFT_AMOUNTS, UFO_HARD_INACCURACY_SCORE } from "./constants";
 import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";

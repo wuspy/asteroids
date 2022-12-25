@@ -1,5 +1,5 @@
 import { LINE_JOIN } from "@pixi/graphics";
-import { DEG_TO_RAD, PI_2 } from "@pixi/math";
+import { DEG_TO_RAD, PI_2 } from "@pixi/core";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Container, ContainerProps, Graphics, RefType } from "../react-pixi";
 import anime from "animejs";

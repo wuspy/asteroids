@@ -1,15 +1,27 @@
-import { DisplayObject } from "@pixi/display";
+import { Point } from "@pixi/core";
+import { EventBoundary, FederatedPointerEvent, FederatedWheelEvent } from "@pixi/events";
+import { DisplayObject, DisplayObjectEvents } from "@pixi/display";
 import { clamp, lineSegmentLength } from "../../core/engine";
 import anime from "animejs";
 import { ComputedLayout, drawContainerBackground, FlexDirection, PositionType } from "../layout";
 import { LIST_BACKGROUND } from "./theme";
-import { InteractionEvent, InteractionManager, } from "@pixi/interaction";
-import { Point } from "@pixi/math";
 import { Container, ContainerProps, Graphics, RefType } from "../react-pixi";
-import { ReactNode, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
-import { useTick } from "../AppContext";
+import { ReactNode, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useApp, useTick } from "../AppContext";
 
 const SCROLL_CAPTURE_THRESHOLD = 10;
+
+const deriveNormalizedWheelDelta = (e: WheelEvent): number => {
+    if (e.detail) {
+        if ((e as any).wheelDelta) {
+            return (e as any).wheelDelta / e.detail / 40 * (e.detail > 0 ? 1 : -1); // Opera
+        } else {
+            return -e.detail / 3; // Firefox
+        }
+    } else {
+        return (e as any).wheelDelta / 120; // IE,Safari,Chrome
+    }
+};
 
 export interface VirtualizedListActions {
     scrollToPosition: (pos: number, blocking: boolean) => void;
@@ -19,7 +31,6 @@ export interface VirtualizedListActions {
 }
 
 export interface VirtualizedListProps<Data> extends ContainerProps {
-    interactionManager: InteractionManager;
     itemRenderer: (data: Data, index: number) => ReactNode;
     data: readonly Data[];
     itemHeight: number;
@@ -28,7 +39,6 @@ export interface VirtualizedListProps<Data> extends ContainerProps {
 }
 
 export const VirtualizedList = <Data extends any>({
-    interactionManager,
     itemRenderer,
     data,
     itemHeight,
@@ -36,9 +46,11 @@ export const VirtualizedList = <Data extends any>({
     actions,
     ...props
 }: VirtualizedListProps<Data>) => {
+    const { renderer, dpr } = useApp();
     const root = useRef<RefType<typeof Container>>(null);
     const itemContainer = useRef<RefType<typeof Container>>(null);
     const mask = useRef<RefType<typeof Graphics>>(null);
+    const eventBoundary = useMemo(() => new EventBoundary(), []);
 
     const pointerDownAt = useRef<Point>();
     const scrollCaptured = useRef<boolean>(false);
@@ -50,6 +62,11 @@ export const VirtualizedList = <Data extends any>({
     const [height, setHeight] = useState(0);
     const anim = useRef<anime.AnimeTimelineInstance>();
 
+    const maxScrollPosition = useMemo(
+        () => Math.max(Math.ceil((data.length * itemHeight - height + overscroll) / itemHeight) * itemHeight, 0),
+        [data.length, itemHeight, height, overscroll],
+    );
+
     useLayoutEffect(() => {
         root.current!.mask = mask.current!;
     }, []);
@@ -59,22 +76,25 @@ export const VirtualizedList = <Data extends any>({
         anim.current?.tick(timestamp);
     });
 
-    const proxyInteraction = (name: string, e: InteractionEvent): DisplayObject | undefined => {
+    const hitTest = (x: number, y: number): DisplayObject | undefined => {
         itemContainer.current!.interactiveChildren = true;
-        const hit = interactionManager.hitTest(e.data.global, itemContainer.current!);
-        hit?.emit(name, e);
+        eventBoundary.rootTarget = itemContainer.current!;
+        const hit = eventBoundary.hitTest(x, y);
         itemContainer.current!.interactiveChildren = false;
         return hit;
-    };
+    }
 
-    const getMaxScrollPosition = () =>
-        Math.max(Math.ceil((data.length * itemHeight - height + overscroll) / itemHeight) * itemHeight, 0);
+    const proxyInteraction = (name: keyof DisplayObjectEvents, e: FederatedPointerEvent): DisplayObject | undefined => {
+        const hit = hitTest(e.globalX, e.globalY);
+        hit?.emit(name, e);
+        return hit;
+    };
 
     const scrollToPositionImmediate = (pos: number) => {
         if (isNaN(height) || data.length === 0) {
             return;
         }
-        pos = clamp(pos, getMaxScrollPosition(), -overscroll);
+        pos = clamp(pos, maxScrollPosition, -overscroll);
         targetPosition.current = pos;
         anim.current = undefined;
         setPosition(pos);
@@ -84,7 +104,7 @@ export const VirtualizedList = <Data extends any>({
         if (isNaN(height) || data.length === 0 || (!blocking && isBlockingMove)) {
             return;
         }
-        targetPosition.current = clamp(pos, getMaxScrollPosition(), -overscroll);
+        targetPosition.current = clamp(pos, maxScrollPosition, -overscroll);
         if (position !== targetPosition.current) {
             setIsBlockingMove(blocking);
             const target = { position };
@@ -127,12 +147,13 @@ export const VirtualizedList = <Data extends any>({
         scrollToPositionImmediate,
     }));
 
-    const onMousewheel = (value: number) => {
-        scrollToPosition(Math.floor((targetPosition.current - (value * itemHeight)) / itemHeight) * itemHeight, false);
+    const onWheel = (e: FederatedWheelEvent) => {
+        const delta = deriveNormalizedWheelDelta(e.nativeEvent as WheelEvent);
+        scrollToPosition(Math.floor((targetPosition.current - (delta * itemHeight)) / itemHeight) * itemHeight, false);
     };
 
-    const onPointerdown = (e: InteractionEvent) => {
-        pointerDownAt.current = e.data.global.clone();
+    const onPointerdown = (e: FederatedPointerEvent) => {
+        pointerDownAt.current = e.global.clone();
         proxyInteraction("pointerdown", e);
     };
 
@@ -149,7 +170,7 @@ export const VirtualizedList = <Data extends any>({
         pointerDownAt.current = undefined;
     };
 
-    const onPointerup = (e: InteractionEvent) => {
+    const onPointerup = (e: FederatedPointerEvent) => {
         proxyInteraction("pointerup", e);
         if (!scrollCaptured.current) {
             proxyInteraction("pointertap", e);
@@ -157,27 +178,33 @@ export const VirtualizedList = <Data extends any>({
         _pointerup();
     };
 
-    const onPointerupoutside = (e: InteractionEvent) => {
+    const onPointerupoutside = (e: FederatedPointerEvent) => {
         proxyInteraction("pointerupoutside", e);
         _pointerup();
     };
 
-    const onPointermove = (e: InteractionEvent) => {
+    const onPointermove = (e: PointerEvent) => {
         if (pointerDownAt.current) {
             if (!scrollCaptured.current
-                && Math.abs(lineSegmentLength([pointerDownAt.current, e.data.global])) > SCROLL_CAPTURE_THRESHOLD
+                && Math.abs(lineSegmentLength([pointerDownAt.current, { x: e.offsetX, y: e.offsetY }])) > SCROLL_CAPTURE_THRESHOLD
             ) {
                 scrollCaptured.current = true;
                 anim.current = undefined;
             }
             if (scrollCaptured.current) {
-                scrollToPositionImmediate(position + (pointerDownAt.current.y - e.data.global.y));
-                pointerDownAt.current.copyFrom(e.data.global);
+                scrollToPositionImmediate(position + (pointerDownAt.current.y - e.offsetY) / root.current!.worldTransform.d);
+                pointerDownAt.current.set(e.offsetX, e.offsetY);
             }
         }
-        const hit = proxyInteraction("pointermove", e);
-        root.current!.cursor = hit ? hit.cursor : "auto";
+        const hit = hitTest(e.offsetX, e.offsetY);
+        root.current!.cursor = (hit?.interactive ? hit.cursor : null) || "auto";
     };
+
+    useLayoutEffect(() => {
+        // As of pixi v7 move events are local, so this must be bound to the canvas to allow touch scrolling
+        renderer.view.addEventListener("pointermove", onPointermove);
+        return () => renderer.view.removeEventListener("pointermove", onPointermove);
+    }, [onPointermove, renderer.view]);
 
     const onLayout = (layout: ComputedLayout) => {
         if (layout.height !== height) {
@@ -216,14 +243,12 @@ export const VirtualizedList = <Data extends any>({
         ref={root}
         flexContainer
         interactive={!isBlockingMove}
-        scrollInteractive
         backgroundStyle={LIST_BACKGROUND}
         on:layout={onLayout}
         on:pointerup={onPointerup}
         on:pointerupoutside={onPointerupoutside}
         on:pointerdown={onPointerdown}
-        on:pointermove={onPointermove}
-        on:mousewheel={onMousewheel}
+        on:wheel={onWheel}
     >
         <Container
             ref={itemContainer}

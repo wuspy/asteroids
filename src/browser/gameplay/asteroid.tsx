@@ -1,4 +1,4 @@
-import { AbstractRenderer, Texture } from "@pixi/core";
+import { IRenderer, Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
@@ -14,7 +14,7 @@ const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
 const GENERATION_SPAWN_SIZES: readonly number[] = [1.15, 1.75, 2.25];
 const GENERATION_EXPLOSION_SIZES: readonly number[] = [250, 200, 150];
 
-const createAsteroidTexture = (renderer: AbstractRenderer, model: number, generation: number): Texture => {
+const createAsteroidTexture = (renderer: IRenderer, model: number, generation: number): Texture => {
     const graphics = new Graphics();
     graphics.lineStyle({
         width: GENERATION_LINE_WIDTHS[generation],
@@ -26,10 +26,10 @@ const createAsteroidTexture = (renderer: AbstractRenderer, model: number, genera
     return renderer.generateTexture(graphics);
 };
 
-const TEXTURE_CACHE = new WeakMap<AbstractRenderer, Texture[][]>;
-const SPAWN_ANIMATION_TEXTURE_CACHE = new WeakMap<AbstractRenderer, Texture[][]>;
+const TEXTURE_CACHE = new WeakMap<IRenderer, Texture[][]>;
+const SPAWN_ANIMATION_TEXTURE_CACHE = new WeakMap<IRenderer, Texture[][]>;
 
-const generateTextureCache = (renderer: AbstractRenderer) => {
+const generateTextureCache = (renderer: IRenderer) => {
     TEXTURE_CACHE.set(renderer, ASTEROID_HITAREAS.map((generations, model) =>
         generations.map((polygon, generation) => {
             const texture = createDropShadowTexture(renderer, createAsteroidTexture(renderer, model, generation));
@@ -52,7 +52,7 @@ export interface AsteroidDisplayProps {
     theme: GameTheme;
     mainContainer: Container;
     foregroundContainer: Container;
-    renderer: AbstractRenderer;
+    renderer: IRenderer;
 }
 
 export const displayAsteroid = ({ asteroid, theme, mainContainer, foregroundContainer, renderer }: AsteroidDisplayProps) => {

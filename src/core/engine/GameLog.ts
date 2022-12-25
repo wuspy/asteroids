@@ -1,4 +1,4 @@
-import { ISize } from "@pixi/math";
+import { ISize } from "@pixi/core";
 import { InputMappingType } from ".";
 import { InputState, createEmptyInput } from "./InputProvider";
 

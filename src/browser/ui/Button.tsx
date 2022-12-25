@@ -1,5 +1,6 @@
 import { ComponentProps, useMemo, useRef, useState } from "react";
 import { GlowFilter } from "@pixi/filter-glow";
+import { FederatedPointerEvent } from "@pixi/events";
 import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection, PositionType } from "../layout";
 import { Image } from "./Image";
 import { ButtonType, BUTTON_THEMES, FONT_STYLE } from "./theme";
@@ -94,13 +95,9 @@ export const Button = ({type, text, imageUrl, enabled = true, loading = false, o
 
     const onPointerOver = () => setHovering(true);
     const onPointerOut = () => setHovering(false);
-    const onPointerDown = () => setActive(enabled && !loading);
-    const onPointerUp = () => setActive(false);
-    const onPointerTap = () => {
-        if (enabled && !loading) {
-            onClick();
-        }
-    };
+    const onPointerDown = (e: FederatedPointerEvent) => e.button === 0 && setActive(enabled && !loading);
+    const onPointerUp = (e: FederatedPointerEvent) => e.button === 0 && setActive(false);
+    const onPointerTap = (e: FederatedPointerEvent) => e.button === 0 && enabled && !loading && onClick();
 
     return (
         <Container
@@ -108,7 +105,7 @@ export const Button = ({type, text, imageUrl, enabled = true, loading = false, o
             ref={container}
             flexContainer
             interactive={enabled}
-            buttonMode={enabled}
+            cursor="pointer"
             on:pointertap={onPointerTap}
             on:pointerover={onPointerOver}
             on:pointerout={onPointerOut}

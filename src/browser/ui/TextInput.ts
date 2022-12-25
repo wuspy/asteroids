@@ -1,8 +1,6 @@
-import { Renderer } from "@pixi/core";
+import { Renderer, ISize, utils } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
 import { AlphaFilter } from "@pixi/filter-alpha";
-import { ISize } from "@pixi/math";
-import { hex2rgb } from "@pixi/utils";
 import { ContainerBackgroundShape, MeasureMode } from "../layout";
 import { PixiComponent, PixiContainerProps } from "../react-pixi/element";
 import { applyDefaultProps } from "../react-pixi/props";
@@ -87,8 +85,9 @@ class DOMTextInput extends Container {
             this.setColor();
         }
 
-        this.element.style.left = `${this.worldTransform.tx + renderer.view.offsetLeft}px`;
-        this.element.style.top = `${this.worldTransform.ty + renderer.view.offsetTop}px`;
+        const view = renderer.view as HTMLCanvasElement;
+        this.element.style.left = `${this.worldTransform.tx + view.offsetLeft}px`;
+        this.element.style.top = `${this.worldTransform.ty + view.offsetTop}px`;
 
         if (this._focusNextRender) {
             this.element.focus();
@@ -109,6 +108,7 @@ class DOMTextInput extends Container {
         this._focusNextRender = true;
     }
 
+    // @ts-ignore
     override onLayoutMeasure(
         width: number,
         widthMeasureMode: MeasureMode,
@@ -138,7 +138,7 @@ class DOMTextInput extends Container {
     }
 
     private setColor() {
-        const rgb = (hex2rgb(this._color) as number[]).map((x) => (x * 255).toFixed()).join(",");
+        const rgb = (utils.hex2rgb(this._color) as number[]).map((x) => (x * 255).toFixed()).join(",");
         this.element.style.color = `rgba(${rgb},${this._lastWorldAlpha.toFixed(2)})`;
     }
 }
@@ -243,7 +243,7 @@ export class PixiTextInput extends Container {
         this._domInput.focus();
     }
 
-    addEventListener<K extends keyof HTMLElementEventMap>(
+    addInputEventListener<K extends keyof HTMLElementEventMap>(
         type: K,
         listener: (this: HTMLInputElement, ev: HTMLElementEventMap[K]) => any,
         options?: boolean | AddEventListenerOptions
@@ -251,7 +251,7 @@ export class PixiTextInput extends Container {
         this._domInput.element.addEventListener(type, listener, options);
     }
 
-    removeEventListener<K extends keyof HTMLElementEventMap>(
+    removeInputEventListener<K extends keyof HTMLElementEventMap>(
         type: K,
         listener: (this: HTMLInputElement, ev: HTMLElementEventMap[K]) => any
     ): void {
@@ -270,10 +270,10 @@ const setEventListener = <K extends keyof HTMLElementEventMap>(
     if (updatePayload) {
         const [oldValue, newValue] = updatePayload;
         if (typeof oldValue === "function") {
-            instance.removeEventListener(type, oldValue);
+            instance.removeInputEventListener(type, oldValue);
         }
         if (typeof newValue === "function") {
-            instance.addEventListener(type, newValue);
+            instance.addInputEventListener(type, newValue);
         }
     }
 }

@@ -1,6 +1,5 @@
 const path = require("path");
 const webpack = require("webpack");
-const TerserPlugin = require("terser-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const HtmlInlineScriptPlugin = require("html-inline-script-webpack-plugin");
 const HtmlInlineCssPlugin = require("html-inline-css-webpack-plugin").default;
@@ -126,17 +125,6 @@ const asteroids = {
             path: false,
             fs: false,
         },
-    },
-    optimization: {
-        minimizer: [new TerserPlugin({
-            terserOptions: {
-                mangle: {
-                    properties: {
-                        regex: /^_/,
-                    },
-                },
-            },
-        })],
     },
 };
 

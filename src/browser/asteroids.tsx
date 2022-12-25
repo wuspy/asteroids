@@ -1,15 +1,14 @@
-import { autoDetectRenderer, BatchRenderer, ExtensionType, extensions } from '@pixi/core';
-import { InteractionManager } from '@pixi/interaction';
+import { autoDetectRenderer } from '@pixi/core';
 import { AsteroidsGameContainer } from "./AsteroidsGameContainer";
 import { initYoga } from "./layout";
 import "./layout";
-import { ScrollInteractionManager } from './ui';
 import { createRoot } from './react-pixi';
 import { Assets } from "@pixi/assets";
 import { MIN_FPS } from "../core";
 import { AppProvider } from "./AppContext";
 import { TickQueue } from "../core/engine";
 import { Container } from "@pixi/display";
+import "@pixi/events";
 
 const MAX_DEVICE_PIXEL_RATIO = 2;
 const MAX_ELAPSED_MS = 1000 / MIN_FPS;
@@ -32,14 +31,7 @@ const MAX_ELAPSED_MS = 1000 / MIN_FPS;
         throw new Error(`#background does not exist`);
     }
 
-    extensions.add(
-        { type: ExtensionType.RendererPlugin, ref: BatchRenderer, name: "batch" },
-        // { type: ExtensionType.RendererPlugin, ref: ParticleRenderer, name: "particle" },
-        { type: ExtensionType.RendererPlugin, ref: InteractionManager, name: "interaction" },
-        { type: ExtensionType.RendererPlugin, ref: ScrollInteractionManager, name: "scrollInteraction" },
-    );
-
-    const renderer = autoDetectRenderer({
+    const renderer = autoDetectRenderer<HTMLCanvasElement>({
         width: container.clientWidth,
         height: container.clientHeight,
         antialias: false,

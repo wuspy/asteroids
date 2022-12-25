@@ -1,4 +1,4 @@
-import { PI_2 } from "@pixi/math";
+import { PI_2 } from "@pixi/core";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { TickQueue } from "../../core/engine";
 import { LINE_JOIN } from "@pixi/graphics";

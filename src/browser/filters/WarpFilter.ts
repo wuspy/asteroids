@@ -1,7 +1,6 @@
 import vertex from "./glsl/vertex.glsl";
 import fragment from "./glsl/warp.glsl";
-import { Filter } from "@pixi/core";
-import { ISize } from "@pixi/math";
+import { Filter, ISize } from "@pixi/core";
 
 export class WarpFilter extends Filter
 {

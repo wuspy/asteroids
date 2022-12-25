@@ -1,5 +1,5 @@
 import { Text } from "@pixi/text";
-import { ISize } from "@pixi/math";
+import { ISize } from "@pixi/core";
 import { MeasureMode } from "./FlexLayout";
 import { DisplayObject } from "@pixi/display";
 

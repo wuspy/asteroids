@@ -10,7 +10,7 @@ import {
     MAX_ASTEROID_COUNT,
     QUEUE_PRIORITIES
 } from "./constants";
-import { DEG_TO_RAD, ISize, Rectangle } from "@pixi/math";
+import { DEG_TO_RAD, ISize, Rectangle } from "@pixi/core";
 import {
     GameObject,
     findUnoccupiedPosition,

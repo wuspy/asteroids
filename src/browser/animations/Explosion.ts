@@ -1,6 +1,5 @@
-import { AbstractRenderer, Texture } from "@pixi/core";
+import { IRenderer, Texture, DEG_TO_RAD } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
-import { DEG_TO_RAD } from "@pixi/math";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { urandom, TickQueue } from "../../core/engine";
 import { createDropShadowTexture } from "../util";
@@ -16,11 +15,11 @@ interface Particle {
     endY: number;
 }
 
-const TEXTURE_CACHE = new WeakMap<AbstractRenderer, Texture>();
+const TEXTURE_CACHE = new WeakMap<IRenderer, Texture>();
 
 const TEXTURE_RADIUS = 10;
 
-const generateTextureCache = (renderer: AbstractRenderer) => {
+const generateTextureCache = (renderer: IRenderer) => {
     const graphics = new Graphics();
     graphics.beginFill(0xffffff, 1, true);
     graphics.drawCircle(0, 0, TEXTURE_RADIUS);
@@ -36,7 +35,7 @@ export interface ExplosionProps {
     diameter: number;
     maxDuration: number;
     color: number;
-    renderer: AbstractRenderer;
+    renderer: IRenderer;
 }
 
 export class Explosion extends Container {

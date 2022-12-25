@@ -5,7 +5,7 @@ import {
     Polygon,
     ObservablePoint,
     PI_2
-} from "@pixi/math";
+} from "@pixi/core";
 import {
     HitArea,
     pointsCoincident,

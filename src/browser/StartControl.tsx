@@ -42,7 +42,7 @@ export const StartControl = ({ resume = false, ...props }: StartControlProps) =>
             {...props}
             control="start"
             interactive
-            buttonMode
+            cursor="pointer"
             filters={[glowFilter]}
             size={32}
             beforeLabel="Press"

@@ -1,27 +1,7 @@
 import { Renderer } from "@pixi/core";
-import { ISize } from "@pixi/math";
 import { Container, DisplayObject } from "@pixi/display";
 import { IFillStyleOptions, ILineStyleOptions, SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { ComputedLayout } from "./FlexLayout";
-
-declare module "@pixi/display"
-{
-    export interface Container {
-        _flexContainer: boolean;
-        _backgroundGraphics?: Graphics;
-        _backgroundStyle?: ContainerBackground;
-        _backgroundSize?: ISize;
-        _backgroundGraphicsHandler: (layout: ComputedLayout) => void;
-        _debugGraphics?: Graphics;
-        _debugGraphicsHandler: (layout: ComputedLayout) => void;
-        set backgroundStyle(background: ContainerBackground | undefined);
-        get debugLayout(): boolean;
-        set debugLayout(debugLayout: boolean);
-        get flexContainer(): boolean;
-        set flexContainer(flexContainer: boolean);
-        get isLayoutRoot(): boolean;
-    }
-}
 
 export const enum ContainerBackgroundShape {
     Rectangle,

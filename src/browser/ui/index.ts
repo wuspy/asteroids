@@ -1,5 +1,4 @@
 export * from "./FadeContainer";
-export * from "./ScrollInteractionManager";
 export * from "./Image";
 export * from "./Button";
 export * from "./Divider";

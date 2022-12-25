@@ -1,5 +1,5 @@
 import { Container } from "@pixi/display";
-import { AbstractRenderer } from "@pixi/core";
+import { IRenderer } from "@pixi/core";
 import { createContext, Dispatch, ReactNode, Reducer, useContext, useEffect, useLayoutEffect, useReducer, useRef } from "react";
 import { clamp, createRandom, createRandomSeed, InputProvider, InputProviderEvents, TickFn, TickQueue } from "../core/engine";
 import { AsteroidsGame, GameEvents, GameStatus, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO } from "../core";
@@ -11,7 +11,7 @@ import { controls, wasdMapping } from "./input";
 export interface AppState {
     queue: TickQueue;
     stage: Container;
-    renderer: AbstractRenderer;
+    renderer: IRenderer<HTMLCanvasElement>;
     container: HTMLElement;
     background: HTMLElement;
     dpr: number;

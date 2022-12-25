@@ -1,9 +1,9 @@
-import { Container, DisplayObject } from "@pixi/display";
+import { Container, DisplayObject, DisplayObjectEvents } from "@pixi/display";
 import React from "react";
 import { AnyProps, applyDefaultProps, diffProperties, PointLike, UpdatePayload } from './props'
 
 type Events = {
-    [P in `on:${string}`]?: (...args: any[]) => void;
+    [P in keyof DisplayObjectEvents as `on:${P}`]?: (...args: DisplayObjectEvents[P]) => void;
 };
 
 type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;

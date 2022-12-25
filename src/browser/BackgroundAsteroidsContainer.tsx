@@ -1,9 +1,8 @@
-import { AbstractRenderer, Texture } from "@pixi/core";
+import { IRenderer, Texture, Rectangle, ISize } from "@pixi/core";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { ASTEROID_GENERATION_COUNT, ASTEROID_HITAREAS, GameEvents, GameState, generateAsteroidAngle } from "../core";
 import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { Rectangle, ISize } from "@pixi/math";
 import { useApp } from "./AppContext";
 import { CoreGameObjectParams, EventManager, findUnoccupiedPosition, GameObject, urandom, TickQueue, Vec2 } from "../core/engine";
 import { Container, RefType, Sprite } from "./react-pixi";
@@ -24,7 +23,7 @@ const HITAREAS = BACKGROUND_POLYGONS.map((generations) => {
     return Math.max(boundingBox.width, boundingBox.height) / 2;
 });
 
-const createAsteroidTexture = (renderer: AbstractRenderer, model: number, generation: number): Texture => {
+const createAsteroidTexture = (renderer: IRenderer, model: number, generation: number): Texture => {
     const graphics = new Graphics();
     graphics.lineStyle({
         width: GENERATION_LINE_WIDTHS[generation],
@@ -36,9 +35,9 @@ const createAsteroidTexture = (renderer: AbstractRenderer, model: number, genera
     return renderer.generateTexture(graphics);
 };
 
-const TEXTURE_CACHE = new WeakMap<AbstractRenderer, Texture[][]>;
+const TEXTURE_CACHE = new WeakMap<IRenderer, Texture[][]>;
 
-const generateTextureCache = (renderer: AbstractRenderer) => {
+const generateTextureCache = (renderer: IRenderer) => {
     TEXTURE_CACHE.set(renderer, ASTEROID_HITAREAS.map((generations, model) =>
         generations.map((polygon, generation) => {
             const texture = createAsteroidTexture(renderer, model, generation);

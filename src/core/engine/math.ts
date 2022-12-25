@@ -1,4 +1,4 @@
-import { ISize, IPointData, Rectangle, Polygon, PI_2 } from "@pixi/math";
+import { ISize, IPointData, Rectangle, Polygon, PI_2 } from "@pixi/core";
 import { RandomFn } from "./random";
 
 export const PI_1_2 = Math.PI / 2;
@@ -44,18 +44,20 @@ export const atan2 = (y: number, x: number): number => {
     return angle;
 }
 
-declare module "@pixi/math" {
+declare module "@pixi/core" {
     interface Rectangle {
         translate(x: number, y: number): Rectangle;
         scale(scale: number): Rectangle;
         intersects(other: Rectangle): boolean;
     }
-}
 
-declare module "@pixi/math" {
-    interface Rectangle {
-        translate(x: number, y: number): Rectangle;
-        intersects(other: Rectangle): boolean;
+    interface Polygon {
+        translate(x: number, y: number): Polygon;
+        rotate(angle: number): Polygon;
+        scale(scale: number): Polygon;
+        getBoundingBox(result?: Rectangle): Rectangle;
+        intersects(other: Polygon): boolean;
+        contains2(point: Vec2, center: Vec2, margin?: number): boolean;
     }
 }
 
@@ -81,17 +83,6 @@ Rectangle.prototype.intersects = function (other: Rectangle): boolean {
         && this.right > other.left
         && this.top < other.bottom
         && this.bottom > other.top;
-}
-
-declare module "@pixi/math" {
-    interface Polygon {
-        translate(x: number, y: number): Polygon;
-        rotate(angle: number): Polygon;
-        scale(scale: number): Polygon;
-        getBoundingBox(result?: Rectangle): Rectangle;
-        intersects(other: Polygon): boolean;
-        contains2(point: Vec2, center: Vec2, margin?: number): boolean;
-    }
 }
 
 Polygon.prototype.translate = function (x: number, y: number): Polygon {

@@ -1,5 +1,5 @@
-import { DisplayObject } from "@pixi/display";
-import { Point, ObservablePoint, IPoint, IPointData } from "@pixi/math";
+import { DisplayObject, DisplayObjectEvents } from "@pixi/display";
+import { Point, ObservablePoint, IPoint, IPointData } from "@pixi/core";
 import deepEqual from "fast-deep-equal";
 
 export type PointLike = IPointData | [number, number] | number;
@@ -124,7 +124,7 @@ export function applyDefaultProps(instance: DisplayObject, updatePayload: Update
     for (const propKey in updatePayload) {
         // update event handlers
         if (propKey.startsWith("on:")) {
-            const event = propKey.substring(3);
+            const event = propKey.substring(3) as keyof DisplayObjectEvents;
             const [oldValue, newValue] = updatePayload[propKey]!;
             if (typeof oldValue === "function") {
                 instance.removeListener(event, oldValue);

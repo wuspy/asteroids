@@ -1,4 +1,4 @@
-import { AbstractRenderer, Texture } from "@pixi/core";
+import { IRenderer, Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
@@ -18,9 +18,9 @@ const LINE_WIDTHS: Readonly<{ [Key in UFOType]: number }> = {
     small: 3
 } as const;
 
-const TEXTURE_CACHE = new WeakMap<AbstractRenderer, { [Key in UFOType]: Texture }>();
+const TEXTURE_CACHE = new WeakMap<IRenderer, { [Key in UFOType]: Texture }>();
 
-const createUFOTexture = (renderer: AbstractRenderer, type: UFOType): Texture => {
+const createUFOTexture = (renderer: IRenderer, type: UFOType): Texture => {
     const graphics = new Graphics();
     graphics.lineStyle({
         width: LINE_WIDTHS[type],
@@ -47,7 +47,7 @@ const createUFOTexture = (renderer: AbstractRenderer, type: UFOType): Texture =>
     return texture;
 };
 
-const generateTextureCache = (renderer: AbstractRenderer) => {
+const generateTextureCache = (renderer: IRenderer) => {
     TEXTURE_CACHE.set(renderer, {
         "large": createUFOTexture(renderer, "large"),
         "small": createUFOTexture(renderer, "small"),
@@ -59,7 +59,7 @@ export interface UFODisplayProps {
     theme: GameTheme;
     mainContainer: Container;
     foregroundContainer: Container;
-    renderer: AbstractRenderer;
+    renderer: IRenderer;
 }
 
 export const displayUFO = ({ ufo, theme, mainContainer, foregroundContainer, renderer }: UFODisplayProps) => {

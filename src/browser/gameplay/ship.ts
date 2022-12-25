@@ -1,6 +1,5 @@
-import { AbstractRenderer, Texture } from "@pixi/core";
+import { IRenderer, Texture, utils } from "@pixi/core";
 import { Container } from "@pixi/display";
-import { hex2string } from "@pixi/utils";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { LINE_JOIN } from "@pixi/graphics";
 import { Ship, HYPERSPACE_DELAY } from "../../core";
@@ -11,7 +10,7 @@ import { Sprite } from "@pixi/sprite";
 import { createDropShadowTexture, createShadowTexture } from "../util";
 import { TickFn } from "../../core/engine";
 
-export const createShipFireTexture = (renderer: AbstractRenderer): Texture => {
+export const createShipFireTexture = (renderer: IRenderer): Texture => {
     const fire = new Graphics();
 
     fire.lineStyle({
@@ -28,7 +27,7 @@ export const createShipFireTexture = (renderer: AbstractRenderer): Texture => {
     return renderer.generateTexture(fire);
 }
 
-export const createShipTexture = (renderer: AbstractRenderer, lineWidth = 3, height = 60): Texture => {
+export const createShipTexture = (renderer: IRenderer, lineWidth = 3, height = 60): Texture => {
     const ship = new Graphics();
     const scale = height / 60;
     ship.lineStyle({
@@ -67,7 +66,7 @@ export interface ShipDisplayProps {
     mainContainer: Container;
     backgroundContainer: Container;
     foregroundContainer: Container;
-    renderer: AbstractRenderer;
+    renderer: IRenderer;
 }
 
 export const displayShip = ({ ship, theme, mainContainer, backgroundContainer, foregroundContainer, renderer }: ShipDisplayProps) => {
@@ -121,7 +120,7 @@ export const displayShip = ({ ship, theme, mainContainer, backgroundContainer, f
                         config: { scale: { start: 0.5, end: 0 } },
                     }, {
                         type: "colorStatic",
-                        config: { color: hex2string(shipSprite.tint) }
+                        config: { color: utils.hex2string(shipSprite.tint) }
                     }, {
                         type: "textureSingle",
                         config: { texture: createShadowTexture(renderer, shipTexture) },

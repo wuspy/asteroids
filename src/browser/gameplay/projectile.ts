@@ -1,5 +1,4 @@
-import { AbstractRenderer, Texture } from "@pixi/core";
-import { hex2string } from "@pixi/utils";
+import { IRenderer, Texture, utils } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
@@ -14,12 +13,12 @@ export interface ProjectileDisplayProps {
     theme: GameTheme;
     mainContainer: Container;
     backgroundContainer: Container;
-    renderer: AbstractRenderer;
+    renderer: IRenderer;
 }
 
-const TEXTURE_CACHE = new WeakMap<AbstractRenderer, Texture>();
+const TEXTURE_CACHE = new WeakMap<IRenderer, Texture>();
 
-const generateTextureCache = (renderer: AbstractRenderer) => {
+const generateTextureCache = (renderer: IRenderer) => {
     const graphics = new Graphics();
     graphics.beginFill(0xffffff, 1, true);
     graphics.drawCircle(0, 0, 5);
@@ -70,7 +69,7 @@ export const displayProjectile = ({ projectile, theme, mainContainer, background
             config: { scale: { start: 0.75, end: 0 } },
         }, {
             type: "colorStatic",
-            config: { color: hex2string(color) }
+            config: { color: utils.hex2string(color) }
         }, {
             type: "moveSpeed",
             config: { speed: { start: 50, end: 10 } },

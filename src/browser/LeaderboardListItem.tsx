@@ -1,6 +1,7 @@
 import { ComponentProps, useMemo } from "react";
 import { Container, Text } from "./react-pixi";
 import { GlowFilter } from "@pixi/filter-glow";
+import { FederatedPointerEvent } from "@pixi/events";
 import { HighScoreResponse } from "../core/api";
 import { Align, ContainerBackground, ContainerBackgroundShape } from "./layout";
 import { FONT_STYLE, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
@@ -39,13 +40,13 @@ export const LeaderboardListItem = ({ selected = false, data, index, onClick, ..
         fontSize: 24,
     }), [selected]);
 
-    const onPointerTap = () => onClick(index);
+    const onPointerTap = (e: FederatedPointerEvent) => e.button === 0 && onClick(index);
 
     return (
         <Container
             {...props}
             interactive
-            buttonMode
+            cursor="pointer"
             on:pointertap={onPointerTap}
             backgroundStyle={selected ? activeBackground : inactiveBackground}
             filters={selected ? selectedFilters : null}

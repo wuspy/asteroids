@@ -1,22 +1,6 @@
 import { DisplayObject, IDestroyOptions } from "@pixi/display";
-import { ISize } from "@pixi/math";
-import FlexLayout, { ComputedLayout, FlexLayoutProps, MeasureMode } from "./FlexLayout";
-
-declare module "@pixi/display"
-{
-    export interface DisplayObject {
-        _layout?: FlexLayout;
-        get layout(): FlexLayout;
-        get isLayoutChild(): boolean;
-        set layoutStyle(style: Partial<FlexLayoutProps>);
-        onLayoutMeasure(
-            width: number,
-            widthMeasureMode: MeasureMode,
-            height: number,
-            heightMeasureMode: MeasureMode,
-        ): ISize,
-    }
-}
+import { ISize } from "@pixi/core";
+import FlexLayout, { FlexLayoutProps, MeasureMode } from "./FlexLayout";
 
 const displayObject = DisplayObject.prototype;
 

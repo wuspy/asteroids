@@ -1,7 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { HighScoreResponse } from "../core/api";
 import { ApiErrorType, ApiResponse, getHighScores } from "./api";
-import { useApp } from "./AppContext";
 import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
 import { LeaderboardListItem, LEADERBOARD_LIST_ITEM_HEIGHT } from "./LeaderboardListItem";
 import { Container, Text } from "./react-pixi";
@@ -46,7 +45,6 @@ export interface LeaderboardProps {
 }
 
 export const LeaderboardModal = ({ open, onClose, selectedId }: LeaderboardProps) => {
-    const { renderer } = useApp();
     const [items, setItems] = useState<ApiResponse<HighScoreResponse[]> | "loading">();
     const [selectedIndex, setSelectedIndex] = useState(0);
     const listActions = useRef<VirtualizedListActions>(null);
@@ -109,7 +107,6 @@ export const LeaderboardModal = ({ open, onClose, selectedId }: LeaderboardProps
                 itemRenderer={itemRenderer}
                 overscroll={12}
                 itemHeight={LEADERBOARD_LIST_ITEM_HEIGHT}
-                interactionManager={renderer.plugins.interaction}
                 actions={listActions}
                 layoutStyle={{
                     width: 400,

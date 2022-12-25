@@ -1,4 +1,4 @@
-import { ISize } from "@pixi/math";
+import { ISize } from "@pixi/core";
 import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
 import {
