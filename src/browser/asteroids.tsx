@@ -1,4 +1,4 @@
-import { autoDetectRenderer } from '@pixi/core';
+import { Renderer, IRenderer } from '@pixi/core';
 import { AsteroidsGameContainer } from "./AsteroidsGameContainer";
 import { initYoga } from "./layout";
 import "./layout";
@@ -31,19 +31,18 @@ const MAX_ELAPSED_MS = 1000 / MIN_FPS;
         throw new Error(`#background does not exist`);
     }
 
-    const renderer = autoDetectRenderer<HTMLCanvasElement>({
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
+    if (dpr !== 1) {
+        container.style.transform = background.style.transform = `scale(${1 / dpr})`;
+    }
+
+    const renderer = new Renderer({
         width: container.clientWidth,
         height: container.clientHeight,
         antialias: false,
         backgroundAlpha: 0,
         powerPreference: "high-performance",
-        forceCanvas: false,
-    });
-
-    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
-    if (dpr !== 1) {
-        renderer.view.style.transform = background.style.transform = `scale(${1 / dpr})`;
-    }
+    }) as IRenderer as IRenderer<HTMLCanvasElement>;
 
     renderer.view.style.position = "absolute";
     container.appendChild(renderer.view);

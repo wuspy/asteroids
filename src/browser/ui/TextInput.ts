@@ -43,17 +43,9 @@ class DOMTextInput extends Container {
         this._fontSize = props.fontSize;
 
         this.addListener("layout", () => {
-            // Calculate world scale
-            const scale = { x: this.scale.x, y: this.scale.y };
-            let parent = this.parent;
-            while (parent) {
-                scale.x *= parent.scale.x;
-                scale.y *= parent.scale.y;
-                parent = parent.parent;
-            }
             // Set HTML input size
-            this.element.style.width = `${Math.round(this.layout.computedLayout.width * scale.x)}px`;
-            this.element.style.fontSize = `${this._fontSize * scale.y}px`;
+            this.element.style.width = `${this.layout.computedLayout.width * this.worldTransform.a}px`;
+            this.element.style.fontSize = `${this._fontSize * this.worldTransform.d}px`;
         });
     }
 
@@ -115,7 +107,10 @@ class DOMTextInput extends Container {
         height: number,
         heightMeasureMode: MeasureMode
     ): ISize {
-        return { width: 0, height: this.getElementHeight() };
+        return {
+            width: 0,
+            height: this.element.offsetHeight / this.worldTransform.d,
+        };
     }
 
     override destroy(options?: boolean | IDestroyOptions): void {
@@ -124,17 +119,6 @@ class DOMTextInput extends Container {
             this.element.parentNode!.removeChild(this.element);
             this._inputAppended = false;
         }
-    }
-
-    private getElementHeight(): number {
-        // Calculate world vertical scale
-        let scale = this.scale.y;
-        let parent = this.parent;
-        while (parent) {
-            scale *= parent.scale.y;
-            parent = parent.parent;
-        }
-        return this.element.offsetHeight / scale;
     }
 
     private setColor() {
