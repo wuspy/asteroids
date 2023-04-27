@@ -10,6 +10,7 @@ import { GameStatus } from "../core";
 import { LeaderboardModal } from "./LeaderboardModal";
 import { GameResponse } from "../core/api";
 import anime from "animejs";
+import { TextStyleFill } from "@pixi/text";
 
 export const GameOverScreen = (props: ContainerProps) => {
     const { game, token, dispatch } = useApp();
@@ -141,7 +142,7 @@ export const GameOverScreen = (props: ContainerProps) => {
                     style={{
                         ...FONT_STYLE,
                         fontSize: 20,
-                        fill: BUTTON_THEMES[ButtonType.Primary].inactive.fill?.color ?? 0xffffff
+                        fill: BUTTON_THEMES[ButtonType.Primary].inactive.fill?.color as TextStyleFill ?? 0xffffff
                     }}
                 />
             </Container>

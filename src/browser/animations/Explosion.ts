@@ -1,4 +1,4 @@
-import { IRenderer, Texture, DEG_TO_RAD } from "@pixi/core";
+import { IRenderer, Texture, DEG_TO_RAD, ColorSource } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { urandom, TickQueue } from "../../core/engine";
@@ -34,7 +34,7 @@ export interface ExplosionProps {
     queue: TickQueue;
     diameter: number;
     maxDuration: number;
-    color: number;
+    color: ColorSource;
     renderer: IRenderer;
 }
 

@@ -330,9 +330,9 @@ export class AsteroidsGame {
                 // Sort distribution by least to most likely
                 .sort(([, chance1], [, chance2]) => chance1 - chance2)
                 // Map chances to a running total
-                .map(([type, chance]) => [type, currentChance += chance * 100])
+                .map(([type, chance]) => [type, currentChance += chance * 100] as [UFOType, number])
                 // Find the first type that is >= the generated percent
-                .find(([, chance]) => chance >= randomPercent)![0] as UFOType;
+                .find(([, chance]) => chance >= randomPercent)![0];
 
             this.events.trigger("ufoCreated", new UFO({
                 state: this.state,

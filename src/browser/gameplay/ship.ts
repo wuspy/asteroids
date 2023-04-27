@@ -120,7 +120,7 @@ export const displayShip = ({ ship, theme, mainContainer, backgroundContainer, f
                         config: { scale: { start: 0.5, end: 0 } },
                     }, {
                         type: "colorStatic",
-                        config: { color: utils.hex2string(shipSprite.tint) }
+                        config: { color: utils.hex2string(shipSprite.tint as number) }
                     }, {
                         type: "textureSingle",
                         config: { texture: createShadowTexture(renderer, shipTexture) },

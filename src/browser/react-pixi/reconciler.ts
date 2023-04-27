@@ -192,8 +192,6 @@ export const PixiFiber = Reconciler({
 
     supportsHydration: false,
 
-    supportsMicrotask: true,
-
     /**
      * -------------------------------------------
      * Mutation

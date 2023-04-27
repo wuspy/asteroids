@@ -9,9 +9,12 @@ Text.prototype.onLayoutMeasure = function (
     height: number,
     heightMeasureMode: MeasureMode
 ): ISize {
-    this.style.wordWrapWidth = this.style.wordWrap && widthMeasureMode !== MeasureMode.Undefined
-        ? width / this.scale.x
-        : undefined;
+    if (widthMeasureMode === undefined) {
+        this.style.wordWrap = false;
+    }
+    if (this.style.wordWrap) {
+        this.style.wordWrapWidth = width / this.scale.x;
+    }
 
     return DisplayObject.prototype.onLayoutMeasure.call(this, width, widthMeasureMode, height, heightMeasureMode);
 }
