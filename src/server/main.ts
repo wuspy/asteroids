@@ -19,7 +19,7 @@ const errorResponse = (message: string) => ({ ok: false, message });
 const app = express();
 const upload = multer();
 
-app.set("trust proxy", config.trustedProxies);
+app.set("trust proxy", config.ASTEROIDS_TRUST_PROXY);
 
 if (process.env.NODE_ENV === "development") {
     // Static content isn't hosted through express in production
@@ -29,8 +29,11 @@ if (process.env.NODE_ENV === "development") {
 app.use(
     bodyParser.json(),
     bodyParser.urlencoded({ extended: true }),
-    morgan(":remote-addr - [:date[clf]] :method :url :status :res[content-length] - :response-time ms"),
 );
+
+if (config.ASTEROIDS_LOG) {
+    app.use(morgan(":remote-addr - [:date[clf]] :method :url :status :res[content-length] - :response-time ms"));
+}
 
 app.get("/api/game-token", async (request, response) => {
     try {
@@ -146,21 +149,16 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
         } else if (gameResult.error === GameValidatorError.VersionMismatch) {
             response.json(errorResponse("You're playing an old version of the game, so your score can't be saved."));
         } else {
-            if (process.env.NODE_ENV === "development") {
+            if (config.ASTEROIDS_SAVE_FAILED_GAMES) {
                 await storeGame({
-                    largeUfosDestroyed: 0,
-                    smallUfosDestroyed: 0,
-                    asteroidsDestroyed: 0,
-                    shotsFired: 0,
-                    accuracy: 0,
-                    duration: 0,
-                    playerName: "[FAILED]",
-                    version: params.version,
-                    score: params.score,
-                    level: params.level,
-                    log: params.log,
-                    tokenId: params.tokenId,
-                });
+                    ...params,
+                    largeUfosDestroyed: -1,
+                    smallUfosDestroyed: -1,
+                    asteroidsDestroyed: -1,
+                    shotsFired: -1,
+                    accuracy: -1,
+                    duration: -1,
+                }, true);
             }
             response.json(errorResponse("That score doesn't seem to be possible."));
         }
@@ -170,7 +168,7 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
     }
 });
 
-const server = app.listen(config.port, "0.0.0.0", () => console.log(`Server listening on port: ${config.port}`));
+const server = app.listen(8080, "0.0.0.0", () => console.log("Server listening on port 8080"));
 
 const shutdown = () => {
     console.log("Shutting down server");

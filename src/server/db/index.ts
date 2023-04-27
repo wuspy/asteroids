@@ -6,17 +6,17 @@ import { Database, PlayerNameFilterAction } from "./schema";
 import { Game, GameToken, HighScore } from "../models";
 import { bufferToUintArray, uintArrayToBuffer } from "./util";
 
-console.log(`Using database at ${config.dbHostname}:${config.dbPort}`);
+console.log(`Using database at ${config.ASTEROIDS_DB_HOST}:${config.ASTEROIDS_DB_PORT}`);
 
 const db = new Kysely<Database>({
     dialect: new PostgresDialect({
         pool: new Pool({
             database: "asteroids",
-            user: config.dbUsername,
-            host: config.dbHostname,
-            password: config.dbPassword,
-            port: config.dbPort,
-            ssl: config.dbSsl,
+            user: config.ASTEROIDS_DB_USER,
+            host: config.ASTEROIDS_DB_HOST,
+            password: config.ASTEROIDS_DB_PASS,
+            port: config.ASTEROIDS_DB_PORT,
+            ssl: config.ASTEROIDS_DB_SSL,
         }),
     }),
 });
@@ -39,7 +39,7 @@ export const findHighScores = async (): Promise<HighScore[]> =>
         .where("deleted", "=", false)
         .orderBy("score", "desc")
         .orderBy("time_added", "asc")
-        .limit(999)
+        .limit(config.ASTEROIDS_HIGH_SCORE_LIMIT)
         .execute();
 
 const selectGames = () =>
@@ -120,7 +120,7 @@ export const createGameToken = async (randomSeed: number[]): Promise<{ id: numbe
         ])
         .executeTakeFirstOrThrow();
 
-export const storeGame = async (game: ValidUnsavedGame): Promise<{ id: number, timeAdded: string }> =>
+export const storeGame = async (game: ValidUnsavedGame, deleted = false): Promise<{ id: number, timeAdded: string }> =>
     await db.insertInto("game")
         .values({
             player_name: game.playerName,
@@ -135,6 +135,7 @@ export const storeGame = async (game: ValidUnsavedGame): Promise<{ id: number, t
             asteroids_destroyed: game.asteroidsDestroyed,
             game_log: game.log,
             game_version: game.version,
+            deleted,
         })
         .returning([
             "game_id as id",
