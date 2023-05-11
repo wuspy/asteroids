@@ -1,45 +1,49 @@
 import { DEG_TO_RAD } from "@pixi/core";
-import { ComponentProps, useCallback, useRef } from "react";
-import { Container, Graphics, RefType } from "../react-pixi";
-import { Align, JustifyContent } from "../layout";
-import { useTick } from "../AppContext";
+import { SmoothGraphics } from "@pixi/graphics-smooth";
+import { createEffect, splitProps } from "solid-js";
+import { onTick } from "../AppContext";
+import { ContainerProps } from "../solid-pixi";
 
-export interface LoadingAnimationParams extends Omit<ComponentProps<typeof Graphics>, "draw"> {
+export interface LoadingAnimationParams extends ContainerProps {
     diameter: number;
     color: number;
 }
 
-export const LoadingAnimation = ({diameter, color, ...props}: LoadingAnimationParams) => {
-    const graphics = useRef<RefType<typeof Graphics>>(null);
+export const LoadingAnimation = (_props: LoadingAnimationParams) => {
+    const [props, childProps] = splitProps(_props, ["diameter", "color"]);
+    let g!: SmoothGraphics;
 
-    const draw = useCallback((g: RefType<typeof Graphics>) => {
+    createEffect(() => {
+        g.clear();
         g.lineStyle({
-            width: Math.ceil(diameter * 0.12),
-            color: color,
+            width: Math.ceil(props.diameter * 0.12),
+            color: props.color,
             alignment: 0,
         });
-        const radius = diameter / 2;
+        const radius = props.diameter / 2;
         g.moveTo(radius, 0);
         g.arc(0, 0, radius, 0, 90 * DEG_TO_RAD);
         g.moveTo(-radius, 0);
         g.arc(0, 0, radius, Math.PI, 270 * DEG_TO_RAD);
-    }, [diameter, color]);
-
-    useTick("app", (timestamp, elapsed) => {
-        if (graphics.current) {
-            graphics.current.rotation += elapsed * 2 * Math.PI;
-        }
     });
 
-    return <Container {...props} flexContainer layoutStyle={{ ...props.layoutStyle, alignItems: Align.Center, justifyContent: JustifyContent.Center }}>
-        <Graphics
-            ref={graphics}
-            draw={draw}
-            layoutStyle={{
-                width: diameter,
-                height: diameter,
-                originAtCenter: true,
-            }}
-        />
-    </Container>;
+    onTick("app", (timestamp, elapsed) => {
+        g.rotation += elapsed * 2 * Math.PI;
+    });
+
+    return (
+        <container
+            {...childProps}
+            flexContainer
+            yg:alignItems="center"
+            yg:justifyContent="center"
+        >
+            <graphics
+                ref={g}
+                yg:width={props.diameter}
+                yg:aspectRatio={1}
+                yg:originAtCenter
+            />
+        </container>
+    );
 };

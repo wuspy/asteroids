@@ -1,13 +1,13 @@
-import { Renderer, IRenderer } from '@pixi/core';
-import { AsteroidsGameContainer } from "./AsteroidsGameContainer";
-import { initYoga } from "./layout";
-import "./layout";
-import { createRoot } from './react-pixi';
 import { Assets } from "@pixi/assets";
-import { MIN_FPS, TickQueue } from "@wuspy/asteroids-core";
-import { AppProvider } from "./AppContext";
+import { IRenderer, Renderer } from '@pixi/core';
 import { Container } from "@pixi/display";
 import "@pixi/events";
+import { MIN_FPS, TickQueue } from "@wuspy/asteroids-core";
+import { AppProvider } from "./AppContext";
+import { AsteroidsGameContainer } from "./AsteroidsGameContainer";
+import "./layout";
+import { initYoga } from "./layout";
+import * as SolidPixi from './solid-pixi';
 
 const MAX_DEVICE_PIXEL_RATIO = 2;
 const MAX_ELAPSED_MS = 1000 / MIN_FPS;
@@ -49,12 +49,18 @@ export const run = async () => {
     const stage = new Container();
     const queue = new TickQueue();
 
-    const root = createRoot(stage);
-    root.render((
-        <AppProvider value={{ queue, stage, renderer, container, background, dpr }}>
+    SolidPixi.render(() => (
+        <AppProvider
+            stage={stage}
+            queue={queue}
+            renderer={renderer}
+            container={container}
+            background={background}
+            dpr={dpr}
+        >
             <AsteroidsGameContainer />
         </AppProvider>
-    ));
+    ), stage);
 
     let lastTimestamp = 0;
     const onAnimationFrame = (timestamp: number) => {

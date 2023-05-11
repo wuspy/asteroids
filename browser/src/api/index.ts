@@ -1,5 +1,6 @@
 export { ApiErrorType } from "./request";
 export type { ApiResponse } from "./request";
+export * from "./solid";
 import { GameResponse, GameTokenResponse, HighScoreResponse, SaveGameRequest } from "@wuspy/asteroids-core";
 import { ApiResponse, get, mapApiResponse, post } from "./request";
 

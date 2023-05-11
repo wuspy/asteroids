@@ -1,9 +1,7 @@
+import { IRenderer, ISize } from "@pixi/core";
+import { Container } from "@pixi/display";
 import {
     AsteroidsGame,
-    clamp,
-    createRandom,
-    createRandomSeed,
-    decodeIntArray,
     GameEvents,
     GameStatus,
     GameTokenResponse,
@@ -12,14 +10,18 @@ import {
     MAX_ASPECT_RATIO,
     MIN_ASPECT_RATIO,
     TickFn,
-    TickQueue
+    TickQueue,
+    clamp,
+    createRandom,
+    createRandomSeed,
+    decodeIntArray
 } from "@wuspy/asteroids-core";
-import { IRenderer } from "@pixi/core";
-import { Container } from "@pixi/display";
-import { createContext, Dispatch, ReactNode, Reducer, useContext, useEffect, useLayoutEffect, useReducer, useRef } from "react";
-import { getGameToken } from "./api";
+import { Accessor, ParentProps, batch, createContext, createEffect, createSignal, onCleanup, useContext } from "solid-js";
 import { GameTheme, getRandomTheme } from "./GameTheme";
+import { getGameToken } from "./api";
 import { controls, wasdMapping } from "./input";
+import { TextStyleProvider } from "./solid-pixi";
+import { FONT_STYLE } from "./ui";
 
 export interface AppState {
     queue: TickQueue;
@@ -28,14 +30,24 @@ export interface AppState {
     container: HTMLElement;
     background: HTMLElement;
     dpr: number;
+    scale: Accessor<number>;
+    worldSize: Accessor<ISize>;
     game: AsteroidsGame;
-    theme: GameTheme;
+    theme: Accessor<GameTheme>;
     input: InputProvider<typeof controls>;
-    quit: boolean;
-    paused: boolean;
-    token: GameTokenResponse | null;
-    nextToken: GameTokenResponse | null;
-    nextTokenLoading: boolean;
+    isQuit: Accessor<boolean>;
+    isPaused: Accessor<boolean>;
+    token: Accessor<GameTokenResponse | null>;
+    nextToken: Accessor<GameTokenResponse | null>;
+    nextTokenLoading: Accessor<boolean>;
+}
+
+export interface AppActions {
+    pause(): void;
+    resume(): void;
+    start(): void;
+    quit(): void;
+    reset(): void;
 }
 
 export type AppAction =
@@ -52,259 +64,214 @@ export type AppAction =
         token: GameTokenResponse | null,
     }
 
-const performResize = (state: AppState): void => {
-    const { game, container, background, renderer, stage, dpr } = state;
-    const [nativeWidth, nativeHeight] = [
-        container.clientWidth * dpr,
-        container.clientHeight * dpr,
-    ];
-    const aspectRatio = nativeWidth / nativeHeight;
-    game.aspectRatio = clamp(aspectRatio, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO);
-    // Scale world based on new screen size and aspect ratio
-    if (aspectRatio > MAX_ASPECT_RATIO) {
-        stage.scale.set(nativeHeight / game.worldSize.height);
-        renderer.resize(nativeHeight * MAX_ASPECT_RATIO, nativeHeight);
-    } else if (aspectRatio < MIN_ASPECT_RATIO) {
-        stage.scale.set(nativeWidth / game.worldSize.width);
-        renderer.resize(nativeWidth, nativeWidth / MIN_ASPECT_RATIO);
-    } else {
-        renderer.resize(nativeWidth, nativeHeight);
-        stage.scale.set(nativeWidth / game.worldSize.width);
-    }
-    // Position view in center of screen
-    renderer.view.style.top = `${Math.round((container.clientHeight - renderer.view.clientHeight) / 2)}px`;
-    renderer.view.style.left = `${Math.round((container.clientWidth - renderer.view.clientWidth) / 2)}px`;
-    // Resize background to view
-    background.style.top = renderer.view.style.top;
-    background.style.left = renderer.view.style.left;
-    background.style.width = `${renderer.view.width}px`;
-    background.style.height = `${renderer.view.height}px`;
-    if (process.env.NODE_ENV === "development") {
-        console.log(
-            `Aspect Ratio\t${aspectRatio.toPrecision(5)}\n` +
-            `DPR\t\t${dpr.toPrecision(5)}\n` +
-            `Stage\t\t{ x: ${renderer.view.width.toPrecision(5)}, y: ${renderer.view.height.toPrecision(5)} }\n` +
-            `Game\t\t{ x: ${game.worldSize.width.toPrecision(5)}, y: ${game.worldSize.height.toPrecision(5)} }\n` +
-            `Scale\t\t{ x: ${stage.scale.x.toPrecision(5)}, y: ${stage.scale.y.toPrecision(5)} }`
-        );
-    }
-};
+export const AppContext = createContext<AppState & AppActions>();
 
-export type ThunkAction = (
-    dispatch: Reducer<AppState, AppAction>,
-    state: AppState,
-) => void;
-
-const reducer: Reducer<AppState, AppAction> = (state, action): AppState => {
-    if (typeof action === "string") {
-        switch (action) {
-            case "start":
-                if (state.game.state.status === GameStatus.Init && !state.nextTokenLoading) {
-                    if (state.nextToken) {
-                        try {
-                            state.game.random = createRandom(decodeIntArray(state.nextToken.randomSeed));
-                            state.game.enableLogging = true;
-                        } catch (e) {
-                            console.error("Failed to seed random from token");
-                            state.game.random = createRandom(createRandomSeed());
-                            state.game.enableLogging = false;
-                        }
-                    } else {
-                        state.game.random = createRandom(createRandomSeed());
-                        state.game.enableLogging = false;
-                    }
-                    state.game.start();
-                    return {
-                        ...state,
-                        token: state.nextToken,
-                        nextToken: null,
-                    };
-                } else {
-                    return state;
-                }
-            case "pause":
-                if (!state.paused && state.game.state.status === GameStatus.Running) {
-                    return { ...state, paused: true };
-                } else {
-                    return state;
-                }
-            case "resume":
-                if (state.paused) {
-                    return { ...state, paused: false };
-                } else {
-                    return state;
-                }
-            case "finished":
-                return { ...state };
-            case "quit":
-                return { ...state, quit: true };
-            case "reset":
-                state.game.reset();
-                return {
-                    ...state,
-                    paused: false,
-                    quit: false,
-                    token: null,
-                    theme: getRandomTheme(),
-                }
-            case "resize":
-                performResize(state);
-                return { ...state, ...reducer(state, "pause") };
-            case "setNextTokenLoading":
-                return { ...state, nextTokenLoading: true };
-        }
-    } else {
-        switch (action.type) {
-            case "setNextToken":
-                return {
-                    ...state,
-                    nextTokenLoading: false,
-                    nextToken: action.token,
-                };
-        }
-    }
-};
-
-export const AppContext = createContext<AppState & { dispatch: Dispatch<AppAction> } | undefined>(undefined);
-
-export interface AppProviderProps {
-    value: Pick<AppState,
+export const AppProvider = (
+    props: ParentProps & Pick<AppState,
         | "queue"
         | "container"
         | "background"
         | "renderer"
         | "stage"
         | "dpr"
-    >;
-    children: ReactNode;
-}
+    >
+) => {
+    const game = new AsteroidsGame();
+    const input = new InputProvider(controls, wasdMapping);
+    const [theme, setTheme] = createSignal(getRandomTheme());
+    const [isPaused, setPaused] = createSignal(false);
+    const [isQuit, setQuit] = createSignal(false);
+    const [token, setToken] = createSignal<GameTokenResponse | null>(null);
+    const [nextToken, setNextToken] = createSignal<GameTokenResponse | null>(null);
+    const [nextTokenLoading, setNextTokenLoading] = createSignal(true);
+    const [scale, setScale] = createSignal(props.stage.scale.x);
+    const [worldSize, setWorldSize] = createSignal({ ...game.worldSize });
 
-export const AppProvider = ({ children, value }: AppProviderProps) => {
-    const [state, dispatch] = useReducer(reducer, value, (state) => {
-        const fullState: AppState = {
-            ...state,
-            game: new AsteroidsGame(),
-            input: new InputProvider(controls, wasdMapping),
-            theme: getRandomTheme(),
-            paused: false,
-            quit: false,
-            token: null,
-            nextToken: null,
-            nextTokenLoading: true,
-        };
-        performResize(fullState);
-        return fullState;
+    const pause = () => {
+        if (game.state.status === GameStatus.Running) {
+            setPaused(true);
+        }
+    };
+
+    const performResize = () => {
+        const [nativeWidth, nativeHeight] = [
+            props.container.clientWidth * props.dpr,
+            props.container.clientHeight * props.dpr,
+        ];
+        const aspectRatio = nativeWidth / nativeHeight;
+        game.aspectRatio = clamp(aspectRatio, MAX_ASPECT_RATIO, MIN_ASPECT_RATIO);
+        // Scale world based on new screen size and aspect ratio
+        if (aspectRatio > MAX_ASPECT_RATIO) {
+            props.stage.scale.set(nativeHeight / game.worldSize.height);
+            props.renderer.resize(nativeHeight * MAX_ASPECT_RATIO, nativeHeight);
+        } else if (aspectRatio < MIN_ASPECT_RATIO) {
+            props.stage.scale.set(nativeWidth / game.worldSize.width);
+            props.renderer.resize(nativeWidth, nativeWidth / MIN_ASPECT_RATIO);
+        } else {
+            props.renderer.resize(nativeWidth, nativeHeight);
+            props.stage.scale.set(nativeWidth / game.worldSize.width);
+        }
+        // Position view in center of screen
+        props.renderer.view.style.top = `${Math.round((props.container.clientHeight - props.renderer.view.clientHeight) / 2)}px`;
+        props.renderer.view.style.left = `${Math.round((props.container.clientWidth - props.renderer.view.clientWidth) / 2)}px`;
+        // Resize background to view
+        props.background.style.top = props.renderer.view.style.top;
+        props.background.style.left = props.renderer.view.style.left;
+        props.background.style.width = `${props.renderer.view.width}px`;
+        props.background.style.height = `${props.renderer.view.height}px`;
+        batch(() => {
+            setScale(props.stage.scale.x);
+            setWorldSize({ ...game.worldSize });
+            pause();
+        });
+        if (process.env.NODE_ENV === "development") {
+            console.log(
+                `Aspect Ratio\t${aspectRatio.toPrecision(5)}\n` +
+                `DPR\t\t${props.dpr.toPrecision(5)}\n` +
+                `Stage\t\t{ x: ${props.renderer.view.width.toPrecision(5)}, y: ${props.renderer.view.height.toPrecision(5)} }\n` +
+                `Game\t\t{ x: ${game.worldSize.width.toPrecision(5)}, y: ${game.worldSize.height.toPrecision(5)} }\n` +
+                `Scale\t\t{ x: ${props.stage.scale.x.toPrecision(5)}, y: ${props.stage.scale.y.toPrecision(5)} }`
+            );
+        }
+    };
+
+    performResize();
+    window.addEventListener("resize", performResize);
+
+    const resume = () => setPaused(false);
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            pause();
+        }
     });
 
-    useEffect(() => {
-        const onFinished = () => dispatch("finished");
-        state.game.events.on("finished", onFinished);
-        return () => state.game.events.off("finished", onFinished);
-    }, [state.game.events]);
+    // TODO maybe make this a resource
+    const loadGameToken = async () => {
+        batch(() => {
+            setToken(nextToken());
+            setNextTokenLoading(true);
+            setNextToken(null);
+        });
+        const response = await getGameToken();
+        batch(() => {
+            setNextToken(response.ok ? response.data : null);
+            setNextTokenLoading(false);
+        });
+    };
 
-    useEffect(() => {
-        const onResize = () => dispatch("resize");
-        window.addEventListener("resize", onResize);
+    loadGameToken();
 
-        const onVisibilityChange = () => {
-            if (document.hidden) {
-                dispatch("pause");
-            }
-        };
-        document.addEventListener("visibilitychange", onVisibilityChange);
-
-        return () => {
-            window.removeEventListener("resize", onResize);
-            document.removeEventListener("visibilitychange", onVisibilityChange);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!state.nextToken) {
-            dispatch("setNextTokenLoading");
-            getGameToken().then((response) => {
-                if (response.ok) {
-                    dispatch({ type: "setNextToken", token: response.data });
-                } else {
-                    dispatch({ type: "setNextToken", token: null });
+    const start = () => {
+        if (game.state.status === GameStatus.Init && !nextTokenLoading()) {
+            if (nextToken()) {
+                try {
+                    game.random = createRandom(decodeIntArray(nextToken()!.randomSeed));
+                    game.enableLogging = true;
+                } catch (e) {
+                    console.error("Failed to seed random from token");
+                    game.random = createRandom(createRandomSeed());
+                    game.enableLogging = false;
                 }
-            });
+            } else {
+                game.random = createRandom(createRandomSeed());
+                game.enableLogging = false;
+            }
+            loadGameToken();
+            game.start();
         }
-    }, [state.nextToken]);
+    };
+
+    const reset = () => {
+        game.reset();
+        batch(() => {
+            setPaused(false);
+            setQuit(false);
+            setToken(null);
+            setTheme(getRandomTheme());
+        });
+    };
+
+    const value = {
+        ...props,
+        game,
+        input,
+        theme,
+        scale,
+        worldSize,
+        token,
+        nextToken,
+        nextTokenLoading,
+        isPaused,
+        pause,
+        resume,
+        isQuit,
+        quit: () => setQuit(true),
+        start,
+        reset,
+    };
 
     return (
-        <AppContext.Provider value={{ ...state, dispatch }}>
-            {children}
+        <AppContext.Provider value={value}>
+            <TextStyleProvider {...FONT_STYLE}>
+                {props.children}
+            </TextStyleProvider>
         </AppContext.Provider>
     );
 }
 
 export const useApp = () => useContext(AppContext)!;
 
-export const useTickQueue = (type: "app" | "game") => {
-    const app = useApp();
-    return type === "app" ? app.queue : app.game.queue;
-};
-
 const TICK_PRIORITY = 100;
+const trueFn: () => any = () => true;
 
-export const useTick = (type: "app" | "game", callback: (timestamp: number, elapsed: number) => void, enabled = true) => {
-    const queue = useTickQueue(type);
-    const ref = useRef(callback);
+export const onTick = (type: "app" | "game", callback: TickFn, enabled = trueFn) => {
+    const app = useApp();
+    const queue = type === "app" ? app.queue : app.game.queue;
+    let registered = false;
 
-    // These must be layout effects because if a subscriber mutates a ref in the callback, they should be
-    // unsubscribed from the tick before the ref is cleared.
-    useLayoutEffect(() => {
-        ref.current = callback;
-    }, [callback]);
-
-    useLayoutEffect(() => {
-        if (enabled) {
-            const dispatch: TickFn = (timestamp, elapsed) => ref.current!(timestamp, elapsed);
-            queue.add(TICK_PRIORITY, dispatch)
-            return () => queue.remove(dispatch);
+    createEffect(() => {
+        if (!!enabled() !== registered) {
+            registered = !!enabled();
+            registered ? queue.add(TICK_PRIORITY, callback) : queue.remove(callback);
         }
-    }, [queue, enabled]);
+    });
+
+    onCleanup(() => registered && queue.remove(callback));
 };
 
-export const useGameEvent = <K extends keyof GameEvents>(event: K, callback: GameEvents[K], enabled = true) => {
+export const onGameEvent = <K extends keyof GameEvents>(
+    event: K,
+    callback: GameEvents[K],
+    enabled = trueFn
+) => {
     const { game } = useApp();
-    const ref = useRef(callback);
+    let registered = false;
 
-    // These must be layout effects because if a subscriber mutates a ref in the callback, they should be
-    // unsubscribed from the event before the ref is cleared.
-    useLayoutEffect(() => {
-        ref.current = callback;
-    }, [callback]);
-
-    useLayoutEffect(() => {
-        if (enabled) {
-            const dispatch: typeof callback = (...args: any[]) => (ref.current as any)!(...args);
-            game.events.on(event, dispatch);
-            return () => game.events.off(event, dispatch);
+    createEffect(() => {
+        if (!!enabled() !== registered) {
+            registered = !!enabled();
+            registered ? game.events.on(event, callback) : game.events.off(event, callback);
         }
-    }, [game, event, enabled]);
+    });
+
+    onCleanup(() => registered && game.events.off(event, callback));
 };
 
-export const useInputEvent = <K extends keyof InputProviderEvents<typeof controls>>(
+export const onInputEvent = <K extends keyof InputProviderEvents<typeof controls>>(
     event: K,
     callback: InputProviderEvents<typeof controls>[K],
-    enabled = true,
+    enabled = trueFn,
 ) => {
     const { input } = useApp();
-    const ref = useRef(callback);
+    let registered = false;
 
-    // These must be layout effects because if a subscriber mutates a ref in the callback, they should be
-    // unsubscribed from the event before the ref is cleared.
-    useLayoutEffect(() => {
-        ref.current = callback;
-    }, [callback]);
-
-    useLayoutEffect(() => {
-        if (enabled) {
-            const dispatch: typeof callback = (...args: any[]) => (ref.current as any)!(...args);
-            input.events.on(event, dispatch);
-            return () => input.events.off(event, dispatch);
+    createEffect(() => {
+        if (!!enabled() !== registered) {
+            registered = !!enabled();
+            registered ? input.events.on(event, callback) : input.events.off(event, callback);
         }
-    }, [input, event, enabled]);
+    });
+
+    onCleanup(() => registered && input.events.off(event, callback));
 };

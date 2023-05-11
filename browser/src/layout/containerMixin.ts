@@ -93,7 +93,7 @@ Object.defineProperties(container, {
                 }
                 if (debugLayout && !this._debugGraphics) {
                     this._debugGraphics = new Graphics();
-                    this._debugGraphics.layout.excluded = true;
+                    this._debugGraphics.layout.style.excluded = true;
                     this._debugGraphics.zIndex = Number.MAX_SAFE_INTEGER;
                     this.addChild(this._debugGraphics);
                     this.addListener("layout", this._debugGraphicsHandler);
@@ -115,7 +115,7 @@ Object.defineProperties(container, {
             }
             if (background && !this._backgroundGraphics) {
                 this._backgroundGraphics = new Graphics();
-                this._backgroundGraphics.layout.excluded = true;
+                this._backgroundGraphics.layout.style.excluded = true;
                 this.addChildAt(this._backgroundGraphics, 0);
                 this._backgroundSize = { width: 0, height: 0 };
                 this.addListener("layout", this._backgroundGraphicsHandler);

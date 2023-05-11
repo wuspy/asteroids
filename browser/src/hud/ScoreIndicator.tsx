@@ -1,36 +1,36 @@
-import { ComponentProps, useState } from "react"
-import { FONT_STYLE, ScoreText, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR } from "../ui";
+import { createSignal } from "solid-js";
+import { onGameEvent, useApp } from "../AppContext";
 import { ContainerBackgroundShape } from "../layout";
-import { Container } from "../react-pixi";
-import { useApp, useGameEvent } from "../AppContext";
+import { ContainerProps } from "../solid-pixi";
+import { ScoreText, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR } from "../ui";
 
-export type ScoreIndicatorProps = ComponentProps<typeof Container>;
+export type ScoreIndicatorProps = ContainerProps;
 
 export const ScoreIndicator = (props: ScoreIndicatorProps) => {
     const { game } = useApp();
-    const [currentScore, setCurrentScore] = useState(game.state.score);
+    const [currentScore, setCurrentScore] = createSignal(game.state.score);
 
-    useGameEvent("scoreChanged", (score) => {
-        setCurrentScore(score);
-    });
+    onGameEvent("scoreChanged", setCurrentScore);
+    onGameEvent("reset", () => setCurrentScore(0));
 
-    useGameEvent("reset", () => setTimeout(() => setCurrentScore(0)));
-
-    return <Container
-        {...props}
-        flexContainer
-        interactiveChildren={false}
-        layoutStyle={{ ...props.layoutStyle, paddingX: 12, paddingY: 8 }}
-        backgroundStyle={{
-            shape: ContainerBackgroundShape.Rectangle,
-            cornerRadius: 12,
-            fill: {
-                color: UI_BACKGROUND_COLOR,
-                alpha: UI_BACKGROUND_ALPHA,
-                smooth: true,
-            },
-        }}
-    >
-        <ScoreText animate score={currentScore} zeroAlpha={0.25} style={{ ...FONT_STYLE, fontSize: 48 }} />
-    </Container>
+    return (
+        <container
+            {...props}
+            interactiveChildren={false}
+            flexContainer
+            yg:paddingX={12}
+            yg:paddingY={8}
+            backgroundStyle={{
+                shape: ContainerBackgroundShape.Rectangle,
+                cornerRadius: 12,
+                fill: {
+                    color: UI_BACKGROUND_COLOR,
+                    alpha: UI_BACKGROUND_ALPHA,
+                    smooth: true,
+                },
+            }}
+        >
+            <ScoreText animate score={currentScore()} zeroAlpha={0.25} style={{ fontSize: 48 }} />
+        </container>
+    );
 };

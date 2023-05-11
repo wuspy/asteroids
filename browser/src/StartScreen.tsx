@@ -1,41 +1,44 @@
-import { GameStatus } from "@wuspy/asteroids-core";
+import { Container } from "@pixi/display";
 import { FederatedPointerEvent } from "@pixi/events";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { GameStatus } from "@wuspy/asteroids-core";
+import { Show, createEffect, createSignal } from "solid-js";
 import { AboutMeModal } from "./AboutMeModal";
-import { useApp, useInputEvent } from "./AppContext";
+import { onGameEvent, onInputEvent, useApp } from "./AppContext";
 import { LeaderboardModal } from "./LeaderboardModal";
 import { StartControl } from "./StartControl";
 import { createShipTexture } from "./gameplay";
-import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
-import { Container, ContainerProps, RefType, Sprite } from "./react-pixi";
-import { Button, ButtonType, ControlDescription, FadeContainer, Pointer } from "./ui";
+import { ContainerProps } from "./solid-pixi";
+import { Button, ControlDescription, FadeContainer, Pointer } from "./ui";
 import { createDropShadowTexture } from "./util";
 
-const delayBetweenControls = 100;
+const delayBetweenControls = 120;
 
 export const StartScreen = (props: ContainerProps) => {
-    const { game, renderer, theme, nextToken, nextTokenLoading, dispatch } = useApp();
-    const gameInit = game.state.status === GameStatus.Init;
-    const [visible, setVisible] = useState(false);
-    const [bottomControlsVisible, setBottomControlsVisible] = useState(false);
-    const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-    const [aboutOpen, setAboutOpen] = useState(false);
-    const shipTexture = useMemo(() => createDropShadowTexture(renderer, createShipTexture(renderer)), [renderer]);
-    const mainContainer = useRef<RefType<typeof Container>>(null);
-    const [fadeInDelay, setFadeInDelay] = useState(500);
+    const { game, renderer, theme, nextToken, nextTokenLoading, start } = useApp();
 
-    useEffect(() => gameInit ? show(true) : hide(), [gameInit]);
+    const [started, setStarted] = createSignal(game.state.status !== GameStatus.Init);
+    const [visible, setVisible] = createSignal(false);
+    const [bottomControlsVisible, setBottomControlsVisible] = createSignal(false);
+    const [leaderboardOpen, setLeaderboardOpen] = createSignal(false);
+    const [aboutOpen, setAboutOpen] = createSignal(false);
+    const [fadeInDelay, setFadeInDelay] = createSignal(500);
+
+    let mainContainer!: Container;
+
+    createEffect(() => started() ? setVisible(false) : show(true));
+    onGameEvent("started", () => setStarted(true));
+    onGameEvent("reset", () => setStarted(false));
 
     const onStart = () => {
-        if (!nextTokenLoading) {
-            hide();
-            setTimeout(() => dispatch("start"), 1000);
+        if (!nextTokenLoading()) {
+            setVisible(false)
+            setTimeout(start, 1000);
         }
     };
 
     const onStartClick = (e: FederatedPointerEvent) => e.button === 0 && onStart();
 
-    useInputEvent("poll", (state, lastState) => {
+    onInputEvent("poll", (state, lastState) => {
         if (state.start && !lastState.start) {
             onStart();
         }
@@ -52,13 +55,9 @@ export const StartScreen = (props: ContainerProps) => {
         }
     };
 
-    const hide = () => {
-        setVisible(false);
-    };
-
     const onAboutClick = () => {
         setAboutOpen(true);
-        hide();
+        setVisible(false);
     };
     const onAboutClose = () => {
         setAboutOpen(false);
@@ -66,7 +65,7 @@ export const StartScreen = (props: ContainerProps) => {
     };
     const onLeaderboardClick = () => {
         setLeaderboardOpen(true);
-        hide();
+        setVisible(false);
     };
     const onLeaderboardClose = () => {
         setLeaderboardOpen(false);
@@ -77,171 +76,172 @@ export const StartScreen = (props: ContainerProps) => {
         <FadeContainer
             {...props}
             ref={mainContainer}
-            visible={visible}
-            keepMounted={gameInit}
+            visible={visible()}
+            keepMounted={!started()}
             fadeInDuration={500}
             fadeOutDuration={500}
             flexContainer
-            layoutStyle={{
-                alignItems: Align.Center,
-                justifyContent: JustifyContent.Center,
-            }}
+            yg:alignItems="center"
+            yg:justifyContent="center"
         >
-            <Container
-                alpha={theme.foregroundAlpha}
+            <container
+                alpha={theme().foregroundAlpha}
                 skew={[-0.02, 0.02]}
-                layoutStyle={{
-                    position: PositionType.Absolute,
-                    originAtCenter: true,
-                }}
+                yg:position="absolute"
+                yg:originAtCenter
             >
                 <Pointer
                     position={[0, -40]}
                     angle={0}
                     length={50}
-                    delay={fadeInDelay}
-                    revealed={visible}
-                    color={theme.foregroundColor}
+                    delay={fadeInDelay()}
+                    revealed={visible()}
+                    color={theme().foregroundColor}
                     childAttachment="bottom"
                 >
                     <ControlDescription
-                        color={theme.foregroundColor}
+                        color={theme().foregroundColor}
                         size={24}
                         control="fire"
                         beforeLabel="Fire"
-                        direction={FlexDirection.Column}
+                        direction="column"
                     />
                 </Pointer>
                 <Pointer
                     position={[20, -10]}
                     angle={70}
                     length={50}
-                    delay={fadeInDelay + delayBetweenControls}
-                    revealed={visible}
-                    color={theme.foregroundColor}
+                    delay={fadeInDelay() + delayBetweenControls}
+                    revealed={visible()}
+                    color={theme().foregroundColor}
                     childAttachment="left"
                 >
                     <ControlDescription
-                        color={theme.foregroundColor}
+                        color={theme().foregroundColor}
                         size={24}
                         control="turn"
                         analogValue={1}
                         afterLabel="Turn Right"
-                        direction={FlexDirection.Row}
+                        direction="row"
                     />
                 </Pointer>
                 <Pointer
                     position={[26, 40]}
                     angle={120}
                     length={50}
-                    delay={fadeInDelay + 2 * delayBetweenControls}
-                    revealed={visible}
-                    color={theme.foregroundColor}
+                    delay={fadeInDelay() + 2 * delayBetweenControls}
+                    revealed={visible()}
+                    color={theme().foregroundColor}
                     childAttachment="left"
                 >
                     <ControlDescription
-                        color={theme.foregroundColor}
+                        color={theme().foregroundColor}
                         size={24}
                         control="hyperspace"
                         afterLabel="Hyperspace"
-                        direction={FlexDirection.Row}
+                        direction="row"
                     />
                 </Pointer>
                 <Pointer
                     position={[0, 30]}
                     angle={180}
                     length={50}
-                    delay={fadeInDelay + 3 * delayBetweenControls}
-                    revealed={visible}
-                    color={theme.foregroundColor}
+                    delay={fadeInDelay() + 3 * delayBetweenControls}
+                    revealed={visible()}
+                    color={theme().foregroundColor}
                     childAttachment="top"
                 >
                     <ControlDescription
-                        color={theme.foregroundColor}
+                        color={theme().foregroundColor}
                         size={24}
                         control="thrust"
                         afterLabel="Thrust"
-                        direction={FlexDirection.Column}
+                        direction="column"
                     />
                 </Pointer>
                 <Pointer
                     position={[-26, 40]}
                     angle={240}
                     length={50}
-                    delay={fadeInDelay + 4 * delayBetweenControls}
-                    revealed={visible}
-                    color={theme.foregroundColor}
+                    delay={fadeInDelay() + 4 * delayBetweenControls}
+                    revealed={visible()}
+                    color={theme().foregroundColor}
                     childAttachment="right"
                 >
                     <ControlDescription
-                        color={theme.foregroundColor}
+                        color={theme().foregroundColor}
                         size={24}
                         control="start"
                         beforeLabel="Pause"
-                        direction={FlexDirection.Row}
+                        direction="row"
                     />
                 </Pointer>
                 <Pointer
                     position={[-20, -10]}
                     angle={290}
                     length={50}
-                    delay={fadeInDelay + 5 * delayBetweenControls}
-                    revealed={visible}
-                    color={theme.foregroundColor}
+                    delay={fadeInDelay() + 5 * delayBetweenControls}
+                    revealed={visible()}
+                    color={theme().foregroundColor}
                     childAttachment="right"
                 >
                     <ControlDescription
-                        color={theme.foregroundColor}
+                        color={theme().foregroundColor}
                         size={24}
                         control="turn"
                         analogValue={-1}
                         beforeLabel="Turn Left"
-                        direction={FlexDirection.Row}
+                        direction="row"
                     />
                 </Pointer>
-                <Sprite texture={shipTexture} anchor={0.5} tint={theme.foregroundColor} />
-            </Container>
+                <sprite
+                    texture={createDropShadowTexture(renderer, createShipTexture(renderer))}
+                    anchor={0.5}
+                    tint={theme().foregroundColor}
+                />
+            </container>
             <FadeContainer
-                flexContainer
                 fadeInDuration={500}
                 fadeOutDuration={0}
                 keepMounted
                 keepPixiVisible
-                visible={bottomControlsVisible}
+                visible={bottomControlsVisible()}
                 blur={0}
                 filterPadding={24}
                 skew={[-0.02, 0.02]}
-                layoutStyle={{
-                    flexDirection: FlexDirection.Column,
-                    alignItems: Align.Center,
-                    top: 220,
-                }}
+                flexContainer
+                yg:flexDirection="column"
+                yg:alignItems="center"
+                yg:top={220}
             >
                 <StartControl
-                    color={theme.foregroundColor}
-                    alpha={theme.foregroundAlpha}
-                    layoutStyle={{ margin: 24 }}
+                    type="start"
+                    color={theme().foregroundColor}
+                    alpha={theme().foregroundAlpha}
+                    yg:margin={24}
                     on:pointertap={onStartClick}
                 />
-                <Container flexContainer layoutStyle={{ flexDirection: FlexDirection.Column, alignItems: Align.Center }}>
-                    <Container flexContainer>
+                <container flexContainer yg:flexDirection="column" yg:alignItems="center">
+                    <container flexContainer>
                         <Button
                             text="About Me"
-                            type={ButtonType.Secondary}
+                            type="secondary"
                             onClick={onAboutClick}
-                            layoutStyle={{ marginX: 12 }}
+                            yg:marginX={12}
                         />
-                        {nextToken && <Button
-                            text="Leaderboard"
-                            type={ButtonType.Secondary}
-                            onClick={onLeaderboardClick}
-                            layoutStyle={{ marginX: 12 }}
-                        />}
-                    </Container>
-                </Container>
+                        <Show when={nextToken()}>
+                            <Button
+                                text="Leaderboard"
+                                type="secondary"
+                                onClick={onLeaderboardClick}
+                                yg:marginX={12}
+                            />
+                        </Show>
+                    </container>
+                </container>
             </FadeContainer>
         </FadeContainer>
-        <LeaderboardModal open={leaderboardOpen} onClose={onLeaderboardClose} />
-        <AboutMeModal open={aboutOpen} onClose={onAboutClose} />
+        <LeaderboardModal open={leaderboardOpen()} onClose={onLeaderboardClose} />
+        <AboutMeModal open={aboutOpen()} onClose={onAboutClose} />
     </>;
 };

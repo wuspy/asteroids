@@ -1,13 +1,11 @@
 import { Button } from "./Button";
-import { ButtonType } from "./theme";
-
 export interface ModalCloseButtonProps {
     onClick: () => void;
 }
 
-export const ModalCloseButton = ({ onClick }: ModalCloseButtonProps) =>
+export const ModalCloseButton = (props: ModalCloseButtonProps) =>
     <Button
-        type={ButtonType.Secondary}
+        type="secondary"
         text="[x]"
-        onClick={onClick}
+        onClick={props.onClick}
     />;

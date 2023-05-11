@@ -1,53 +1,52 @@
 import { GlowFilter } from "@pixi/filter-glow";
 import anime from "animejs";
-import { useMemo } from "react";
-import { useApp, useTick } from "./AppContext";
-import { FlexDirection } from "./layout";
-import { ContainerProps } from "./react-pixi"
+import { useApp, onTick } from "./AppContext";
 import { ControlDescription } from "./ui";
+import { createRenderEffect, splitProps } from "solid-js";
+import { ContainerProps } from "./solid-pixi";
 
 export interface StartControlProps extends ContainerProps {
     color: number;
-    resume?: boolean;
+    type: "start" | "resume";
 }
 
-export const StartControl = ({ resume = false, ...props }: StartControlProps) => {
+export const StartControl = (_props: StartControlProps) => {
+    const [props, childProps] = splitProps(_props, ["type"]);
+
     const { theme } = useApp();
 
-    const glowFilter = useMemo(() => new GlowFilter({
+    const glowFilter = new GlowFilter({
         innerStrength: 0.25,
         outerStrength: 0.25,
         distance: 24,
-        color: theme.foregroundColor,
-    }), [theme.foregroundColor]);
+    });
 
-    const anim = useMemo(() =>
-        anime({
-            autoplay: false,
-            loop: true,
-            direction: "alternate",
-            easing: "easeInOutSine",
-            duration: 1500,
-            targets: glowFilter,
-            outerStrength: 2.5,
-            innerStrength: 2,
-        }),
-        [glowFilter]
-    );
+    createRenderEffect(() => glowFilter.color = theme().foregroundColor);
 
-    useTick("app", anim.tick);
+    const anim = anime({
+        autoplay: false,
+        loop: true,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        duration: 1500,
+        targets: glowFilter,
+        outerStrength: 2.5,
+        innerStrength: 2,
+    });
+
+    onTick("app", anim.tick);
 
     return (
         <ControlDescription
-            {...props}
+            {...childProps}
             control="start"
             interactive
             cursor="pointer"
             filters={[glowFilter]}
             size={32}
             beforeLabel="Press"
-            afterLabel={resume ? "to resume" : "to play"}
-            direction={FlexDirection.Row}
+            afterLabel={props.type === "resume" ? "to resume" : "to play"}
+            direction="row"
         />
     );
 }

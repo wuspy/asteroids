@@ -1,9 +1,8 @@
-import { Align, FlexDirection } from "../layout";
-import { ControlGraphic } from "./ControlGraphic";
-import { Container, ContainerProps, RefType, Text } from "../react-pixi";
-import { FONT_STYLE } from "./theme";
-import { ForwardedRef, forwardRef } from "react";
+import { Accessor, Show, splitProps } from "solid-js";
 import { controls } from "../input";
+import { FlexDirection } from "../layout";
+import { ContainerProps } from "../solid-pixi";
+import { ControlGraphic } from "./ControlGraphic";
 
 
 export interface ControlDescriptionProps extends ContainerProps {
@@ -13,54 +12,44 @@ export interface ControlDescriptionProps extends ContainerProps {
     beforeLabel?: string;
     afterLabel?: string;
     size: number;
-    direction: FlexDirection;
+    direction: keyof typeof FlexDirection;
 }
 
-export const ControlDescription = forwardRef(({
-    control,
-    analogValue,
-    color,
-    beforeLabel,
-    afterLabel,
-    direction,
-    size,
-    ...props
-}: ControlDescriptionProps, ref: ForwardedRef<RefType<typeof Container>>) => {
-    const margin = Math.round(size * (direction === FlexDirection.Column ? 0.3 : 0.4));
-    const controlGraphicLayout = direction === FlexDirection.Column
-        ? {
-            marginTop: beforeLabel ? margin : 0,
-            marginBottom: afterLabel ? margin : 0,
-        }
-        : {
-            marginLeft: beforeLabel ? margin : 0,
-            marginRight: afterLabel ? margin : 0,
-        };
+export const ControlDescription = (_props: ControlDescriptionProps) => {
+    const [props, childProps] = splitProps(_props, [
+        "control",
+        "analogValue",
+        "color",
+        "beforeLabel",
+        "afterLabel",
+        "direction",
+        "size",
+    ]);
 
-    const beforeText = beforeLabel
-        ? <Text text={beforeLabel} style={{ ...FONT_STYLE, fontSize: size, fill: color }} />
-        : null;
-
-    const afterText = afterLabel
-        ? <Text text={afterLabel} style={{ ...FONT_STYLE, fontSize: size, fill: color }} />
-        : null;
+    const margin = () => Math.round(props.size * (props.direction === "column" ? 0.3 : 0.4));
+    const label = (label: Accessor<string>) =>
+        <text text={label()} style:fontSize={props.size} style:fill={props.color} />;
 
     return (
-        <Container
-            {...props}
-            ref={ref}
+        <container
+            {...childProps}
+            // ref={ref}
             flexContainer
-            layoutStyle={{ ...props.layoutStyle, alignItems: Align.Center, flexDirection: direction }}
+            yg:alignItems="center"
+            yg:flexDirection={props.direction}
         >
-            {beforeText}
+            <Show when={props.beforeLabel}>{label}</Show>
             <ControlGraphic
-                control={control}
-                analogValue={analogValue}
-                color={color}
-                size={size}
-                layoutStyle={controlGraphicLayout}
+                control={props.control}
+                analogValue={props.analogValue}
+                color={props.color}
+                size={props.size}
+                yg:marginLeft={props.beforeLabel && props.direction === "row" ? margin() : undefined}
+                yg:marginRight={props.afterLabel && props.direction === "row" ? margin() : undefined}
+                yg:marginTop={props.beforeLabel && props.direction === "column" ? margin() : undefined}
+                yg:marginBottom={props.afterLabel && props.direction === "column" ? margin() : undefined}
             />
-            {afterText}
-        </Container>
+            <Show when={props.afterLabel}>{label}</Show>
+        </container>
     );
-});
+};

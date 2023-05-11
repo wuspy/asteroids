@@ -1,37 +1,40 @@
 import { HighScoreResponse } from "@wuspy/asteroids-core";
-import { useLayoutEffect, useRef, useState } from "react";
+import { Match, Show, Switch, createEffect, createResource, createSignal } from "solid-js";
 import { LEADERBOARD_LIST_ITEM_HEIGHT, LeaderboardListItem } from "./LeaderboardListItem";
-import { ApiErrorType, ApiResponse, getHighScores } from "./api";
-import { Align, FlexDirection, JustifyContent, PositionType } from "./layout";
-import { Container, Text } from "./react-pixi";
-import { Divider, DividerDirection, FONT_STYLE, LoadingAnimation, Modal, UI_FOREGROUND_COLOR, VirtualizedList, VirtualizedListActions } from "./ui";
+import { empty, error, getHighScores, some } from "./api";
+import { Divider, LoadingAnimation, Modal, UI_FOREGROUND_COLOR, VirtualizedList, VirtualizedListActions } from "./ui";
 
 interface PlaceholderProps {
     loading: boolean;
     message: string;
 }
 
-const Placeholder = ({ loading, message }: PlaceholderProps) =>
-    <Container flexContainer layoutStyle={{
-        flexDirection: FlexDirection.Column,
-        position: PositionType.Absolute,
-        alignItems: Align.Center,
-        justifyContent: JustifyContent.Center,
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    }}>
-        {loading && <LoadingAnimation diameter={120} color={UI_FOREGROUND_COLOR} layoutStyle={{ marginY: 12 }} />}
-        <Text
-            text={message}
-            style={{ ...FONT_STYLE, fontSize: 20, wordWrap: true, align: "center" }}
-            layoutStyle={{ marginY: 12 }}
+const Placeholder = (props: PlaceholderProps) =>
+    <container
+        flexContainer
+        yg:flexDirection="column"
+        yg:position="absolute"
+        yg:alignItems="center"
+        yg:justifyContent="center"
+        yg:top={0}
+        yg:left={0}
+        yg:right={0}
+        yg:bottom={0}
+    >
+        <Show when={props.loading}>
+            <LoadingAnimation diameter={120} color={UI_FOREGROUND_COLOR} yg:marginY={12} />
+        </Show>
+        <text
+            text={props.message}
+            style:fontSize={20}
+            style:wordWrap
+            style:align="center"
+            yg:marginY={12}
         />
-    </Container>;
+    </container>;
 
-const DetailItem = ({ text }: { text: string }) =>
-    <Text text={text} style={{ ...FONT_STYLE, fontSize: 20 }} layoutStyle={{ marginY: 4 }} />
+const DetailItem = (props: { text: string }) =>
+    <text {...props} style:fontSize={20} yg:marginY={4} />;
 
 const formatTime = (duration: number) => {
     const seconds = Math.floor(duration / 1000);
@@ -44,181 +47,160 @@ export interface LeaderboardProps {
     selectedId?: number;
 }
 
-export const LeaderboardModal = ({ open, onClose, selectedId }: LeaderboardProps) => {
-    const [items, setItems] = useState<ApiResponse<HighScoreResponse[]> | "loading">();
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const listActions = useRef<VirtualizedListActions>(null);
+export const LeaderboardModal = (props: LeaderboardProps) => (
+    <Modal
+        open={props.open}
+        header="Leaderboard"
+        onRequestClose={props.onClose}
+    >
+        <container flexContainer yg:width={800} yg:height={390}>
+            <Content selectedId={props.selectedId} />
+        </container>
+    </Modal>
+);
 
-    const isLoaded = typeof items === "object" && items.ok;
-    const isError = typeof items === "object" && !items.ok;
+interface ContentProps {
+    selectedId?: number,
+}
 
-    useLayoutEffect(() => {
-        let isMounted = true;
+const Content = (props: ContentProps) => {
+    const [items] = createResource(getHighScores);
+    const [listActions, setListActions] = createSignal<VirtualizedListActions>();
+    const [selectedIndex, setSelectedIndex] = createSignal(0);
 
-        if (open) {
-            if (!isLoaded) {
-                setItems("loading");
-                getHighScores().then(response => isMounted && setItems(response));
-            }
-        } else if (items) {
-            setTimeout(() => {
-                if (isMounted) {
-                    setSelectedIndex(0);
-                    setItems(undefined);
-                }
-            }, 200);
-        }
-
-        return () => {
-            isMounted = false;
-        };
-    }, [open, isLoaded]);
-
-    useLayoutEffect(() => {
-        if (open && isLoaded && selectedId) {
-            const selectedIndex = items.data.findIndex(item => item.id === selectedId);
+    createEffect(() => {
+        if (props.selectedId !== undefined && some(items)) {
+            const selectedIndex = some(items)!.findIndex(item => item.id === props.selectedId);
             if (selectedIndex !== -1) {
                 setSelectedIndex(selectedIndex);
                 setTimeout(() => {
-                    if (listActions.current) {
-                        listActions.current.scrollToIndex(selectedIndex, true, true);
-                    }
+                    listActions()?.scrollToIndex(selectedIndex, true, true);
                 }, 150);
             }
         }
-    }, [open, isLoaded, selectedId]);
+    });
 
-    let content;
-    if (isLoaded && items.data.length) {
-        const itemRenderer = (data: HighScoreResponse, index: number) =>
-            <LeaderboardListItem
-                key={data.id}
-                data={data}
-                index={index}
-                selected={index === selectedIndex}
-                onClick={setSelectedIndex}
-            />;
+    return <Switch>
+        <Match when={items.loading}>
+            <Placeholder loading message="Connecting to mainframe..." />
+        </Match>
+        <Match when={empty(items)}>
+            <Placeholder loading message="There's nothing here." />;
+        </Match>
+        <Match when={error(items)}>{message =>
+            <Placeholder loading={false} message={message()} />}
+        </Match>
+        <Match when={some(items)}>{items => {
+            const selectedItem = () => items()[selectedIndex()];
 
-        const selectedItem = items.data[selectedIndex];
-
-        content = <>
-            <VirtualizedList
-                data={items.data}
-                itemRenderer={itemRenderer}
-                overscroll={12}
-                itemHeight={LEADERBOARD_LIST_ITEM_HEIGHT}
-                actions={listActions}
-                layoutStyle={{
-                    width: 400,
-                    height: "100%",
-                    flexShrink: 0,
-                }}
-            />
-            <Divider margin={16} direction={DividerDirection.Vertical} />
-            <Container
-                flexContainer
-                layoutStyle={{
-                    flexDirection: FlexDirection.Column,
-                    alignItems: Align.Center,
-                    flexGrow: 1,
-                }}>
-                <Container flexContainer layoutStyle={{ marginTop: 8 }}>
-                    <Text
-                        text={`#${selectedIndex + 1}`}
-                        style={{ ...FONT_STYLE, fontSize: 32 }}
-                        alpha={0.25}
-                        layoutStyle={{ marginRight: 12 }}
-                    />
-                    <Text
-                        text={selectedItem.name}
-                        style={{ ...FONT_STYLE, fontSize: 32 }}
-                    />
-                </Container>
-                <Divider margin={24} direction={DividerDirection.Horizontal} layoutStyle={{ width: 200 }} />
-                <Container flexContainer layoutStyle={{ width: "100%" }}>
-                    <Container flexContainer layoutStyle={{
-                        flexDirection: FlexDirection.Column,
-                        alignItems: Align.Center,
-                        width: "50%",
-                    }}>
-                        <Text
-                            text="Score"
+            return <>
+                <VirtualizedList
+                    data={items()}
+                    actions={setListActions}
+                    itemRenderer={(data: HighScoreResponse, index: number) =>
+                        <LeaderboardListItem
+                            data={data}
+                            index={index}
+                            selected={index === selectedIndex()}
+                            onClick={setSelectedIndex}
+                        />}
+                    overscroll={12}
+                    itemHeight={LEADERBOARD_LIST_ITEM_HEIGHT}
+                    // actions={listActions}
+                    yg:width={400}
+                    yg:height="100%"
+                    yg:flexShrink={0}
+                />
+                <Divider direction="vertical" yg:marginX={16} />
+                <container
+                    flexContainer
+                    yg:flexDirection="column"
+                    yg:alignItems="center"
+                    yg:flexGrow={1}
+                >
+                    <container flexContainer yg:marginTop={8}>
+                        <text
+                            text={`#${selectedIndex() + 1}`}
+                            style:fontSize={32}
                             alpha={0.25}
-                            style={{ ...FONT_STYLE, fontSize: 32 }}
-                            layoutStyle={{ marginY: 4 }}
+                            yg:marginRight={12}
                         />
-                        <Text
-                            text={selectedItem.score.toFixed()}
-                            style={{ ...FONT_STYLE, fontSize: 32 }}
-                            layoutStyle={{ marginY: 4 }}
+                        <text
+                            text={selectedItem().name}
+                            style:fontSize={32}
                         />
-                    </Container>
-                    <Container flexContainer layoutStyle={{
-                        flexDirection: FlexDirection.Column,
-                        alignItems: Align.Center,
-                        width: "50%",
-                    }}>
-                        <Text
-                            text="Time"
+                    </container>
+                    <Divider direction="horizontal" yg:marginY={24} yg:width={200} />
+                    <container flexContainer yg:width="100%">
+                        <container
+                            flexContainer
+                            yg:flexDirection="column"
+                            yg:alignItems="center"
+                            yg:width="50%"
+                        >
+                            <text
+                                text="Score"
+                                alpha={0.25}
+                                style:fontSize={32}
+                                yg:marginY={4}
+                            />
+                            <text
+                                text={selectedItem().score.toFixed()}
+                                style:fontSize={32}
+                                yg:marginY={4}
+                            />
+                        </container>
+                        <container
+                            flexContainer
+                            yg:flexDirection="column"
+                            yg:alignItems="center"
+                            yg:width="50%"
+                        >
+                            <text
+                                text="Time"
+                                alpha={0.25}
+                                style:fontSize={32}
+                                yg:marginY={4}
+                            />
+                            <text
+                                text={formatTime(selectedItem().duration)}
+                                style:fontSize={32}
+                                yg:marginY={4}
+                            />
+                        </container>
+                    </container>
+                    <Divider direction="horizontal" yg:marginY={24} yg:width={200} />
+                    <container flexContainer>
+                        <container
+                            flexContainer
                             alpha={0.25}
-                            style={{ ...FONT_STYLE, fontSize: 32 }}
-                            layoutStyle={{ marginY: 4 }}
-                        />
-                        <Text
-                            text={formatTime(selectedItem.duration)}
-                            style={{ ...FONT_STYLE, fontSize: 32 }}
-                            layoutStyle={{ marginY: 4 }}
-                        />
-                    </Container>
-                </Container>
-                <Divider margin={24} direction={DividerDirection.Horizontal} layoutStyle={{ width: 200 }} />
-                <Container flexContainer>
-                    <Container flexContainer alpha={0.25} layoutStyle={{
-                        flexDirection: FlexDirection.Column,
-                        alignItems: Align.FlexEnd,
-                        width: "60%",
-                        marginRight: 8,
-                    }}>
-                        <DetailItem text="Level Reached" />
-                        <DetailItem text="Shots Fired" />
-                        <DetailItem text="Accuracy" />
-                        <DetailItem text="Asteroids Hit" />
-                        <DetailItem text="Saucers Hit" />
-                    </Container>
-                    <Container flexContainer layoutStyle={{
-                        flexDirection: FlexDirection.Column,
-                        width: "40%",
-                        marginLeft: 8,
-                    }}>
-                        <DetailItem text={selectedItem.level.toFixed()} />
-                        <DetailItem text={selectedItem.shots.toFixed()} />
-                        <DetailItem text={`${(selectedItem.accuracy * 100).toFixed(1)}%`} />
-                        <DetailItem text={selectedItem.asteroids.toFixed()} />
-                        <DetailItem text={selectedItem.ufos.toFixed()} />
-                    </Container>
-                </Container>
-            </Container>
-        </>;
-    } else if (isLoaded && !items.data.length) {
-        content = <Placeholder loading message="There's nothing here." />;
-    } else if (isError) {
-        const message = items.error === ApiErrorType.ApiError
-            ? items.message
-            : "Error contacting server. Try again later.";
-        content = <Placeholder loading={false} message={message} />;
-    } else if (items === "loading") {
-        content = <Placeholder loading message="Connecting to mainframe..." />;
-    }
-
-    return (
-        <Modal
-            open={open}
-            header="Leaderboard"
-            onRequestClose={onClose}
-        >
-            <Container flexContainer layoutStyle={{ width: 800, height: 390 }}>
-                {content}
-            </Container>
-        </Modal>
-    );
+                            yg:flexDirection="column"
+                            yg:alignItems="flex-end"
+                            yg:width="60%"
+                            yg:marginRight={8}
+                        >
+                            <DetailItem text="Level Reached" />
+                            <DetailItem text="Shots Fired" />
+                            <DetailItem text="Accuracy" />
+                            <DetailItem text="Asteroids Hit" />
+                            <DetailItem text="Saucers Hit" />
+                        </container>
+                        <container
+                            flexContainer
+                            yg:flexDirection="column"
+                            yg:width="40%"
+                            yg:marginLeft={8}
+                        >
+                            <DetailItem text={selectedItem().level.toFixed()} />
+                            <DetailItem text={selectedItem().shots.toFixed()} />
+                            <DetailItem text={`${(selectedItem().accuracy * 100).toFixed(1)}%`} />
+                            <DetailItem text={selectedItem().asteroids.toFixed()} />
+                            <DetailItem text={selectedItem().ufos.toFixed()} />
+                        </container>
+                    </container>
+                </container>
+            </>;
+        }}
+        </Match>
+    </Switch>;
 };

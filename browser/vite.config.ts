@@ -2,14 +2,24 @@ import { readFileSync } from "fs";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import glsl from "vite-plugin-glsl";
+import solidPlugin from 'vite-plugin-solid';
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 const version = JSON.parse(readFileSync("./package.json", "utf8")).version;
+
+const hmr = false;
 
 export default defineConfig({
     plugins: [
         glsl({
             compress: true,
+        }),
+        solidPlugin({
+            hot: hmr,
+            solid: {
+                generate: "universal",
+                moduleName: "/src/solid-pixi",
+            },
         }),
         viteStaticCopy({
             targets: [
@@ -25,6 +35,7 @@ export default defineConfig({
         "process.env.npm_package_version": `"${version}"`,
     },
     server: {
+        hmr,
         port: 8081,
     },
     build: {

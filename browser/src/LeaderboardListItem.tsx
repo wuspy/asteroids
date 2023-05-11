@@ -1,12 +1,11 @@
-import { HighScoreResponse } from "@wuspy/asteroids-core";
-import { FederatedPointerEvent } from "@pixi/events";
 import { GlowFilter } from "@pixi/filter-glow";
-import { ComponentProps, useMemo } from "react";
-import { Align, ContainerBackground, ContainerBackgroundShape } from "./layout";
-import { Container, Text } from "./react-pixi";
-import { FONT_STYLE, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
+import { HighScoreResponse } from "@wuspy/asteroids-core";
+import { splitProps } from "solid-js";
+import { ContainerBackground, ContainerBackgroundShape } from "./layout";
+import { ContainerProps } from "./solid-pixi";
+import { UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
 
-export interface LeaderboardListItemProps extends ComponentProps<typeof Container> {
+export interface LeaderboardListItemProps extends ContainerProps {
     selected?: boolean;
     data: HighScoreResponse;
     index: number;
@@ -32,48 +31,44 @@ const activeBackground: ContainerBackground = {
     },
 };
 
-export const LeaderboardListItem = ({ selected = false, data, index, onClick, ...props }: LeaderboardListItemProps) => {
-    const selectedFilters = useMemo(() => [new GlowFilter({outerStrength: 1, color: UI_FOREGROUND_COLOR})], []);
-    const textStyle = useMemo(() => ({
-        ...FONT_STYLE,
-        fill: selected ? UI_BACKGROUND_COLOR : UI_FOREGROUND_COLOR,
-        fontSize: 24,
-    }), [selected]);
+export const LeaderboardListItem = (_props: LeaderboardListItemProps) => {
+    const [props, childProps] = splitProps(_props, ["selected", "data", "index", "onClick"]);
 
-    const onPointerTap = (e: FederatedPointerEvent) => e.button === 0 && onClick(index);
+    const selectedFilters = [new GlowFilter({outerStrength: 1, color: UI_FOREGROUND_COLOR})];
+    const textStyle = () => ({
+        fill: props.selected ? UI_BACKGROUND_COLOR : UI_FOREGROUND_COLOR,
+        fontSize: 24,
+    });
 
     return (
-        <Container
-            {...props}
+        <container
+            {...childProps}
             interactive
             cursor="pointer"
-            on:pointertap={onPointerTap}
-            backgroundStyle={selected ? activeBackground : inactiveBackground}
-            filters={selected ? selectedFilters : null}
+            on:pointertap={e => e.button === 0 && props.onClick(props.index)}
+            backgroundStyle={props.selected ? activeBackground : inactiveBackground}
+            filters={props.selected ? selectedFilters : null}
             flexContainer
-            layoutStyle={{
-                ...props.layoutStyle,
-                height: LEADERBOARD_LIST_ITEM_HEIGHT,
-                alignItems: Align.Center,
-                paddingX: 12,
-                paddingY: 6,
-            }}
+            yg:height={LEADERBOARD_LIST_ITEM_HEIGHT}
+            yg:alignItems="center"
+            yg:paddingX={12}
+            yg:paddingY={6}
         >
-            <Text
-                text={(index + 1).toFixed()}
-                style={textStyle}
-                alpha={selected ? 0.5 : 0.25}
-                layoutStyle={{ marginRight: 12 }}
+            <text
+                text={(props.index + 1).toFixed()}
+                style={textStyle()}
+                alpha={props.selected ? 0.5 : 0.25}
+                yg:marginRight={12}
             />
-            <Text
-                text={data.name}
-                style={textStyle}
-                layoutStyle={{ flexGrow: 1 }}
+            <text
+                text={props.data.name}
+                style={textStyle()}
+                yg:flexGrow={1}
             />
-            <Text
-                text={data.score.toFixed()}
-                style={textStyle}
+            <text
+                text={props.data.score.toFixed()}
+                style={textStyle()}
             />
-        </Container>
+        </container>
     );
 }

@@ -1,39 +1,32 @@
-import { ComponentProps, useEffect, useState } from "react";
 import { Assets } from "@pixi/assets";
+import { createResource, Show, splitProps } from "solid-js";
+import { ContainerProps } from "../solid-pixi";
 import { FadeContainer } from "./FadeContainer";
-import { Container, Sprite } from "../react-pixi";
 
-export interface ImageProps extends ComponentProps<typeof Container> {
+export interface ImageProps extends ContainerProps {
     url: string;
 }
 
-export const Image = ({ url, ...props }: ImageProps) => {
-    const [texture, setTexture] = useState(
-        Assets.cache.has(url)
-            ? Assets.cache.get(url)
-            : undefined
+export const Image = (_props: ImageProps) => {
+    const [props, childProps] = splitProps(_props, ["url"]);
+
+    const [texture] = createResource(() =>
+        Assets.cache.has(props.url)
+            ? Assets.cache.get(props.url)
+            : Assets.load(props.url)
     );
 
-    useEffect(() => {
-        if (texture) {
-            return;
-        }
-        let isMounted = true;
-        Assets.load(url).then(texture => isMounted && setTexture(texture));
-        return () => {
-            isMounted = false;
-        };
-    }, [url, texture]);
-
     return <FadeContainer
-        {...props}
+        {...childProps}
         flexContainer
         fadeInDuration={200}
         fadeOutDuration={200}
         keepPixiVisible
         keepMounted
-        visible={!!texture}
+        visible={!!texture()}
     >
-        {texture && <Sprite texture={texture} />}
+        <Show when={!!texture()}>
+            <sprite texture={texture()} />
+        </Show>
     </FadeContainer>;
 };

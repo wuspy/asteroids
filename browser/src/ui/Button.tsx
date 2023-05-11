@@ -1,16 +1,17 @@
-import { ComponentProps, useMemo, useRef, useState } from "react";
-import { GlowFilter } from "@pixi/filter-glow";
 import { FederatedPointerEvent } from "@pixi/events";
-import { Align, ContainerBackground, ContainerBackgroundShape, drawContainerBackground, FlexDirection, PositionType } from "../layout";
+import { GlowFilter } from "@pixi/filter-glow";
+import { SmoothGraphics } from "@pixi/graphics-smooth";
+import { Show, mergeProps, splitProps } from "solid-js";
+import { onTick } from "../AppContext";
+import { ContainerBackgroundShape } from "../layout";
+import { ContainerProps } from "../solid-pixi";
 import { Image } from "./Image";
-import { ButtonType, BUTTON_THEMES, FONT_STYLE } from "./theme";
 import { LoadingAnimation } from "./LoadingAnimation";
-import { Container, Graphics, RefType, Text } from "../react-pixi";
-import { useTick } from "../AppContext";
+import { BUTTON_THEMES, ButtonType } from "./theme";
 
 const TRANSITION_TIME = 0.25;
 
-interface ButtonProps extends ComponentProps<typeof Container> {
+interface ButtonProps extends ContainerProps {
     type: ButtonType;
     text: string;
     imageUrl?: string;
@@ -19,92 +20,77 @@ interface ButtonProps extends ComponentProps<typeof Container> {
     onClick: () => void;
 }
 
-export const Button = ({type, text, imageUrl, enabled = true, loading = false, onClick, ...props}: ButtonProps) => {
-    const theme = BUTTON_THEMES[type];
-    const [hovering, setHovering] = useState(false);
-    const [active, setActive] = useState(false);
-    const lastWidth = useRef(0);
-    const lastHeight = useRef(0);
-    const container = useRef<RefType<typeof Container>>(null);
-    const activeGraphics = useRef<RefType<typeof Graphics>>(null);
-    const inactiveGraphics = useRef<RefType<typeof Graphics>>(null);
-    const inactiveGlowFilter = useMemo(() => new GlowFilter({
+const defaultProps = {
+    enabled: true,
+    loading: false,
+};
+
+export const Button = (_props: ButtonProps) => {
+    const [props, childProps] = splitProps(
+        mergeProps(defaultProps, _props),
+        ["type", "text", "imageUrl", "enabled", "loading", "onClick"]
+    );
+
+    const theme = () => BUTTON_THEMES[props.type];
+    let active = false;
+    let hovering = false;
+    let activeGraphics!: SmoothGraphics;
+
+    const inactiveGlowFilter = new GlowFilter({
         innerStrength: 0,
         outerStrength: 0,
         distance: 24,
-        color: theme.inactive.glow,
-    }), [theme.inactive.glow]);
-    const activeGlowFilter = useMemo(() => new GlowFilter({
+        color: theme().inactive.glow,
+    });
+    const activeGlowFilter = new GlowFilter({
         innerStrength: 0,
         outerStrength: 2,
         distance: 24,
-        color: theme.active.glow,
-    }), [theme.active.glow]);
-    const activeBackground = useMemo((): ContainerBackground => ({
-        shape: ContainerBackgroundShape.Rectangle,
-        cornerRadius: 8,
-        fill: theme.active.fill,
-        stroke: theme.active.stroke,
-    }), [theme.active.fill, theme.active.stroke]);
-    const inactiveBackground = useMemo((): ContainerBackground => ({
-        shape: ContainerBackgroundShape.Rectangle,
-        cornerRadius: 8,
-        fill: theme.inactive.fill,
-        stroke: theme.inactive.stroke,
-    }), [theme.inactive.fill, theme.inactive.stroke]);
+        color: theme().active.glow,
+    });
 
-    useTick("app", (timestamp, elapsed) => {
-        if (!container.current) {
-            return;
-        }
-        const { width, height } = container.current.layout.computedLayout;
+    onTick("app", (timestamp, elapsed) => {
         const alphaDiff = elapsed / TRANSITION_TIME;
         const glowDiff = alphaDiff * 2;
 
-        let needsBackgroundRedraw = width !== lastWidth.current || height !== lastHeight.current;
-
         if (!active && hovering) {
             inactiveGlowFilter.outerStrength = Math.min(2, inactiveGlowFilter.outerStrength + glowDiff);
-            needsBackgroundRedraw = true;
         } else if (inactiveGlowFilter.outerStrength) {
             inactiveGlowFilter.outerStrength = Math.max(0, inactiveGlowFilter.outerStrength - glowDiff);
-            needsBackgroundRedraw = true;
         }
 
         if (active) {
-            activeGraphics.current!.alpha = Math.min(1, activeGraphics.current!.alpha + alphaDiff);
-            activeGraphics.current!.visible = true;
-            needsBackgroundRedraw = true;
-        } else if (activeGraphics.current!.visible) {
-            activeGraphics.current!.alpha = Math.max(0, activeGraphics.current!.alpha - alphaDiff);
-            activeGraphics.current!.visible = activeGraphics.current!.alpha > 0;
-            needsBackgroundRedraw = true;
-        }
-
-        if (needsBackgroundRedraw) {
-            inactiveGraphics.current!.clear();
-            drawContainerBackground(inactiveGraphics.current!, inactiveBackground, width, height);
-            if (activeGraphics.current!.visible) {
-                activeGraphics.current!.clear();
-                drawContainerBackground(activeGraphics.current!, activeBackground, width, height);
-            }
-            lastWidth.current = width;
-            lastHeight.current = height;
+            activeGraphics.alpha = Math.min(1, activeGraphics.alpha + alphaDiff);
+            activeGraphics.visible = true;
+        } else if (activeGraphics.visible) {
+            activeGraphics.alpha = Math.max(0, activeGraphics.alpha - alphaDiff);
+            activeGraphics.visible = activeGraphics.alpha > 0;
         }
     });
 
-    const onPointerOver = () => setHovering(true);
-    const onPointerOut = () => setHovering(false);
-    const onPointerDown = (e: FederatedPointerEvent) => e.button === 0 && setActive(enabled && !loading);
-    const onPointerUp = (e: FederatedPointerEvent) => e.button === 0 && setActive(false);
-    const onPointerTap = (e: FederatedPointerEvent) => e.button === 0 && enabled && !loading && onClick();
+    const onPointerOver = () => hovering = true;
+    const onPointerOut = () => hovering = false;
+    const onPointerDown = (e: FederatedPointerEvent) => {
+        if (e.button === 0 && props.enabled && !props.loading) {
+            active = true;
+        }
+    };
+    const onPointerUp = (e: FederatedPointerEvent) => {
+        if (e.button === 0) {
+            active = false;
+        }
+    };
+    const onPointerTap = (e: FederatedPointerEvent) => {
+        if (e.button === 0 && props.enabled && !props.loading) {
+            props.onClick();
+        }
+    };
 
     return (
-        <Container
-            {...props}
-            ref={container}
+        <container
+            {...childProps}
             flexContainer
-            interactive={enabled}
+            interactive={props.enabled}
             cursor="pointer"
             on:pointertap={onPointerTap}
             on:pointerover={onPointerOver}
@@ -112,53 +98,71 @@ export const Button = ({type, text, imageUrl, enabled = true, loading = false, o
             on:pointerdown={onPointerDown}
             on:pointerup={onPointerUp}
             on:pointerupoutside={onPointerUp}
-            layoutStyle={{
-                ...props.layoutStyle,
-                paddingX: 14,
-                paddingY: 10,
-                flexDirection: FlexDirection.Row,
-                alignItems: Align.Center,
-            }}
+            yg:paddingX={14}
+            yg:paddingY={10}
+            yg:flexDirection="row"
+            yg:alignItems="center"
         >
-            <Graphics
-                ref={inactiveGraphics}
-                layoutStyle={{ excluded: true }}
+            <graphics
+                backgroundStyle={{
+                    shape: ContainerBackgroundShape.Rectangle,
+                    cornerRadius: 8,
+                    fill: theme().inactive.fill,
+                    stroke: theme().inactive.stroke,
+                }}
+                yg:position="absolute"
+                yg:top={0}
+                yg:left={0}
+                yg:right={0}
+                yg:bottom={0}
                 filters={[inactiveGlowFilter]}
             />
-            <Graphics
-                ref={activeGraphics}
+            <graphics
                 alpha={0}
-                layoutStyle={{ excluded: true }}
+                visible={false}
+                ref={activeGraphics}
+                backgroundStyle={{
+                    shape: ContainerBackgroundShape.Rectangle,
+                    cornerRadius: 8,
+                    fill: theme().active.fill,
+                    stroke: theme().active.stroke,
+                }}
+                yg:position="absolute"
+                yg:top={0}
+                yg:left={0}
+                yg:right={0}
+                yg:bottom={0}
                 filters={[activeGlowFilter]}
             />
-            {imageUrl ? <Image
-                url={imageUrl}
-                alpha={theme.textAlpha}
-                layoutStyle={{
-                    width: 20,
-                    height: 20,
-                    marginRight: 8,
-                }}
-                renderable={!loading}
-            /> : null}
-            <Text
-                text={text}
-                alpha={theme.textAlpha}
-                style={{ ...FONT_STYLE, fontSize: 20, fill: theme.textColor }}
-                renderable={!loading}
+            <Show when={props.imageUrl}>
+                {url => <Image
+                    url={url()}
+                    alpha={theme().textAlpha}
+                    yg:width={20}
+                    yg:aspectRatio={1}
+                    yg:marginRight={8}
+                    renderable={!props.loading}
+                />}
+            </Show>
+            <text
+                text={props.text}
+                alpha={theme().textAlpha}
+                style:fontSize={20}
+                style:fill={theme().textColor}
+                renderable={!props.loading}
             />
-            {loading ? <LoadingAnimation
-                diameter={24}
-                color={theme.textColor}
-                alpha={theme.textAlpha}
-                layoutStyle={{
-                    position: PositionType.Absolute,
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                }}
-            /> : null}
-        </Container>
+            <Show when={props.loading}>
+                <LoadingAnimation
+                    diameter={24}
+                    color={theme().textColor}
+                    alpha={theme().textAlpha}
+                    yg:position="absolute"
+                    yg:top={0}
+                    yg:left={0}
+                    yg:right={0}
+                    yg:bottom={0}
+                />
+            </Show>
+        </container>
     );
 };

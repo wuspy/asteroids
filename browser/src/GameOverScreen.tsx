@@ -1,184 +1,123 @@
-import { GameResponse, GameStatus } from "@wuspy/asteroids-core";
 import { GlowFilter } from "@pixi/filter-glow";
 import { TextStyleFill } from "@pixi/text";
+import { GameResponse, GameStatus } from "@wuspy/asteroids-core";
 import anime from "animejs";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { useApp, useTick } from "./AppContext";
+import { Show, batch, createRenderEffect, createSignal } from "solid-js";
+import { onGameEvent, onTick, useApp } from "./AppContext";
 import { LeaderboardModal } from "./LeaderboardModal";
 import { SaveScoreModal } from "./SaveScoreModal";
 import { ChromaticAbberationFilter } from "./filters";
-import { Align, ContainerBackgroundShape, FlexDirection, PositionType } from "./layout";
-import { Container, ContainerProps, Text } from "./react-pixi";
+import { ContainerBackgroundShape } from "./layout";
+import { ContainerProps } from "./solid-pixi";
 import {
     BUTTON_THEMES,
-    Button, ButtonType,
+    Button,
     FONT_STYLE,
     FadeContainer,
     RevealText,
     ScoreText,
-    UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR
+    UI_BACKGROUND_ALPHA,
+    UI_BACKGROUND_COLOR,
+    UI_FOREGROUND_COLOR
 } from "./ui";
 
 export const GameOverScreen = (props: ContainerProps) => {
-    const { game, token, dispatch } = useApp();
-    const gameOver = game.state.status === GameStatus.Finished;
-    const [visible, setVisible] = useState(gameOver);
-    const [saveScoreOpen, setSaveScoreOpen] = useState(false);
-    const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-    const [savedScoreId, setSavedScoreId] = useState<number>();
-    const [anim, setAnim] = useState<anime.AnimeTimelineInstance>();
+    const { game, token, quit, reset } = useApp();
 
-    const inBackground = saveScoreOpen || leaderboardOpen;
+    const [visible, setVisible] = createSignal(game.state.status === GameStatus.Finished);
+    const [saveScoreOpen, setSaveScoreOpen] = createSignal(false);
+    const [leaderboardOpen, setLeaderboardOpen] = createSignal(false);
+    const [savedScoreId, setSavedScoreId] = createSignal<number>();
+    const [anim, setAnim] = createSignal<anime.AnimeTimelineInstance>();
 
-    const titleGlowFilter = useMemo(() =>
-        new GlowFilter({
-            outerStrength: 1,
-            distance: 24,
-        }),
-        []
-    );
+    const inBackground = () => saveScoreOpen() || leaderboardOpen();
 
-    const titleAbberationFilter = useMemo(() =>
-        new ChromaticAbberationFilter(1, 2),
-        []
-    );
+    const titleGlowFilter = new GlowFilter({
+        outerStrength: 1,
+        distance: 24,
+    });
+    const titleAbberationFilter = new ChromaticAbberationFilter(1, 2);
+    const scoreGlowFilter = new GlowFilter({
+        outerStrength: 1,
+        distance: 36,
+        color: UI_FOREGROUND_COLOR,
+        quality: 0.05,
+    });
+    const scoreAbberationFilter = new ChromaticAbberationFilter(4, 2);
 
-    const scoreGlowFilter = useMemo(() =>
-        new GlowFilter({
-            outerStrength: 1,
-            distance: 36,
-            color: UI_FOREGROUND_COLOR,
-            quality: 0.05,
-        }),
-        []
-    );
-
-    const scoreAbberationFilter = useMemo(() =>
-        new ChromaticAbberationFilter(4, 2),
-        []
-    );
-
-    useEffect(() => {
-        setVisible(gameOver);
+    onGameEvent("finished", () => batch(() => {
         setSavedScoreId(undefined);
         setSaveScoreOpen(false);
-        if (gameOver) {
-            scoreGlowFilter.outerStrength = 0;
-            setAnim(anime.timeline({ autoplay: false })
-                .add({
-                    targets: scoreGlowFilter,
-                    outerStrength: 2,
-                    easing: "easeOutElastic",
-                    delay: 150,
-                    duration: 600,
-                }).add({
-                    targets: scoreGlowFilter,
-                    outerStrength: 0.8,
-                    easing: "linear",
-                    delay: 250,
-                    duration: 750,
-                    complete: () => {
-                        setAnim(undefined);
-                    },
-                })
-            );
-            return () => setAnim(undefined);
-        }
-    }, [gameOver]);
+        setVisible(true);
+        scoreGlowFilter.outerStrength = 0;
+        setAnim(anime.timeline({ autoplay: false })
+            .add({
+                targets: scoreGlowFilter,
+                outerStrength: 2,
+                easing: "easeOutElastic",
+                delay: 150,
+                duration: 600,
+            }).add({
+                targets: scoreGlowFilter,
+                outerStrength: 0.8,
+                easing: "linear",
+                delay: 250,
+                duration: 750,
+                complete: () => setAnim(undefined),
+            })
+        );
+    }));
+
+    onGameEvent("reset", () => batch(() => {
+        setVisible(false);
+        setSavedScoreId(undefined);
+        setSaveScoreOpen(false);
+        setAnim(undefined);
+    }));
 
     // Disabling these filters when blurred massively increase performance
-    useLayoutEffect(() => {
+    createRenderEffect(() => {
         scoreGlowFilter.enabled
             = scoreAbberationFilter.enabled
             = titleGlowFilter.enabled
             = titleAbberationFilter.enabled
-            = !inBackground;
-    }, [inBackground]);
+            = !inBackground();
+    });
 
-    useTick("app", (timestamp) => anim!.tick(timestamp), !!anim);
+    onTick("app", timestamp => anim()!.tick(timestamp), anim);
 
-    const onNewGameClicked = () => {
+    const enableSave = () => visible() && token() && game.enableLogging;
+
+    const onNewGameClick = () => {
         setVisible(false);
         setTimeout(() => {
-            dispatch("quit");
-            setTimeout(() => dispatch("reset"), 1000);
+            quit()
+            setTimeout(reset, 1000);
         }, 200);
     };
-    const onLeaderboardClicked = () => setLeaderboardOpen(true);
-    const onLeaderboardClose = () => setLeaderboardOpen(false);
-    const onSaveScoreClicked = () => setSaveScoreOpen(true);
-    const onSaveScoreClose = () => setSaveScoreOpen(false);
+
     const onScoreSaved = (game: GameResponse) => {
         setSaveScoreOpen(false);
         setSavedScoreId(game.id);
         setTimeout(() => setLeaderboardOpen(true), 200);
     };
 
-    const enableSave = gameOver && token && game.enableLogging;
-
-    const saveEnabledButtons = enableSave && <>
-        <Button
-            type={ButtonType.Secondary}
-            text="Leaderboard"
-            onClick={onLeaderboardClicked}
-            layoutStyle={{ marginX: 12 }}
-        />
-        {savedScoreId
-            // TODO add native disabled state to button
-            ? <Container
-                flexContainer
-                layoutStyle={{
-                    paddingX: 14,
-                    paddingY: 10,
-                    marginX: 12,
-                    flexDirection: FlexDirection.Row,
-                    alignItems: Align.Center,
-                }}
-                backgroundStyle={{
-                    shape: ContainerBackgroundShape.Rectangle,
-                    cornerRadius: 8,
-                    stroke: {
-                        width: BUTTON_THEMES[ButtonType.Primary].inactive.stroke?.width || 2,
-                        color: BUTTON_THEMES[ButtonType.Primary].inactive.fill?.color ?? 0xffffff,
-                    },
-                }}
-                alpha={(BUTTON_THEMES[ButtonType.Primary].inactive.fill?.alpha || 1) * 0.5}
-            >
-                <Text
-                    text={"  Saved!  "}
-                    style={{
-                        ...FONT_STYLE,
-                        fontSize: 20,
-                        fill: BUTTON_THEMES[ButtonType.Primary].inactive.fill?.color as TextStyleFill ?? 0xffffff
-                    }}
-                />
-            </Container>
-            : <Button
-                type={ButtonType.Primary}
-                text={"Save Score"}
-                onClick={onSaveScoreClicked}
-                layoutStyle={{ marginX: 12 }}
-            />
-        }
-    </>;
+    const visibility = () => visible() ? (inBackground() ? 0.5 : 1) : false;
 
     return <>
         <FadeContainer
             {...props}
-            visible={visible && !inBackground}
+            visible={visibility()}
             // Causes the content to mount just before it becomes visible
             // so the RevealText animation will work
-            keepMounted={gameOver}
-            fadeOutAmount={inBackground ? 0.5 : 0}
+            // keepMounted={gameOver}
             fadeInDuration={100}
             fadeOutDuration={200}
             flexContainer
-            layoutStyle={{
-                position: PositionType.Absolute,
-                width: "100%",
-                flexDirection: FlexDirection.Column,
-                alignItems: Align.Center,
-            }}
+            yg:position="absolute"
+            yg:width="100%"
+            yg:flexDirection="column"
+            yg:alignItems="center"
             backgroundStyle={{
                 shape: ContainerBackgroundShape.Rectangle,
                 fill: {
@@ -189,10 +128,11 @@ export const GameOverScreen = (props: ContainerProps) => {
         >
             <RevealText
                 text="GAME OVER"
-                revealed={visible}
+                revealed={visible()}
                 duration={500}
                 style={{ ...FONT_STYLE, fontSize: 64 }}
-                layoutStyle={{ margin: 24, marginBottom: 18 }}
+                yg:margin={24}
+                yg:marginBottom={18}
                 filters={[titleGlowFilter, titleAbberationFilter]}
             />
             <ScoreText
@@ -201,17 +141,71 @@ export const GameOverScreen = (props: ContainerProps) => {
                 style={{ ...FONT_STYLE, fontSize: 104 }}
                 filters={[scoreGlowFilter, scoreAbberationFilter]}
             />
-            <Container flexContainer layoutStyle={{ margin: 24, marginTop: 18 }}>
+            <container flexContainer yg:margin={24} yg:marginTop={18}>
                 <Button
-                    type={enableSave ? ButtonType.Secondary : ButtonType.Primary}
+                    type={enableSave() ? "secondary" : "primary"}
                     text="New Game"
-                    onClick={onNewGameClicked}
-                    layoutStyle={{ marginX: 12 }}
+                    onClick={onNewGameClick}
+                    yg:marginX={12}
                 />
-                {saveEnabledButtons}
-            </Container>
+                <Show when={enableSave()}>
+                    <Button
+                        type="secondary"
+                        text="Leaderboard"
+                        onClick={() => setLeaderboardOpen(true)}
+                        yg:marginX={12}
+                    />
+                    <Show when={!savedScoreId()} fallback={disabledSaveButton()}>
+                        <Button
+                            type="primary"
+                            text={"Save Score"}
+                            onClick={() => setSaveScoreOpen(true)}
+                            yg:marginX={12}
+                        />
+                    </Show>
+                </Show>
+            </container>
         </FadeContainer>
-        <LeaderboardModal open={leaderboardOpen} onClose={onLeaderboardClose} selectedId={savedScoreId} />
-        {enableSave && <SaveScoreModal open={saveScoreOpen} onClose={onSaveScoreClose} onSaved={onScoreSaved} />}
+        <LeaderboardModal
+            open={leaderboardOpen()}
+            onClose={() => setLeaderboardOpen(false)}
+            selectedId={savedScoreId()}
+        />
+        <Show when={enableSave()}>
+            <SaveScoreModal
+                open={saveScoreOpen()}
+                onClose={() => setSaveScoreOpen(false)}
+                onSaved={onScoreSaved}
+            />
+        </Show>
     </>;
 };
+
+// TODO add native disabled state to button
+const disabledSaveButton = () =>
+    <container
+        flexContainer
+        yg:paddingX={14}
+        yg:paddingY={10}
+        yg:marginX={12}
+        yg:flexDirection="row"
+        yg:alignItems="center"
+        backgroundStyle={{
+            shape: ContainerBackgroundShape.Rectangle,
+            cornerRadius: 8,
+            stroke: {
+                width: BUTTON_THEMES.primary.inactive.stroke?.width || 2,
+                color: BUTTON_THEMES.primary.inactive.fill?.color ?? 0xffffff,
+            },
+        }}
+        alpha={(BUTTON_THEMES.primary.inactive.fill?.alpha || 1) * 0.5}
+    >
+        <text
+            text="  Saved!  "
+            style={{
+                ...FONT_STYLE,
+                fontSize: 20,
+                fill: BUTTON_THEMES.primary.inactive.fill?.color as TextStyleFill ?? 0xffffff
+            }}
+        />
+    </container>;

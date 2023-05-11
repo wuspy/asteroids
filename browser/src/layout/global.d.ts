@@ -1,7 +1,6 @@
 declare namespace GlobalMixins
 {
     type FlexLayout = import("./FlexLayout").default;
-    type FlexLayoutProps = import("./FlexLayout").FlexLayoutProps;
     type ComputedLayout = import ("./FlexLayout").ComputedLayout;
     type MeasureMode = import ("./FlexLayout").MeasureMode;
     type ISize = import ("@pixi/core").ISize;
@@ -16,7 +15,6 @@ declare namespace GlobalMixins
         _layout?: FlexLayout;
         get layout(): FlexLayout;
         get isLayoutChild(): boolean;
-        set layoutStyle(layoutStyle: Partial<FlexLayoutProps>);
         onLayoutMeasure(
             width: number,
             widthMeasureMode: MeasureMode,

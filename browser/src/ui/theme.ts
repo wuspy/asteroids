@@ -67,11 +67,7 @@ export interface ButtonTheme {
     },
 }
 
-export const enum ButtonType {
-    Primary,
-    Secondary,
-    Danger
-}
+export type ButtonType = "primary" | "secondary" | "danger"
 
 // Shared between all buttons
 const BUTTON_ACTIVE_THEME = {
@@ -87,7 +83,7 @@ const BUTTON_ACTIVE_THEME = {
 };
 
 export const BUTTON_THEMES: { [Key in ButtonType]: ButtonTheme } = {
-    [ButtonType.Primary]: {
+    primary: {
         textColor: UI_FOREGROUND_COLOR,
         textAlpha: 1,
         inactive: {
@@ -104,7 +100,7 @@ export const BUTTON_THEMES: { [Key in ButtonType]: ButtonTheme } = {
         },
         active: BUTTON_ACTIVE_THEME,
     },
-    [ButtonType.Secondary]: {
+    secondary: {
         textColor: UI_FOREGROUND_COLOR,
         textAlpha: 0.8,
         inactive: {
@@ -121,7 +117,7 @@ export const BUTTON_THEMES: { [Key in ButtonType]: ButtonTheme } = {
         },
         active: BUTTON_ACTIVE_THEME,
     },
-    [ButtonType.Danger]: {
+    danger: {
         textColor: UI_FOREGROUND_COLOR,
         textAlpha: 1,
         inactive: {

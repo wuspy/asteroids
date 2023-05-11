@@ -1,8 +1,8 @@
-import { ITextStyle, TextStyle } from "@pixi/text";
+import { ITextStyle, Text, TextStyle } from "@pixi/text";
 import anime from "animejs";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Container, ContainerProps, RefType, Text } from "../react-pixi";
-import { useTick } from "../AppContext";
+import { createEffect, createSignal, onMount, splitProps } from "solid-js";
+import { onTick } from "../AppContext";
+import { ContainerProps } from "../solid-pixi";
 
 export interface RevealTextProps extends ContainerProps {
     text: string;
@@ -11,60 +11,63 @@ export interface RevealTextProps extends ContainerProps {
     revealed: boolean;
 }
 
-export const RevealText = ({ text, style, duration, revealed, ...props}: RevealTextProps) => {
-    const textRef = useRef<RefType<typeof Text>>(null);
-    const leftBracketRef = useRef<RefType<typeof Text>>(null);
-    const rightBracketRef = useRef<RefType<typeof Text>>(null);
-    const [anim, setAnim] = useState<anime.AnimeTimelineInstance>();
-    const [wasRevealed, setWasRevealed] = useState(revealed);
+export const RevealText = (_props: RevealTextProps) => {
+    const [props, childProps] = splitProps(_props, ["text", "style", "duration", "revealed"]);
+
+    let text!: Text;
+    let leftBracket!: Text;
+    let rightBracket!: Text;
+
+    const [anim, setAnim] = createSignal<anime.AnimeTimelineInstance>();
+    let wasRevealed = props.revealed;
 
     const onLayoutMeasure = () => {
         return {
-            width: textRef.current!.width + leftBracketRef.current!.width + rightBracketRef.current!.width,
-            height: textRef.current!.height,
+            width: text.width + leftBracket.width + rightBracket.width,
+            height: text.height,
         };
     };
 
-    const getCenterline = () => leftBracketRef.current!.width + textRef.current!.width / 2;
+    const getCenterline = () => leftBracket.width + text.width / 2;
 
-    useLayoutEffect(() => {
+    onMount(() => {
         const center = getCenterline();
-        textRef.current!.alpha = revealed ? 1 : 0;
-        textRef.current!.x = leftBracketRef.current!.width;
-        rightBracketRef.current!.x = revealed ? textRef.current!.width + textRef.current!.x : center;
-        leftBracketRef.current!.x = revealed ? 0 : center - leftBracketRef.current!.width;
-    }, []);
+        text.alpha = props.revealed ? 1 : 0;
+        text.x = leftBracket.width;
+        rightBracket.x = props.revealed ? text.width + text.x : center;
+        leftBracket.x = props.revealed ? 0 : center - leftBracket.width;
+    });
 
-    useEffect(() => {
-        if (revealed !== wasRevealed) {
+    createEffect(() => {
+        if (props.revealed !== wasRevealed) {
             const center = getCenterline();
             setAnim(anime.timeline({
                 autoplay: false,
-                duration,
+                duration: props.duration,
                 easing: "easeOutExpo",
+                complete: () => setAnim(undefined),
             }).add({
-                targets: rightBracketRef.current!,
-                x: revealed ? textRef.current!.width + textRef.current!.x : center,
+                targets: rightBracket,
+                x: props.revealed ? text.width + text.x : center,
             }, 0).add({
-                targets: leftBracketRef.current!,
-                x: revealed ? 0 : center - leftBracketRef.current!.width,
+                targets: leftBracket,
+                x: props.revealed ? 0 : center - leftBracket.width,
             }, 0).add({
-                targets: textRef.current!,
-                alpha: revealed ? 1 : 0,
+                targets: text,
+                alpha: props.revealed ? 1 : 0,
             }, 0));
 
-            setWasRevealed(revealed);
-            return () => setAnim(undefined);
+            wasRevealed = props.revealed;
         }
-    }, [revealed]);
+    });
 
-    useTick("app", (timestamp) => anim!.tick(timestamp), !!anim);
+    onTick("app", (timestamp) => anim()!.tick(timestamp), anim);
 
     return (
-        <Container {...props} flexContainer={false} onLayoutMeasure={onLayoutMeasure}>
-            <Text ref={textRef} text={` ${text} `} style={style} />
-            <Text ref={leftBracketRef} text={"["} style={style} />
-            <Text ref={rightBracketRef} text={"]"} style={style} />
-        </Container>
+        <container {...childProps} flexContainer={false} onLayoutMeasure={onLayoutMeasure}>
+            <text ref={text} text={` ${props.text} `} style={props.style} />
+            <text ref={leftBracket} text={"["} style={props.style} />
+            <text ref={rightBracket} text={"]"} style={props.style} />
+        </container>
     );
 };

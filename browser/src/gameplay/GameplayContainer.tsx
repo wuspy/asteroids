@@ -1,80 +1,79 @@
-import { ComponentProps, useRef } from "react";
-import { Container, RefType } from "../react-pixi";
-import { useApp, useGameEvent } from "../AppContext";
+import { Container } from "@pixi/display";
+import { onGameEvent, useApp } from "../AppContext";
+import { ContainerProps } from "../solid-pixi";
+import { FadeContainer } from "../ui";
 import { displayAsteroid } from "./asteroid";
+import { displayProjectile } from "./projectile";
 import { displayShip } from "./ship";
 import { displayUFO } from "./ufo";
-import { displayProjectile } from "./projectile";
-import { FadeContainer } from "../ui";
 
-export type GameplayContainerProps = ComponentProps<typeof Container>;
+export const GameplayContainer = (props: ContainerProps) => {
+    const { renderer, isQuit, theme } = useApp();
 
-export const GameplayContainer = (props: GameplayContainerProps) => {
-    const background = useRef<RefType<typeof Container>>(null);
-    const main = useRef<RefType<typeof Container>>(null);
-    const foreground = useRef<RefType<typeof Container>>(null);
-    const { renderer, quit, theme } = useApp();
+    let background!: Container;
+    let main!: Container;
+    let foreground!: Container;
 
-    useGameEvent("shipCreated", ship => displayShip({
+    onGameEvent("shipCreated", ship => displayShip({
         ship,
-        theme,
+        theme: theme(),
         renderer,
-        mainContainer: main.current!,
-        backgroundContainer: background.current!,
-        foregroundContainer: foreground.current!,
+        mainContainer: main,
+        backgroundContainer: background,
+        foregroundContainer: foreground,
     }));
 
-    useGameEvent("asteroidsCreated", newAsteroids => {
+    onGameEvent("asteroidsCreated", newAsteroids => {
         for (const asteroid of newAsteroids) {
             displayAsteroid({
                 asteroid,
-                theme,
+                theme: theme(),
                 renderer,
-                mainContainer: main.current!,
-                foregroundContainer: foreground.current!,
+                mainContainer: main,
+                foregroundContainer: foreground,
             });
         }
     });
 
-    useGameEvent("projectileCreated", projectile => displayProjectile({
+    onGameEvent("projectileCreated", projectile => displayProjectile({
         projectile,
-        theme,
+        theme: theme(),
         renderer,
-        mainContainer: main.current!,
-        backgroundContainer: background.current!,
+        mainContainer: main,
+        backgroundContainer: background,
     }));
 
-    useGameEvent("ufoCreated", ufo => displayUFO({
+    onGameEvent("ufoCreated", ufo => displayUFO({
         ufo,
-        theme,
+        theme: theme(),
         renderer,
-        mainContainer: main.current!,
-        foregroundContainer: foreground.current!,
+        mainContainer: main,
+        foregroundContainer: foreground,
     }));
 
-    useGameEvent("reset", () => {
+    onGameEvent("reset", () => {
         // Remove anything that may be remaining in the containers
-        while (background.current!.children.length) {
-            background.current!.children[0].destroy({ children: true });
+        while (background.children.length) {
+            background.children[0].destroy({ children: true });
         }
-        while (main.current!.children.length) {
-            main.current!.children[0].destroy({ children: true });
+        while (main.children.length) {
+            main.children[0].destroy({ children: true });
         }
-        while (foreground.current!.children.length) {
-            foreground.current!.children[0].destroy({ children: true });
+        while (foreground.children.length) {
+            foreground.children[0].destroy({ children: true });
         }
     });
 
     return <FadeContainer
         {...props}
-        visible={!quit}
+        visible={!isQuit()}
         keepMounted={true}
         fadeInDuration={0}
         fadeOutDuration={500}
         interactiveChildren={false}
     >
-        <Container ref={background} />
-        <Container ref={main} />
-        <Container ref={foreground} />
+        <container ref={background} />
+        <container ref={main} />
+        <container ref={foreground} />
     </FadeContainer>;
 };

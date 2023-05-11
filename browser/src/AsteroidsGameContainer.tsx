@@ -1,113 +1,92 @@
-import { useEffect, useLayoutEffect, useMemo } from "react";
-import { GameStatus } from "@wuspy/asteroids-core";
-import { ChromaticAbberationFilter, WarpFilter } from "./filters";
 import { AlphaFilter } from "@pixi/filter-alpha";
-import { Align, JustifyContent, PositionType } from "./layout";
-import { Container } from "./react-pixi";
-import { LevelIndicator, LifeIndicator, ScoreIndicator } from "./hud";
-import { BoundsGraphics } from "./BoundsGraphics";
-import { StartScreen } from "./StartScreen";
-import { DebugContainer } from "./DebugContainer";
-import { useApp, useTick, useInputEvent } from "./AppContext";
+import { createEffect, createRenderEffect } from "solid-js";
+import { onInputEvent, onTick, useApp } from "./AppContext";
 import { BackgroundAsteroidsContainer } from "./BackgroundAsteroidsContainer";
-import { PauseScreen } from "./PauseScreen";
-import { GameplayContainer } from "./gameplay";
+import { BoundsGraphics } from "./BoundsGraphics";
 import { GameOverScreen } from "./GameOverScreen";
+import { PauseScreen } from "./PauseScreen";
+import { StartScreen } from "./StartScreen";
+import { ChromaticAbberationFilter, WarpFilter } from "./filters";
+import { GameplayContainer } from "./gameplay/GameplayContainer";
+import { LevelIndicator, LifeIndicator, ScoreIndicator } from "./hud";
 
 const WARP_STRENGTH = 3;
 const RGB_SPLIT_SEPARATION = 3;
 
 export const AsteroidsGameContainer = () => {
+    // This is necessary and I have no idea why
+    if (!useApp()) return null;
+
     const {
+        renderer,
+        background,
         game,
         input,
+        worldSize,
+        isQuit,
+        isPaused,
+        pause,
         theme,
-        stage,
-        background,
-        renderer,
-        paused,
-        quit,
-        dispatch,
+        scale,
     } = useApp();
 
-    const mainWarpFilter = useMemo(() => new WarpFilter(WARP_STRENGTH), []);
-    const mainAlphaFilter = useMemo(() => {
-        const filter = new AlphaFilter(0);
-        filter.padding = 24;
-        return filter;
-    }, []);
-    const mainAbberationFilter = useMemo(() => new ChromaticAbberationFilter(RGB_SPLIT_SEPARATION, 0.75), []);
+    const mainWarpFilter = new WarpFilter(WARP_STRENGTH);
+    const mainAlphaFilter = new AlphaFilter(0);
+    mainAlphaFilter.padding = 24;
+    const mainAbberationFilter = new ChromaticAbberationFilter(RGB_SPLIT_SEPARATION, 0.75);
 
-    useEffect(() => {
-        if (quit) {
+    createEffect(() => {
+        if (isQuit()) {
             background.style.opacity = "0";
         } else {
-            background.style.background = theme.background;
+            background.style.background = theme().background;
             background.style.opacity = "1";
-            mainAlphaFilter.alpha = theme.foregroundAlpha;
+            mainAlphaFilter.alpha = theme().foregroundAlpha;
             if (process.env.NODE_ENV === "development") {
-                console.log("Applied theme", theme);
+                console.log("Applied theme", theme());
             }
         }
-    }, [theme, quit]);
+    });
 
-    useLayoutEffect(() => {
-        mainAbberationFilter.maxDisplacement = RGB_SPLIT_SEPARATION * stage.scale.x;
-    }, [stage.scale.x]);
+    createRenderEffect(() => {
+        mainAbberationFilter.maxDisplacement = RGB_SPLIT_SEPARATION * scale();
+    });
 
-    useTick("app", (timestamp, elapsed) => {
+    onTick("app", (timestamp, elapsed) => {
+        // Dispatch game tick if game is running
         const inputState = input.poll();
-        if (!paused) {
+        if (!isPaused()) {
             game.tick(elapsed * 1000, inputState);
         }
     });
 
-    useInputEvent("poll", (state, lastState) => {
+    onInputEvent("poll", (state, lastState) => {
         if (state.start && !lastState.start) {
-            dispatch("pause");
+            pause();
         }
-    }, !paused && game.state.status === GameStatus.Running);
+    }, () => !isPaused());
 
     return <>
-        <Container key="background" interactiveChildren={false}>
+        <container interactiveChildren={false}>
             <BackgroundAsteroidsContainer />
             <BoundsGraphics mainWarpFilter={mainWarpFilter} />
-        </Container>
-        <Container key="main" filterArea={renderer.screen} filters={[mainAbberationFilter, mainWarpFilter]}>
+        </container>
+        <container filterArea={renderer.screen} filters={[mainAbberationFilter, mainWarpFilter]}>
             <GameplayContainer filters={[mainAlphaFilter]} />
-            <DebugContainer />
-            <Container
-                key="ui"
+            <container
                 flexContainer
-                layoutStyle={{
-                    alignItems: Align.Center,
-                    justifyContent: JustifyContent.Center,
-                    width: game.worldSize.width,
-                    height: game.worldSize.height,
-                }}
+                yg:width={worldSize().width}
+                yg:height={worldSize().height}
+                yg:alignItems="center"
+                yg:justifyContent="center"
             >
-                <ScoreIndicator layoutStyle={{
-                    margin: 12,
-                    position: PositionType.Absolute,
-                    top: 0,
-                    left: 0
-                }} />
-                <LifeIndicator layoutStyle={{
-                    margin: 12,
-                    position: PositionType.Absolute,
-                    top: 0,
-                    right: 0
-                }} />
-                <LevelIndicator layoutStyle={{
-                    marginY: 12,
-                    position: PositionType.Absolute,
-                    bottom: 0,
-                    left: 0,
-                }} />
-                <StartScreen />
+                <ScoreIndicator yg:position="absolute" yg:margin={12} yg:top={0} yg:left={0} />
+                <LifeIndicator yg:position="absolute" yg:margin={12} yg:top={0} yg:right={0} />
+                <LevelIndicator yg:position="absolute" yg:marginY={12} yg:bottom={0} yg:left={0} />
                 <PauseScreen />
+                <StartScreen />
                 <GameOverScreen />
-            </Container>
-        </Container>
+            </container>
+        </container>
     </>;
 };

@@ -1,21 +1,23 @@
+import { IRenderer, ISize, Rectangle, Texture } from "@pixi/core";
+import { LINE_JOIN } from "@pixi/graphics";
+import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { Sprite } from "@pixi/sprite";
 import {
     ASTEROID_GENERATION_COUNT,
     ASTEROID_HITAREAS,
-    CoreGameObjectParams, EventManager,
+    CoreGameObjectParams,
+    EventManager,
     GameEvents,
     GameObject,
     GameState,
-    TickQueue, Vec2,
+    TickQueue,
+    Vec2,
     findUnoccupiedPosition,
     generateAsteroidAngle,
     urandom
 } from "@wuspy/asteroids-core";
-import { IRenderer, ISize, Rectangle, Texture } from "@pixi/core";
-import { LINE_JOIN } from "@pixi/graphics";
-import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { For, createRenderEffect } from "solid-js";
 import { useApp } from "./AppContext";
-import { Container, RefType, Sprite } from "./react-pixi";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
 
@@ -131,65 +133,55 @@ class BackgroundAsteroid extends GameObject<GameState, undefined, GameEvents> {
     }
 }
 
-interface BackgroundAsteroidDisplayProps {
-    asteroid: BackgroundAsteroid;
-}
-
-const BackgroundAsteroidDisplay = ({ asteroid }: BackgroundAsteroidDisplayProps) => {
-    const { renderer, theme } = useApp();
-    const sprite = useRef<RefType<typeof Sprite>>(null);
-
-    if (!TEXTURE_CACHE.has(renderer)) {
-        generateTextureCache(renderer);
-    }
-
-    useLayoutEffect(() => {
-        asteroid.onPositionChange = position => sprite.current!.position.copyFrom(position);
-        asteroid.onRotationChange = rotation => sprite.current!.rotation = rotation;
-    }, [asteroid]);
-
-    return <Sprite
-        ref={sprite}
-        texture={TEXTURE_CACHE.get(renderer)![asteroid.model][asteroid.generation]}
-        alpha={theme.backgroundAlpha}
-        tint={theme.backgroundColor}
-        position={asteroid.position}
-        rotation={asteroid.rotation}
-    />;
-};
-
 export const BackgroundAsteroidsContainer = () => {
-    const { game } = useApp();
-    const tickQueue = useApp().queue;
-    const lastWorldSize = useRef({ ...game.worldSize });
-    const asteroids = useMemo(() => (
-        BackgroundAsteroid.create({
-            count: 20,
-            queue: tickQueue,
-            events: game.events,
-            state: game.state,
-            worldSize: lastWorldSize.current,
-        })
-    ), []);
+    const { renderer, game, queue, worldSize, theme } = useApp();
+    let lastWorldSize = worldSize();
 
-    useLayoutEffect(() => {
-        if (lastWorldSize.current.width !== game.worldSize.width
-            || lastWorldSize.current.height !== game.worldSize.height
-        ) {
-            const xDiff = game.worldSize.width / lastWorldSize.current.width;
-            const yDiff = game.worldSize.height / lastWorldSize.current.height;
-            lastWorldSize.current.width = game.worldSize.width;
-            lastWorldSize.current.height = game.worldSize.height;
-            for (const asteroid of asteroids) {
-                asteroid.position.set(
-                    asteroid.x * xDiff,
-                    asteroid.y * yDiff,
-                );
-            }
+    const asteroids = BackgroundAsteroid.create({
+        count: 20,
+        queue,
+        events: game.events,
+        state: game.state,
+        worldSize: game.worldSize,
+    });
+
+    createRenderEffect(() => {
+        const xDiff = worldSize().width / lastWorldSize.width;
+        const yDiff = worldSize().height / lastWorldSize.height;
+        lastWorldSize = worldSize();
+
+        for (const asteroid of asteroids) {
+            asteroid.position.set(
+                asteroid.x * xDiff,
+                asteroid.y * yDiff,
+            );
         }
-    }, [game.worldSize.width, game.worldSize.height]);
+    });
 
-    return <Container>
-        {asteroids.map((asteroid, i) => <BackgroundAsteroidDisplay key={i} asteroid={asteroid} />)}
-    </Container>;
+    return (
+        <container>
+            <For each={asteroids}>
+                {(asteroid) => {
+                    if (!TEXTURE_CACHE.has(renderer)) {
+                        generateTextureCache(renderer);
+                    }
+                
+                    let sprite: Sprite;
+                    asteroid.onPositionChange = position => sprite.position.copyFrom(position);
+                    asteroid.onRotationChange = rotation => sprite.rotation = rotation;
+                
+                    return (
+                        <sprite
+                            ref={sprite!}
+                            texture={TEXTURE_CACHE.get(renderer)![asteroid.model][asteroid.generation]}
+                            alpha={theme().backgroundAlpha}
+                            tint={theme().backgroundColor}
+                            position={asteroid.position}
+                            rotation={asteroid.rotation}
+                        />
+                    );
+                }}
+            </For>
+        </container>
+    )
 };

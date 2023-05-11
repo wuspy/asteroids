@@ -1,14 +1,11 @@
-import { ComponentProps, ReactNode } from "react";
-import { Align, FlexDirection, JustifyContent, PositionType } from "../layout";
-import { FONT_STYLE, MODAL_BACKGROUND } from "./theme";
-import { Divider, DividerDirection } from "./Divider";
-import { FadeContainer } from "./FadeContainer";
-import { Container, Text } from "../react-pixi";
-import { useInputEvent } from "../AppContext";
+import { Show } from "solid-js";
+import { onInputEvent } from "../AppContext";
+import { Divider } from "./Divider";
+import { FadeContainer, FadeContainerProps } from "./FadeContainer";
 import { ModalCloseButton } from "./ModalCloseButton";
+import { MODAL_BACKGROUND } from "./theme";
 
-export interface ModalProps extends Omit<
-    ComponentProps<typeof FadeContainer>,
+export interface ModalProps extends Omit<FadeContainerProps,
     | "fadeInDuration"
     | "fadeOutDuration"
     | "visible"
@@ -16,52 +13,47 @@ export interface ModalProps extends Omit<
     | "flexContainer"
 > {
     open: boolean;
-    onRequestClose: () => void;
     header?: string;
     padding?: number;
+    onRequestClose: () => void;
 }
 
-export const Modal = ({ children, open, onRequestClose, header, padding = 16, ...props }: ModalProps) => {
-    const headerContent = header && <>
-        <Container
-            flexContainer
-            layoutStyle={{
-                width: "100%",
-                alignItems: Align.Center,
-                justifyContent: JustifyContent.SpaceBetween,
-            }}
-        >
-            <Text
-                text={header}
-                style={{ ...FONT_STYLE, fontSize: 32 }}
-                layoutStyle={{ marginRight: padding }}
-            />
-            <ModalCloseButton onClick={onRequestClose} />
-        </Container>
-        <Divider direction={DividerDirection.Horizontal} margin={padding} />
-    </>;
+const DEFAULT_PADDING = 16;
 
-    useInputEvent("poll", (state, prevState) => {
+export const Modal = (props: ModalProps) => {
+    onInputEvent("poll", (state, prevState) => {
         if (state.back && !prevState.back) {
-            onRequestClose();
+            props.onRequestClose();
         }
-    }, open);
+    }, () => props.open);
 
     return <FadeContainer
         {...props}
-        visible={open}
+        visible={props.open}
         backgroundStyle={MODAL_BACKGROUND}
         flexContainer
         fadeInDuration={200}
         fadeOutDuration={200}
-        layoutStyle={{
-            ...props.layoutStyle,
-            position: PositionType.Absolute,
-            flexDirection: FlexDirection.Column,
-            padding,
-        }}
+        yg:position="absolute"
+        yg:flexDirection="column"
+        yg:padding={props.padding ?? DEFAULT_PADDING}
     >
-        {headerContent}
-        {children}
+        <Show when={!!props.header}>
+            <container
+                flexContainer
+                yg:width="100%"
+                yg:alignItems="center"
+                yg:justifyContent="space-between"
+            >
+                <text
+                    text={props.header}
+                    style:fontSize={32}
+                    yg:marginRight={props.padding ?? DEFAULT_PADDING}
+                />
+                <ModalCloseButton onClick={props.onRequestClose} />
+            </container>
+            <Divider direction="horizontal" yg:marginY={props.padding ?? DEFAULT_PADDING} />
+        </Show>
+        {props.children}
     </FadeContainer>;
 };

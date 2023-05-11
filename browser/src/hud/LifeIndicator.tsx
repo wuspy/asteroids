@@ -1,80 +1,74 @@
+import { Container } from "@pixi/display";
+import { Sprite } from "@pixi/sprite";
 import { LIVES, TickQueue } from "@wuspy/asteroids-core";
-import { Sprite as PixiSprite } from "@pixi/sprite";
-import { ComponentProps, useMemo, useRef } from "react";
-import { useApp, useGameEvent } from "../AppContext";
+import { JSX, createSignal } from "solid-js";
+import { onGameEvent, useApp } from "../AppContext";
 import { PopAnimation } from "../animations";
 import { createShipTexture } from "../gameplay";
 import { ContainerBackgroundShape } from "../layout";
-import { Container, RefType, Sprite } from "../react-pixi";
+import { ContainerProps } from "../solid-pixi";
 import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui";
 
 const SIZE = 36;
 
-export type LifeIndicatorProps = ComponentProps<typeof Container>;
+export type LifeIndicatorProps = ContainerProps;
 
 export const LifeIndicator = (props: LifeIndicatorProps) => {
     const { queue, renderer } = useApp();
-    const shipTexture = useMemo(() => createShipTexture(renderer, 3, SIZE), [renderer]);
-    const indicators: React.ReactNode[] = [];
-    const indicatorRefs: React.MutableRefObject<PixiSprite | null>[] = [];
-    const container = useRef<RefType<typeof Container>>(null);
+    const [lives, setLives] = createSignal(LIVES);
 
-    for (let i = 0; i < LIVES; i++) {
-        // No this doesn't break rules of hooks since LIVES is constant
-        indicatorRefs.push(useRef(null));
-        indicators.push(
-            <Sprite
-                key={i}
-                ref={indicatorRefs[i]}
+    const shipTexture = createShipTexture(renderer, 3, SIZE);
+
+    let container!: Container;
+    const children: JSX.Element[] = [];
+    const indicators: Sprite[] = [];
+
+    for (let i = LIVES - 1; i >= 0; i--) {
+        children.push(
+            <sprite
+                ref={indicators[i]}
                 texture={shipTexture}
                 tint={UI_FOREGROUND_COLOR}
+                alpha={lives() > i ? 1 : 0.25}
                 anchor={0.5}
-                layoutStyle={{ originAtCenter: true, paddingX: 5 }}
+                yg:originAtCenter
+                yg:paddingX={5}
             />
         );
     }
 
-    useGameEvent("livesChanged", (lives) => {
-        for (let i = 0; i < LIVES; i++) {
-            const indicator = indicatorRefs[i].current!;
-            if (i < LIVES - lives && indicator.alpha !== 0.25) {
-                indicator.alpha = 0.25;
-                container.current!.addChild(new LifeAnimation(queue, indicator));
-            } else if (i >= LIVES - lives && indicator.alpha !== 1) {
-                indicator.alpha = 1;
-                container.current!.addChild(new LifeAnimation(queue, indicator));
-            }
-        }
+    onGameEvent("livesChanged", lives => {
+        setLives(lives);
+        container.addChild(new LifeAnimation(queue, indicators[lives]));
     });
 
-    useGameEvent("reset", () => {
-        for (const { current: indicator } of indicatorRefs) {
-            indicator!.alpha = 1;
-        }
-    });
+    onGameEvent("reset", () => setLives(LIVES));
 
-    return <Container
-        {...props}
-        ref={container}
-        flexContainer
-        interactiveChildren={false}
-        layoutStyle={{ ...props.layoutStyle, paddingX: 14, paddingY: 12 }}
-        backgroundStyle={{
-            shape: ContainerBackgroundShape.Rectangle,
-            cornerRadius: 12,
-            fill: {
-                color: UI_BACKGROUND_COLOR,
-                alpha: UI_BACKGROUND_ALPHA,
-                smooth: true,
-            },
-        }}
-    >
-        {indicators}
-    </Container>
+    return (
+        <container
+            {...props}
+            ref={container}
+            interactiveChildren={false}
+            flexContainer
+            yg:paddingX={14}
+            yg:paddingY={12}
+            backgroundStyle={{
+                shape: ContainerBackgroundShape.Rectangle,
+                cornerRadius: 12,
+                fill: {
+                    color: UI_BACKGROUND_COLOR,
+                    alpha: UI_BACKGROUND_ALPHA,
+                    smooth: true,
+                },
+            }}
+        >
+            {children}
+        </container>
+    );
 }
 
 class LifeAnimation extends PopAnimation {
-    constructor(queue: TickQueue, source: PixiSprite) {
+    constructor(queue: TickQueue, source: Sprite) {
         super({
             queue,
             texture: source.texture,
@@ -84,7 +78,7 @@ class LifeAnimation extends PopAnimation {
         this.anchor.set(0.5);
         this.alpha = 0.8;
         this.tint = UI_FOREGROUND_COLOR;
-        this.layout.excluded = true;
+        this.layout.style.excluded = true;
         this.position.copyFrom(source);
     }
 }

@@ -1,10 +1,15 @@
-import { AnalogInputMapping, DigitalInputMapping, GamepadAxisName, GamepadButtonName, InputMapping } from "@wuspy/asteroids-core";
-import { ComponentProps, useMemo } from "react";
+import {
+    AnalogInputMapping,
+    DigitalInputMapping,
+    GamepadAxisName,
+    GamepadButtonName,
+    InputMapping
+} from "@wuspy/asteroids-core";
+import { Match, Show, Switch, splitProps } from "solid-js";
 import { useApp } from "../AppContext";
 import { controls } from "../input";
-import { Align, ContainerBackgroundShape, JustifyContent } from "../layout";
-import { Container, Text } from "../react-pixi";
-import { FONT_STYLE } from "./theme";
+import { ContainerBackgroundShape } from "../layout";
+import { ContainerProps } from "../solid-pixi";
 
 export type ControlType = "key" | "button" | "trigger" | "stick";
 
@@ -27,11 +32,11 @@ const findControlValues = <Controls extends readonly string[]>(
     control: Controls[number],
     inputMapping: InputMapping<Controls>,
     analogValue?: number,
-): [ControlType?, string?] => {
+): { type: ControlType, name: string } | undefined => {
     if (inputMapping.keys) {
         for (const [key, mapping] of Object.entries(inputMapping.keys)) {
             if (isMappingForControl(control, mapping, analogValue)) {
-                return ["key", key];
+                return { type: "key", name: key };
             }
         }
     }
@@ -41,17 +46,8 @@ const findControlValues = <Controls extends readonly string[]>(
                 let type: ControlType, buttonName: string;
                 switch (button as GamepadButtonName) {
                     case "A":
-                        type = "button";
-                        buttonName = button;
-                        break;
                     case "B":
-                        type = "button";
-                        buttonName = button;
-                        break;
                     case "X":
-                        type = "button";
-                        buttonName = button;
-                        break;
                     case "Y":
                         type = "button";
                         buttonName = button;
@@ -90,7 +86,7 @@ const findControlValues = <Controls extends readonly string[]>(
                         type = "key";
                         break;
                 }
-                return [type!, buttonName!];
+                return { type: type!, name: buttonName! };
             }
         }
     }
@@ -108,92 +104,78 @@ const findControlValues = <Controls extends readonly string[]>(
                         axisName = "RS";
                         break;
                 }
-                return ["stick", axisName];
+                return { type: "stick", name: axisName };
             }
         }
     }
-    return [undefined, undefined];
 }
 
 const capitalizeFirstLetter = (string: string) => string.charAt(0).toLocaleUpperCase() + string.slice(1);
 
-export interface ControlGraphicProps extends ComponentProps<typeof Container> {
+export interface ControlGraphicProps extends ContainerProps {
     control: typeof controls[number];
     analogValue?: number;
     size: number;
     color: number;
 }
 
-export const ControlGraphic = ({
-    control,
-    analogValue,
-    size,
-    color,
-    ...props
-}: ControlGraphicProps) => {
+export const ControlGraphic = (_props: ControlGraphicProps) => {
+    const [props, childProps] = splitProps(_props, ["control", "analogValue", "size", "color"]);
     const { input } = useApp();
+
+    const control = () => findControlValues(props.control, input.mapping!, props.analogValue);
 
     // This filter was designed to make the graphic glow when the associated input
     // is pressed, however enabling it for first time causes a severe hang in Chrome at
     // getUniformLocation in ShaderSystem.generateProgram.
     // The amount of time it hangs also depends on the values of distance and quality.
 
-    // const glowFilter = useMemo(() => {
-    //     const filter = new GlowFilter({
-    //         outerStrength: 2.5,
-    //         innerStrength: 0,
-    //         distance: 10,
-    //         quality: 0.5,
-    //         color,
-    //     });
-    //     filter.enabled = false;
-    //     return filter;
-    // }, [color]);
-
-    const [type, name] = useMemo(() =>
-        findControlValues(control, input.mapping!, analogValue),
-        [control, analogValue, input.mapping]
-    );
-
-    // useInputEvent("poll", (state) => {
-    //     glowFilter.enabled = analogValue
-    //         ? Math.abs(analogValue - state[control]) < 1
-    //         : !!state[control];
+    // const glowFilter = new GlowFilter({
+    //     outerStrength: 2,
+    //     innerStrength: 0,
+    //     distance: 10,
+    //     quality: 0.5,
     // });
 
-    if (!name) {
-        return null;
-    } else if (type === "key") {
-        return (
-            <Container
-                {...props}
-                flexContainer
-                layoutStyle={{
-                    ...props.layoutStyle,
-                    height: size,
-                    minWidth: size,
-                    paddingX: size * 0.25,
-                    alignItems: Align.Center,
-                    justifyContent: JustifyContent.Center,
-                }}
-                backgroundStyle={{
-                    shape: ContainerBackgroundShape.Rectangle,
-                    cornerRadius: size * 0.2,
-                    stroke: {
-                        width: 2,
-                        color,
-                        alpha: 1,
-                    },
-                }}
-            >
-                <Text
-                    style={{ ...FONT_STYLE, fontSize: size * 0.66, fontWeight: "bold", fill: color }}
-                    text={capitalizeFirstLetter(type === "key" && name in KEY_LABELS ? KEY_LABELS[name] : name)}
-                />
-            </Container>
-        );
-    } else {
-        // TODO
-        return null;
-    }
+    // glowFilter.enabled = false;
+
+    // createRenderEffect(() => glowFilter.color = props.color);
+
+    // onInputEvent("poll", (state) => {
+    //     glowFilter.enabled = props.analogValue
+    //         ? Math.abs(props.analogValue - state[props.control]) < 1
+    //         : !!state[props.control];
+    // });
+
+    return <Show when={control()}>{control =>
+        <Switch>
+            <Match when={control().type === "key"}>
+                <container
+                    {...childProps}
+                    flexContainer
+                    yg:height={props.size}
+                    yg:minWidth={props.size}
+                    yg:paddingX={props.size * 0.25}
+                    yg:alignItems="center"
+                    yg:justifyContent="center"
+                    backgroundStyle={{
+                        shape: ContainerBackgroundShape.Rectangle,
+                        cornerRadius: props.size * 0.2,
+                        stroke: {
+                            width: 2,
+                            color: props.color,
+                            alpha: 1,
+                        },
+                    }}
+                >
+                    <text
+                        style:fontSize={props.size * 0.66}
+                        style:fontWeight="bold"
+                        style:fill={props.color}
+                        text={capitalizeFirstLetter(control().name in KEY_LABELS ? KEY_LABELS[control().name] : control().name)}
+                    />
+                </container>
+            </Match>
+        </Switch>}
+    </Show>;
 };

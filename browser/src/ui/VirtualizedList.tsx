@@ -1,12 +1,13 @@
-import { clamp, lineSegmentLength } from "@wuspy/asteroids-core";
 import { Point } from "@pixi/core";
-import { DisplayObject, DisplayObjectEvents } from "@pixi/display";
+import { Container, DisplayObject, DisplayObjectEvents } from "@pixi/display";
 import { EventBoundary, FederatedPointerEvent, FederatedWheelEvent } from "@pixi/events";
+import { SmoothGraphics } from "@pixi/graphics-smooth";
 import anime from "animejs";
-import { ReactNode, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useApp, useTick } from "../AppContext";
-import { ComputedLayout, FlexDirection, PositionType, drawContainerBackground } from "../layout";
-import { Container, ContainerProps, Graphics, RefType } from "../react-pixi";
+import { For, JSX, Setter, createMemo, createRenderEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { onTick, useApp } from "../AppContext";
+import { clamp, lineSegmentLength } from "@wuspy/asteroids-core";
+import { ComputedLayout, drawContainerBackground } from "../layout";
+import { ContainerProps } from "../solid-pixi";
 import { LIST_BACKGROUND } from "./theme";
 
 const SCROLL_CAPTURE_THRESHOLD = 10;
@@ -31,56 +32,42 @@ export interface VirtualizedListActions {
 }
 
 export interface VirtualizedListProps<Data> extends ContainerProps {
-    itemRenderer: (data: Data, index: number) => ReactNode;
+    itemRenderer: (data: Data, index: number) => JSX.Element;
     data: readonly Data[];
     itemHeight: number;
     overscroll?: number;
-    actions?: React.Ref<VirtualizedListActions>; // forwardRef doesn't play nice with generic components
+    actions?: Setter<VirtualizedListActions>;
 }
 
-export const VirtualizedList = <Data extends any>({
-    itemRenderer,
-    data,
-    itemHeight,
-    overscroll = 0,
-    actions,
-    ...props
-}: VirtualizedListProps<Data>) => {
-    const { renderer, dpr } = useApp();
-    const root = useRef<RefType<typeof Container>>(null);
-    const itemContainer = useRef<RefType<typeof Container>>(null);
-    const mask = useRef<RefType<typeof Graphics>>(null);
-    const eventBoundary = useMemo(() => new EventBoundary(), []);
+export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Data>) => {
+    const { renderer } = useApp();
+    let root!: Container;
+    let itemContainer!: Container;
+    let mask!: SmoothGraphics;
+    const eventBoundary = new EventBoundary();
 
-    const pointerDownAt = useRef<Point>();
-    const scrollCaptured = useRef<boolean>(false);
-    const targetPosition = useRef(-overscroll);
-    const lastTimestamp = useRef(0);
-    const [isBlockingMove, setIsBlockingMove] = useState(false);
+    let pointerDownAt: Point | undefined = undefined;
+    let scrollCaptured = false;
+    let targetPosition = -(props.overscroll || 0);
+    let lastTimestamp = 0;
+    const [isBlockingMove, setIsBlockingMove] = createSignal(false);
 
-    const [position, setPosition] = useState(-overscroll);
-    const [height, setHeight] = useState(0);
-    const anim = useRef<anime.AnimeTimelineInstance>();
+    const [position, setPosition] = createSignal(-(props.overscroll || 0));
+    const [height, setHeight] = createSignal(0);
+    let anim: anime.AnimeTimelineInstance | undefined;
 
-    const maxScrollPosition = useMemo(
-        () => Math.max(Math.ceil((data.length * itemHeight - height + overscroll) / itemHeight) * itemHeight, 0),
-        [data.length, itemHeight, height, overscroll],
-    );
+    const maxScrollPosition = createMemo(() => Math.max(Math.ceil((props.data.length * props.itemHeight - height() + (props.overscroll || 0)) / props.itemHeight) * props.itemHeight, 0));
 
-    useLayoutEffect(() => {
-        root.current!.mask = mask.current!;
-    }, []);
-
-    useTick("app", (timestamp) => {
-        lastTimestamp.current = timestamp;
-        anim.current?.tick(timestamp);
+    onTick("app", (timestamp) => {
+        lastTimestamp = timestamp;
+        anim?.tick(timestamp);
     });
 
     const hitTest = (x: number, y: number): DisplayObject | undefined => {
-        itemContainer.current!.interactiveChildren = true;
-        eventBoundary.rootTarget = itemContainer.current!;
+        itemContainer.interactiveChildren = true;
+        eventBoundary.rootTarget = itemContainer;
         const hit = eventBoundary.hitTest(x, y);
-        itemContainer.current!.interactiveChildren = false;
+        itemContainer.interactiveChildren = false;
         return hit;
     }
 
@@ -91,46 +78,46 @@ export const VirtualizedList = <Data extends any>({
     };
 
     const scrollToPositionImmediate = (pos: number) => {
-        if (isNaN(height) || data.length === 0) {
+        if (isNaN(height()) || props.data.length === 0) {
             return;
         }
-        pos = clamp(pos, maxScrollPosition, -overscroll);
-        targetPosition.current = pos;
-        anim.current = undefined;
+        pos = clamp(pos, maxScrollPosition(), -(props.overscroll || 0));
+        targetPosition = pos;
+        anim = undefined;
         setPosition(pos);
     };
 
     const scrollToPosition = (pos: number, blocking: boolean) => {
-        if (isNaN(height) || data.length === 0 || (!blocking && isBlockingMove)) {
+        if (isNaN(height()) || props.data.length === 0 || (!blocking && isBlockingMove())) {
             return;
         }
-        targetPosition.current = clamp(pos, maxScrollPosition, -overscroll);
-        if (position !== targetPosition.current) {
+        targetPosition = clamp(pos, maxScrollPosition(), -(props.overscroll || 0));
+        if (position() !== targetPosition) {
             setIsBlockingMove(blocking);
-            const target = { position };
-            anim.current = anime.timeline({
+            const target = { position: position() };
+            anim = anime.timeline({
                 autoplay: false,
                 easing: "easeOutQuart",
                 complete: () => {
-                    anim.current = undefined;
+                    anim = undefined;
                     setIsBlockingMove(false);
-                    setPosition(targetPosition.current);
+                    setPosition(targetPosition);
                 },
             }).add({
                 targets: target,
-                position: targetPosition.current,
-                duration: blocking ? Math.sqrt(Math.abs(position - targetPosition.current)) * 36 : 250,
+                position: targetPosition,
+                duration: blocking ? Math.sqrt(Math.abs(position() - targetPosition)) * 36 : 250,
                 change: () => setPosition(target.position),
             });
-            anim.current.tick(lastTimestamp.current);
+            anim.tick(lastTimestamp);
         }
     };
 
     const getIndexPosition = (index: number, middle?: boolean): number => {
         if (middle) {
-            return getIndexPosition(index - Math.round(height / itemHeight / 2) + 1, false);
+            return getIndexPosition(index - Math.round(height() / props.itemHeight / 2) + 1, false);
         } else {
-            return index * itemHeight;
+            return index * props.itemHeight;
         }
     }
 
@@ -140,39 +127,44 @@ export const VirtualizedList = <Data extends any>({
     const scrollToIndex = (index: number, blocking: boolean, middle?: boolean) =>
         scrollToPosition(getIndexPosition(index, middle), blocking);
 
-    useImperativeHandle(actions, () => ({
-        scrollToPosition,
-        scrollToIndexImmediate,
-        scrollToIndex,
-        scrollToPositionImmediate,
-    }));
+    createRenderEffect(() => {
+        if (props.actions) {
+            props.actions({
+                scrollToPosition,
+                scrollToIndexImmediate,
+                scrollToIndex,
+                scrollToPositionImmediate,
+            });
+        }
+    });
 
     const onWheel = (e: FederatedWheelEvent) => {
+        const ih = props.itemHeight;
         const delta = deriveNormalizedWheelDelta(e.nativeEvent as WheelEvent);
-        scrollToPosition(Math.floor((targetPosition.current - (delta * itemHeight)) / itemHeight) * itemHeight, false);
+        scrollToPosition(Math.floor((targetPosition - (delta * ih)) / ih) * ih, false);
     };
 
     const onPointerdown = (e: FederatedPointerEvent) => {
-        pointerDownAt.current = e.global.clone();
+        pointerDownAt = e.global.clone();
         proxyInteraction("pointerdown", e);
     };
 
     const _pointerup = () => {
-        if (scrollCaptured.current) {
-            scrollCaptured.current = false;
+        if (scrollCaptured) {
+            scrollCaptured = false;
             // Align closest item with top of list
-            if (overscroll && position < -overscroll / 2) {
-                scrollToPosition(-overscroll, false);
+            if (props.overscroll && position() < -props.overscroll / 2) {
+                scrollToPosition(-props.overscroll, false);
             } else {
-                scrollToIndex(Math.round(position / itemHeight), false);
+                scrollToIndex(Math.round(position() / props.itemHeight), false);
             }
         }
-        pointerDownAt.current = undefined;
+        pointerDownAt = undefined;
     };
 
     const onPointerup = (e: FederatedPointerEvent) => {
         proxyInteraction("pointerup", e);
-        if (!scrollCaptured.current) {
+        if (!scrollCaptured) {
             proxyInteraction("pointertap", e);
         }
         _pointerup();
@@ -184,33 +176,31 @@ export const VirtualizedList = <Data extends any>({
     };
 
     const onPointermove = (e: PointerEvent) => {
-        if (pointerDownAt.current) {
-            if (!scrollCaptured.current
-                && Math.abs(lineSegmentLength([pointerDownAt.current, { x: e.offsetX, y: e.offsetY }])) > SCROLL_CAPTURE_THRESHOLD
+        if (pointerDownAt) {
+            if (!scrollCaptured
+                && Math.abs(lineSegmentLength([pointerDownAt, { x: e.offsetX, y: e.offsetY }])) > SCROLL_CAPTURE_THRESHOLD
             ) {
-                scrollCaptured.current = true;
-                anim.current = undefined;
+                scrollCaptured = true;
+                anim = undefined;
             }
-            if (scrollCaptured.current) {
-                scrollToPositionImmediate(position + (pointerDownAt.current.y - e.offsetY) / root.current!.worldTransform.d);
-                pointerDownAt.current.set(e.offsetX, e.offsetY);
+            if (scrollCaptured) {
+                scrollToPositionImmediate(position() + (pointerDownAt.y - e.offsetY) / root.worldTransform.d);
+                pointerDownAt.set(e.offsetX, e.offsetY);
             }
         }
         const hit = hitTest(e.offsetX, e.offsetY);
-        root.current!.cursor = (hit?.interactive ? hit.cursor : null) || "auto";
+        root.cursor = (hit?.interactive ? hit.cursor : null) || "auto";
     };
 
-    useLayoutEffect(() => {
-        // As of pixi v7 move events are local, so this must be bound to the canvas to allow touch scrolling
-        renderer.view.addEventListener("pointermove", onPointermove);
-        return () => renderer.view.removeEventListener("pointermove", onPointermove);
-    }, [onPointermove, renderer.view]);
+    // As of pixi v7 move events are local, so this must be bound to the canvas to allow touch scrolling
+    onMount(() => renderer.view.addEventListener("pointermove", onPointermove));
+    onCleanup(() => renderer.view.removeEventListener("pointermove", onPointermove));
 
     const onLayout = (layout: ComputedLayout) => {
-        if (layout.height !== height) {
-            mask.current!.clear();
+        if (layout.height !== height()) {
+            mask.clear();
             drawContainerBackground(
-                mask.current!,
+                mask,
                 {
                     ...LIST_BACKGROUND,
                     fill: {
@@ -229,20 +219,17 @@ export const VirtualizedList = <Data extends any>({
         }
     };
 
-    const items = [];
-    const [start, end] = [
-        Math.max(0, Math.floor(position / itemHeight)),
-        Math.min(data.length, Math.ceil((position + height) / itemHeight)),
-    ];
-    for (let i = start; i < end; ++i) {
-        items.push(itemRenderer(data[i], i));
-    }
+    const indexedItems = createMemo(() => props.data.map((item, i): [Data, number] => [item, i]));
+    const range = createMemo(() => [
+        Math.max(0, Math.floor(position() / props.itemHeight)),
+        Math.min(props.data.length, Math.ceil((position() + height()) / props.itemHeight)),
+    ]);
 
-    return <Container
+    return <container
         {...props}
         ref={root}
         flexContainer
-        interactive={!isBlockingMove}
+        interactive={!isBlockingMove()}
         backgroundStyle={LIST_BACKGROUND}
         on:layout={onLayout}
         on:pointerup={onPointerup}
@@ -250,20 +237,21 @@ export const VirtualizedList = <Data extends any>({
         on:pointerdown={onPointerdown}
         on:wheel={onWheel}
     >
-        <Container
+        <graphics ref={mask} yg:excluded />
+        <container
             ref={itemContainer}
-            flexContainer
+            mask={mask}
             interactiveChildren={false}
-            layoutStyle={{
-                flexDirection: FlexDirection.Column,
-                position: PositionType.Absolute,
-                top: position > 0 ? -position % itemHeight : -position,
-                left: 0,
-                right: 0,
-            }}
+            flexContainer
+            yg:flexDirection="column"
+            yg:position="absolute"
+            yg:top={position() > 0 ? -position() % props.itemHeight : -position()}
+            yg:left={0}
+            yg:right={0}
         >
-            {items}
-        </Container>
-        <Graphics ref={mask} layoutStyle={{ excluded: true }} />
-    </Container>;
+            <For each={indexedItems().slice(...range())}>
+                {item => props.itemRenderer(...item)}
+            </For>
+        </container>
+    </container>;
 };

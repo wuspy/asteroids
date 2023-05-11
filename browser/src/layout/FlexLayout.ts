@@ -2,55 +2,55 @@ import { DisplayObject } from "@pixi/display";
 import yoga, { Value, Node, Layout } from "@wuspy/yoga-layout-wasm";
 import getYoga from "./getYoga";
 
-export const enum FlexDirection {
-    Column = 0,
-    ColumnReverse,
-    Row,
-    RowReverse,
+export enum FlexDirection {
+    "column" = 0,
+    "column-reverse",
+    "row",
+    "row-reverse",
 }
 
-export const enum JustifyContent {
-    FlexStart = 0,
-    Center,
-    FlexEnd,
-    SpaceBetween,
-    SpaceAround,
-    SpaceEvenly,
+export enum JustifyContent {
+    "flex-start" = 0,
+    "center",
+    "flex-end",
+    "space-between",
+    "space-around",
+    "space-evenly",
 }
 
-export const enum FlexWrap {
-    NoWrap = 0,
-    Wrap,
-    WrapReverse,
+export enum FlexWrap {
+    "nowrap" = 0,
+    "wrap",
+    "wrap-reverse",
 }
 
-export const enum Align {
-    Auto = 0,
-    FlexStart,
-    Center,
-    FlexEnd,
-    Stretch,
-    Baseline,
-    SpaceBetween,
-    SpaceAround,
+export enum Align {
+    "auto" = 0,
+    "flex-start",
+    "center",
+    "flex-end",
+    "stretch",
+    "baseline",
+    "space-between",
+    "space-around",
 }
 
-export const enum PositionType {
-    Static = 0,
-    Relative,
-    Absolute,
+export enum PositionType {
+    "static" = 0,
+    "relative",
+    "absolute",
+};
+
+export enum Direction {
+    "inherit" = 0,
+    "ltr",
+    "rtl",
 }
 
 export const enum MeasureMode {
     Undefined = 0,
     Exactly,
     AtMost,
-}
-
-export const enum Direction {
-    Inherit = 0,
-    LTR,
-    RTL,
 }
 
 export type ComputedLayout = Layout;
@@ -62,175 +62,40 @@ export interface ComputedEdges {
     right: number;
 }
 
-export interface FlexLayoutProps {
-    alignContent: Align;
-    alignItems: Align;
-    alignSelf: Align;
-    aspectRatio: number;
-    flex: number;
-    flexGrow: number;
-    flexShrink: number;
-    flexWrap: FlexWrap;
-    flexDirection: FlexDirection;
-    flexBasis: Value;
-    justifyContent: JustifyContent;
-    marginTop: Value;
-    marginBottom: Value;
-    marginLeft: Value;
-    marginRight: Value;
-    marginX: Value;
-    marginY: Value;
-    margin: Value;
-    paddingTop: Value;
-    paddingBottom: Value;
-    paddingLeft: Value;
-    paddingRight: Value;
-    paddingX: Value;
-    paddingY: Value;
-    padding: Value;
-    position: PositionType;
-    top: Value;
-    bottom: Value;
-    left: Value;
-    right: Value;
-    width: Value;
-    height: Value;
-    maxWidth: Value;
-    maxHeight: Value;
-    minWidth: Value;
-    minHeight: Value;
-    originAtCenter: boolean;
-    excluded: boolean;
-}
-
-export default class FlexLayout {
+export class FlexLayoutStyleProxy {
     private readonly _node: Node;
-    private readonly _displayObject: DisplayObject;
-    private _parent?: FlexLayout;
-    private _children: FlexLayout[];
 
-    excluded: boolean;
+    constructor(node: Node) {
+        this._node = node;
+        this.originAtCenter = false;
+        this.excluded = false;
+    }
+
     originAtCenter: boolean;
+    excluded: boolean;
 
-    constructor(displayObject: DisplayObject) {
-        const yoga = getYoga();
-        const config = yoga.Config.create();
-        config.setUseWebDefaults(true);
-        config.setPointScaleFactor(10);
-        this._node = yoga.Node.createWithConfig(config);
-        this._displayObject = displayObject;
-        this._children = [];
-        this.originAtCenter = false;
-        this.excluded = false;
-        this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+    get alignContent(): keyof typeof Align {
+        return Align[this._node.getAlignContent()] as keyof typeof Align;
     }
 
-    insertChild(child: FlexLayout, index: number): void {
-        if (child._parent) {
-            child._parent.removeChild(child);
-        }
-        if (this._children.length === 0) {
-            // This is no longer a leaf node, so remove measureFunc so yoga doesn't complain
-            this._node.unsetMeasureFunc();
-        }
-        this._node.insertChild(child._node, index);
-        this._children.splice(index, 0, child);
-        child._parent = this;
+    set alignContent(alignContent: keyof typeof Align) {
+        this._node.setAlignContent(Align[alignContent]);
     }
 
-    appendChild(child: FlexLayout): void {
-        this.insertChild(child, this._children.length);
+    get alignItems(): keyof typeof Align {
+        return Align[this._node.getAlignItems()] as keyof typeof Align;
     }
 
-    removeChild(child: FlexLayout): void {
-        const i = this._children.indexOf(child);
-        if (i !== -1) {
-            this._node.removeChild(child._node);
-            this._children.splice(i, 1);
-            child._parent = undefined;
-            if (this._children.length === 0) {
-                // This is now a leaf node, so set measureFunc again
-                this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
-            }
-        } else {
-            console.warn("Not a child of this layout:", child);
-        }
+    set alignItems(alignItems: keyof typeof Align) {
+        this._node.setAlignItems(Align[alignItems]);
     }
 
-    update(): void {
-        this.prepareLayout();
-        this._node.calculateLayout();
-        this.applyLayout();
+    get alignSelf(): keyof typeof Align {
+        return Align[this._node.getAlignSelf()] as keyof typeof Align;
     }
 
-    reset(): void {
-        this._node.reset();
-        this.originAtCenter = false;
-        this.excluded = false;
-    }
-
-    destroy(): void {
-        if (this._parent) {
-            this._parent.removeChild(this);
-        }
-        for (const child of this._children) {
-            child._parent = undefined;
-        }
-        this._node.free();
-    }
-
-    style<T extends keyof FlexLayoutProps>(props: Partial<FlexLayoutProps>) {
-        for (const [prop, value] of Object.entries(props) as [T, FlexLayoutProps[T]][]) {
-            (this as Pick<FlexLayout, keyof FlexLayoutProps>)[prop] = value;
-        }
-    }
-
-    get computedLayout(): Layout {
-        return this._node.getComputedLayout();
-    }
-
-    get comptedWidth(): number {
-        return this._node.getComputedWidth();
-    }
-
-    get computedHeight(): number {
-        return this._node.getComputedHeight();
-    }
-
-    get computedMargin(): ComputedEdges {
-        return this.getComputedEdges("Margin");
-    }
-
-    get computedPadding(): ComputedEdges {
-        return this.getComputedEdges("Padding");
-    }
-
-    get computedBorder(): ComputedEdges {
-        return this.getComputedEdges("Border");
-    }
-
-    get alignContent(): Align {
-        return this._node.getAlignContent();
-    }
-
-    set alignContent(alignContent: Align) {
-        this._node.setAlignContent(alignContent);
-    }
-
-    get alignItems(): Align {
-        return this._node.getAlignItems();
-    }
-
-    set alignItems(alignItems: Align) {
-        this._node.setAlignItems(alignItems);
-    }
-
-    get alignSelf(): Align {
-        return this._node.getAlignSelf();
-    }
-
-    set alignSelf(alignSelf: Align) {
-        this._node.setAlignSelf(alignSelf);
+    set alignSelf(alignSelf: keyof typeof Align) {
+        this._node.setAlignSelf(Align[alignSelf]);
     }
 
     get aspectRatio(): number {
@@ -261,20 +126,20 @@ export default class FlexLayout {
         this._node.setFlexShrink(flexShrink);
     }
 
-    get flexWrap(): FlexWrap {
-        return this._node.getFlexWrap();
+    get flexWrap(): keyof typeof FlexWrap {
+        return FlexWrap[this._node.getFlexWrap()] as keyof typeof FlexWrap;
     }
 
-    set flexWrap(flexWrap: FlexWrap) {
-        this._node.setFlexWrap(flexWrap);
+    set flexWrap(flexWrap: keyof typeof FlexWrap) {
+        this._node.setFlexWrap(FlexWrap[flexWrap]);
     }
 
-    get flexDirection(): FlexDirection {
-        return this._node.getFlexDirection();
+    get flexDirection(): keyof typeof FlexDirection {
+        return FlexDirection[this._node.getFlexDirection()] as keyof typeof FlexDirection;
     }
 
-    set flexDirection(flexDirection: FlexDirection) {
-        this._node.setFlexDirection(flexDirection);
+    set flexDirection(flexDirection: keyof typeof FlexDirection) {
+        this._node.setFlexDirection(FlexDirection[flexDirection]);
     }
 
     get flexBasis(): Value {
@@ -285,12 +150,12 @@ export default class FlexLayout {
         this._node.setFlexBasis(flexBasis);
     }
 
-    get justifyContent(): JustifyContent {
-        return this._node.getJustifyContent();
+    get justifyContent(): keyof typeof JustifyContent {
+        return JustifyContent[this._node.getJustifyContent()] as keyof typeof JustifyContent;
     }
 
-    set justifyContent(justifyContent: JustifyContent) {
-        this._node.setJustifyContent(justifyContent);
+    set justifyContent(justifyContent: keyof typeof JustifyContent) {
+        this._node.setJustifyContent(JustifyContent[justifyContent]);
     }
 
     get direction(): Direction {
@@ -389,12 +254,12 @@ export default class FlexLayout {
         this._node.setPadding(yoga.EDGE_ALL, padding);
     }
 
-    get position(): PositionType {
-        return this._node.getPositionType();
+    get position(): keyof typeof PositionType {
+        return PositionType[this._node.getPositionType()] as keyof typeof PositionType;
     }
 
-    set position(position: PositionType) {
-        this._node.setPositionType(position);
+    set position(position: keyof typeof PositionType) {
+        this._node.setPositionType(PositionType[position]);
     }
 
     get top(): Value {
@@ -476,9 +341,108 @@ export default class FlexLayout {
     set minHeight(minHeight: Value) {
         this._node.setMinHeight(minHeight);
     }
+}
+
+export default class FlexLayout {
+    private readonly _node: Node;
+    private readonly _displayObject: DisplayObject;
+    private _parent?: FlexLayout;
+    private _children: FlexLayout[];
+
+    readonly style: FlexLayoutStyleProxy;
+
+    constructor(displayObject: DisplayObject) {
+        const yoga = getYoga();
+        const config = yoga.Config.create();
+        config.setUseWebDefaults(true);
+        config.setPointScaleFactor(10);
+        this._node = yoga.Node.createWithConfig(config);
+        this._displayObject = displayObject;
+        this.style = new FlexLayoutStyleProxy(this._node);
+        this._children = [];
+        this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+    }
+
+    insertChild(child: FlexLayout, index: number): void {
+        if (child._parent) {
+            child._parent.removeChild(child);
+        }
+        if (this._children.length === 0) {
+            // This is no longer a leaf node, so remove measureFunc so yoga doesn't complain
+            this._node.unsetMeasureFunc();
+        }
+        this._node.insertChild(child._node, index);
+        this._children.splice(index, 0, child);
+        child._parent = this;
+    }
+
+    appendChild(child: FlexLayout): void {
+        this.insertChild(child, this._children.length);
+    }
+
+    removeChild(child: FlexLayout): void {
+        const i = this._children.indexOf(child);
+        if (i !== -1) {
+            this._node.removeChild(child._node);
+            this._children.splice(i, 1);
+            child._parent = undefined;
+            if (this._children.length === 0) {
+                // This is now a leaf node, so set measureFunc again
+                this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+            }
+        } else {
+            console.warn("Not a child of this layout:", child);
+        }
+    }
+
+    update(): void {
+        this.prepareLayout();
+        this._node.calculateLayout();
+        this.applyLayout();
+    }
+
+    reset(): void {
+        this._node.reset();
+        this.style.originAtCenter = false;
+        this.style.excluded = false;
+    }
+
+    destroy(): void {
+        if (this._parent) {
+            this._parent.removeChild(this);
+        }
+        for (const child of this._children) {
+            child._parent = undefined;
+        }
+        this._node.free();
+    }
+
+    get computedLayout(): Layout {
+        return this._node.getComputedLayout();
+    }
+
+    get comptedWidth(): number {
+        return this._node.getComputedWidth();
+    }
+
+    get computedHeight(): number {
+        return this._node.getComputedHeight();
+    }
+
+    get computedMargin(): ComputedEdges {
+        return this.getComputedEdges("Margin");
+    }
+
+    get computedPadding(): ComputedEdges {
+        return this.getComputedEdges("Padding");
+    }
+
+    get computedBorder(): ComputedEdges {
+        return this.getComputedEdges("Border");
+    }
 
     private prepareLayout(): void {
-        if (this.excluded || !this._displayObject.visible) {
+        if (this.style.excluded || !this._displayObject.visible) {
             this._node.setDisplay(yoga.DISPLAY_NONE);
         } else {
             this._node.setDisplay(yoga.DISPLAY_FLEX);
@@ -493,13 +457,13 @@ export default class FlexLayout {
     }
 
     private applyLayout(): void {
-        if (this.excluded || !this._displayObject.visible) {
+        if (this.style.excluded || !this._displayObject.visible) {
             return;
         }
         if (this._node.getHasNewLayout()) {
             const layout = this.computedLayout;
             if (this._parent) {
-                if (this.originAtCenter) {
+                if (this.style.originAtCenter) {
                     this._displayObject.position.set(layout.left + layout.width / 2, layout.top + layout.height / 2);
                 } else {
                     this._displayObject.position.set(layout.left, layout.top);

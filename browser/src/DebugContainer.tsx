@@ -1,9 +1,8 @@
+import { SmoothGraphics } from "@pixi/graphics-smooth";
 import { GameObject } from "@wuspy/asteroids-core";
-import { SmoothGraphics as PixiGraphics } from "@pixi/graphics-smooth";
-import { FC, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Component, createSignal, onCleanup, onMount } from "solid-js";
 import Stats from "stats.js";
-import { useApp, useTick } from "./AppContext";
-import { Graphics } from "./react-pixi";
+import { onTick, useApp } from "./AppContext";
 
 declare global {
     interface Window {
@@ -11,10 +10,10 @@ declare global {
     }
 }
 
-export let DebugContainer: FC;
+export let DebugContainer: Component;
 
 if (process.env.NODE_ENV === "development") {
-    const drawObjects = (graphics: PixiGraphics, objects: GameObject[]) => {
+    const drawObjects = (graphics: SmoothGraphics, objects: GameObject[]) => {
         for (const object of objects) {
             graphics.lineStyle({
                 width: 2,
@@ -36,25 +35,23 @@ if (process.env.NODE_ENV === "development") {
 
     DebugContainer = () => {
         const { game } = useApp();
-        const [visible, setVisible] = useState(false);
-        const fpsStats = useMemo(() => {
-            const fpsStats = new Stats();
-            fpsStats.showPanel(0);
-            fpsStats.dom.style.position = "relative";
-            fpsStats.dom.style.display = "inline-block";
-            return fpsStats;
-        }, []);
-        const memoryStats = useMemo(() => {
-            const memoryStats = new Stats();
-            memoryStats.showPanel(2);
-            memoryStats.dom.style.position = "relative";
-            memoryStats.dom.style.display = "inline-block";
-            return memoryStats;
-        }, []);
-        const graphics = useRef<PixiGraphics>(null);
+        const [visible, setVisible] = createSignal(false);
 
-        useLayoutEffect(() => {
-            const statsDiv = document.createElement("div");
+        const fpsStats = new Stats();
+        fpsStats.showPanel(0);
+        fpsStats.dom.style.position = "relative";
+        fpsStats.dom.style.display = "inline-block";
+
+        const memoryStats = new Stats();
+        memoryStats.showPanel(2);
+        memoryStats.dom.style.position = "relative";
+        memoryStats.dom.style.display = "inline-block";
+
+        const statsDiv = document.createElement("div");
+
+        let graphics!: SmoothGraphics;
+
+        onMount(() => {
             statsDiv.style.position = "absolute";
             statsDiv.style.right = "0";
             statsDiv.style.bottom = "0";
@@ -82,32 +79,29 @@ if (process.env.NODE_ENV === "development") {
                     }
                 },
             };
-            return () => {
-                fpsStats.end();
-                memoryStats.end();
-                statsDiv.remove();
-                window.asteroids = undefined;
-            };
-        }, []);
+        });
 
-        useTick("app", () => {
+        onCleanup(() => {
+            fpsStats.end();
+            memoryStats.end();
+            statsDiv.remove();
+            window.asteroids = undefined;
+        });
+
+        onTick("app", () => {
             fpsStats.update();
             memoryStats.update();
         });
 
-        useTick("game", () => {
-            if (!graphics.current) {
-                return;
-            }
-
-            graphics.current.clear();
-            drawObjects(graphics.current, game.state.asteroids);
-            drawObjects(graphics.current, game.state.ufos);
-            drawObjects(graphics.current, game.state.projectiles);
-            game.state.ship && drawObjects(graphics.current, [game.state.ship]);
+        onTick("game", () => {
+            graphics.clear();
+            drawObjects(graphics, game.state.asteroids);
+            drawObjects(graphics, game.state.ufos);
+            drawObjects(graphics, game.state.projectiles);
+            game.state.ship && drawObjects(graphics, [game.state.ship]);
         }, visible);
 
-        return <Graphics ref={graphics} visible={visible} />;
+        return <graphics ref={graphics} visible={visible()} />;
     }
 } else {
     DebugContainer = () => null;

@@ -1,6 +1,6 @@
 import { DisplayObject, IDestroyOptions } from "@pixi/display";
 import { ISize } from "@pixi/core";
-import FlexLayout, { FlexLayoutProps, MeasureMode } from "./FlexLayout";
+import FlexLayout, { MeasureMode } from "./FlexLayout";
 
 const displayObject = DisplayObject.prototype;
 
@@ -18,15 +18,9 @@ Object.defineProperties(displayObject, {
             return this._layout;
         },
     },
-    layoutStyle: {
-        set(this: DisplayObject, props: Partial<FlexLayoutProps>) {
-            // TODO does not reset already applied styles
-            this.layout.style(props);
-        },
-    },
     isLayoutChild: {
         get(this: DisplayObject): boolean {
-            return !!this.parent && this.parent.flexContainer && !this.layout.excluded;
+            return !!this.parent && this.parent.flexContainer && !this.layout.style.excluded;
         }
     },
 });
