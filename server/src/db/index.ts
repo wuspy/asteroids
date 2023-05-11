@@ -43,7 +43,7 @@ export const findHighScores = async (): Promise<HighScore[]> =>
         .execute();
 
 const selectGames = () =>
-        db.selectFrom("game")
+    db.selectFrom("game")
         .innerJoin("game_token", "game_token.game_token_id", "game.game_token_id")
         .select([
             "game_id as id",
@@ -98,11 +98,11 @@ export const findUnusedGameToken = async (id: number): Promise<GameToken | undef
             "random_seed as randomSeed",
         ])
         .where("game_token_id", "=", id)
-        .whereNotExists((qb) => qb
-            .selectFrom("game")
-            .select("game.game_id")
-            .whereRef("game.game_token_id", "=", "game_token.game_token_id")
-        )
+        .where(({ not, exists, selectFrom }) => not(exists(
+            selectFrom("game")
+                .select("game.game_id")
+                .whereRef("game.game_token_id", "=", "game_token.game_token_id")
+        )))
         .executeTakeFirst()
         .then((row) => !row ? undefined : {
             ...row,
@@ -161,12 +161,12 @@ export const findReservedPlayerNames = async (): Promise<{ [Key in string]: stri
         }, <{ [Key in string]: string }>{}))
 
 export const storePlayerNameFilter = async (phrase: string, action: PlayerNameFilterAction): Promise<InsertResult> =>
-        await db.insertInto("player_name_filter")
-            .values({
-                phrase,
-                filter_action: action
-            })
-            .executeTakeFirstOrThrow()
+    await db.insertInto("player_name_filter")
+        .values({
+            phrase,
+            filter_action: action
+        })
+        .executeTakeFirstOrThrow()
 
 export const findPlayerNameFilters = async (): Promise<{ [Key in string]: PlayerNameFilterAction }> =>
     await db.selectFrom("player_name_filter")
