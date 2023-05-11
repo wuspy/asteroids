@@ -1,0 +1,15 @@
+{
+    "name": "@wuspy/asteroids-core",
+    "version": "0.0.0",
+    "author": "Jacob Jordan",
+    "license": "MIT",
+    "private": true,
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "lint": "eslint src",
+        "dev": "",
+        "build": "",
+        "clean": ""
+    }
+}
