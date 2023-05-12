@@ -1,7 +1,7 @@
 import { Container } from "@pixi/display";
 import { Sprite } from "@pixi/sprite";
 import { LIVES, TickQueue } from "@wuspy/asteroids-core";
-import { JSX, createSignal } from "solid-js";
+import { Index, createSignal } from "solid-js";
 import { onGameEvent, useApp } from "../AppContext";
 import { PopAnimation } from "../animations";
 import { createShipTexture } from "../gameplay";
@@ -20,24 +20,10 @@ export const LifeIndicator = (props: LifeIndicatorProps) => {
     const shipTexture = createShipTexture(renderer, 3, SIZE);
 
     let container!: Container;
-    const children: JSX.Element[] = [];
-    const indicators: Sprite[] = [];
-
-    for (let i = LIVES - 1; i >= 0; i--) {
-        children.push(
-            <sprite
-                ref={indicators[i]}
-                texture={shipTexture}
-                tint={UI_FOREGROUND_COLOR}
-                alpha={lives() > i ? 1 : 0.25}
-                anchor={0.5}
-                yg:originAtCenter
-                yg:paddingX={5}
-            />
-        );
-    }
+    const indicators: Sprite[] = Array(LIVES).fill(undefined);
 
     onGameEvent("livesChanged", lives => {
+        console.log("livesChanged", lives, indicators[lives]);
         setLives(lives);
         container.addChild(new LifeAnimation(queue, indicators[lives]));
     });
@@ -50,6 +36,7 @@ export const LifeIndicator = (props: LifeIndicatorProps) => {
             ref={container}
             interactiveChildren={false}
             flexContainer
+            yg:flexDirection="row-reverse"
             yg:paddingX={14}
             yg:paddingY={12}
             backgroundStyle={{
@@ -62,7 +49,17 @@ export const LifeIndicator = (props: LifeIndicatorProps) => {
                 },
             }}
         >
-            {children}
+            <Index each={indicators}>{(_, i) =>
+                <sprite
+                    ref={indicators[i]}
+                    texture={shipTexture}
+                    tint={UI_FOREGROUND_COLOR}
+                    alpha={lives() > i ? 1 : 0.25}
+                    anchor={0.5}
+                    yg:originAtCenter
+                    yg:paddingX={5}
+                />}
+            </Index>
         </container>
     );
 }
