@@ -1,0 +1,22 @@
+FROM node:18-slim AS builder
+
+WORKDIR /usr/src/asteroids
+
+COPY . .
+RUN npm ci
+RUN npm run build:api
+
+FROM node:18-slim
+
+WORKDIR /usr/share/asteroids
+
+COPY --from=builder --chmod=555 /usr/src/asteroids/api/dist/ .
+
+ARG NODE_ENV=production
+ENV NODE_ENV=$NODE_ENV
+
+ARG npm_package_version
+ENV npm_package_version=$npm_package_version
+
+EXPOSE 8080
+ENTRYPOINT node index.js

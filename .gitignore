@@ -1,4 +1,4 @@
 node_modules
 dist
 .swc
-browser/stats.html
+web/stats.html

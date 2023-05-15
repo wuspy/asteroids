@@ -1,5 +1,5 @@
 {
-    "name": "@wuspy/asteroids-server",
+    "name": "@wuspy/asteroids-api",
     "version": "3.0.0",
     "author": "Jacob Jordan",
     "license": "MIT",
@@ -12,6 +12,7 @@
         "@types/multer": "^1.4.7",
         "@types/node": "^18.16.1",
         "@types/pg": "^8.6.6",
+        "@vercel/ncc": "^0.36.1",
         "@wuspy/asteroids-core": "*",
         "bcrypt": "^5.1.0",
         "cross-env": "7.0.3",
@@ -26,11 +27,11 @@
     },
     "scripts": {
         "lint": "eslint src",
-        "prod": "NODE_ENV=production ts-node src/main.ts",
         "dev": "cross-env NODE_ENV=development nodemon --signal SIGTERM src/main.ts",
-        "storeReservedName": "ts-node scripts/storeReservedName.ts",
+        "build": "NODE_ENV=production ncc build src/main.ts -C --target es2020 --v8-cache --license ../LICENSE -o dist",
+        "storeReservedName": "ts-node src/scripts/storeReservedName.ts",
         "clean": "rimraf dist node_modules",
-        "storeNameFilter": "ts-node scripts/storeNameFilter.ts",
-        "validateGames": "ts-node scripts/validateGames.ts"
+        "storeNameFilter": "ts-node src/scripts/storeNameFilter.ts",
+        "validateGames": "ts-node src/scripts/validateGames.ts"
     }
 }

@@ -24,13 +24,6 @@ svg {
     right: 0;
 }
 
-.striped-overlay {
-    background-size: 16px 3pt;
-    background-position: 50%;
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, .05) 1pt, rgba(255, 255, 255, .025) 1pt);
-    z-index: 99999;
-}
-
 #background {
     display: block;
     opacity: 0;

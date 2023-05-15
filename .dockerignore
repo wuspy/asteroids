@@ -2,4 +2,4 @@ node_modules
 npm-debug.log
 dist
 .swc
-browser/stats.html
+web/stats.html

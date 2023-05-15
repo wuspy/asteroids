@@ -7,7 +7,7 @@ import { viteStaticCopy } from "vite-plugin-static-copy";
 
 const version = JSON.parse(readFileSync("./package.json", "utf8")).version;
 
-const hmr = false;
+const hmr = true;
 
 export default defineConfig({
     plugins: [
