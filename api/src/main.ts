@@ -170,15 +170,21 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
 });
 
 if (process.env.NODE_ENV === "development") {
-    // Proxy other requests to the vite dev server
-    console.log("Server is running in development move, all non-API requests are proxied to Vite");
+    console.log("Server is running in development move");
     const createViteProxy = async () => {
-        const { createProxyMiddleware } = await import("http-proxy-middleware");
-        app.use(createProxyMiddleware({
-            target: "http://localhost:8081",
-            changeOrigin: true,
-            ws: true,
-        }));
+        const { existsSync } = await import("fs");
+        if (existsSync("../web/dist")) {
+            console.log("Serving static assets from web/dist");
+            app.use(express.static("../web/dist"));
+        } else {
+            console.log("Proxying all non-API requests to Vite at http://localhost:8081");
+            const { createProxyMiddleware } = await import("http-proxy-middleware");
+            app.use(createProxyMiddleware({
+                target: "http://localhost:8081",
+                changeOrigin: true,
+                ws: true,
+            }));
+        }
     };
 
     createViteProxy();

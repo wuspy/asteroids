@@ -1,5 +1,5 @@
-import vertex from "./glsl/vertex.glsl";
-import fragment from "./glsl/chromatic-abberation.glsl";
+import vertex from "./glsl/vertex.glsl?raw";
+import fragment from "./glsl/chromatic-abberation.glsl?raw";
 import { Filter } from "@pixi/core";
 
 export class ChromaticAbberationFilter extends Filter

@@ -32,14 +32,13 @@
         "@wuspy/asteroids-core": "*",
         "@wuspy/yoga-layout-wasm": "https://github.com/wuspy/yoga-layout-wasm",
         "animejs": "^3.2.1",
+        "ismobilejs": "^1.1.1",
         "rollup-plugin-visualizer": "^5.9.0",
         "solid-js": "^1.7.5",
         "stats.js": "^0.17.0",
         "typescript": "^5.0.4",
         "vite": "^4.3.5",
-        "vite-plugin-glsl": "^1.1.2",
-        "vite-plugin-solid": "^2.7.0",
-        "vite-plugin-static-copy": "^0.14.0"
+        "vite-plugin-solid": "^2.7.0"
     },
     "scripts": {
         "lint": "eslint src",

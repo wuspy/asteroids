@@ -1,12 +1,13 @@
-// TODO add mobile redirect or get rid of this
-const redirect = false;
+import ismobilejs from "ismobilejs";
 
-if (redirect) {
+if (ismobilejs().phone) {
     window.location.href = "/about.html";
 } else {
-    document.getElementById("loader-placeholder")!.id = "loader";
-    document.getElementById("branding")!.style.visibility = "visible";
-    import("./asteroids.tsx").then(asteroids => asteroids.run());
+    const asteroids = import("./asteroids.tsx");
+    window.addEventListener("load", async () => {
+        document.getElementById("loader-placeholder")!.id = "loader";
+        (await asteroids).run();
+    });
 }
 
 export {}

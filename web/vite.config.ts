@@ -1,9 +1,7 @@
 import { readFileSync } from "fs";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
-import glsl from "vite-plugin-glsl";
-import solidPlugin from 'vite-plugin-solid';
-import { viteStaticCopy } from "vite-plugin-static-copy";
+import solidPlugin from "vite-plugin-solid";
 
 const version = JSON.parse(readFileSync("./package.json", "utf8")).version;
 
@@ -11,23 +9,12 @@ const hmr = true;
 
 export default defineConfig({
     plugins: [
-        glsl({
-            compress: true,
-        }),
         solidPlugin({
             hot: hmr,
             solid: {
                 generate: "universal",
                 moduleName: "/src/solid-pixi",
             },
-        }),
-        viteStaticCopy({
-            targets: [
-                {
-                    src: "../node_modules/@wuspy/yoga-layout-wasm/dist/yoga.wasm",
-                    dest: ".",
-                }
-            ]
         }),
         visualizer(),
     ],
