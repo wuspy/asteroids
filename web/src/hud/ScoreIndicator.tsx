@@ -30,7 +30,7 @@ export const ScoreIndicator = (props: ScoreIndicatorProps) => {
                 },
             }}
         >
-            <ScoreText animate score={currentScore()} zeroAlpha={0.25} style={{ fontSize: 48 }} />
+            <ScoreText animate score={currentScore()} zeroAlpha={0.25} style={{ fontSize: 48 }} yg:marginBottom={-2} />
         </container>
     );
 };

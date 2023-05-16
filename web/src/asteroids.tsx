@@ -6,6 +6,7 @@ import { MIN_FPS, TickQueue } from "@wuspy/asteroids-core";
 import { AppProvider } from "./AppContext";
 import { AsteroidsGameContainer } from "./AsteroidsGameContainer";
 import "./layout";
+import FontFaceObserver from "fontfaceobserver";
 import { initYoga } from "./layout";
 import * as SolidPixi from './solid-pixi';
 
@@ -18,8 +19,14 @@ export const run = async () => {
         "/assets/github-64px.webp",
         "/assets/linkedin-64px.webp",
     ]);
-    // Init yoga
+
     await initYoga();
+
+    try {
+        await new FontFaceObserver("Noto Sans Mono").load();
+    } catch (e) {
+        console.error("Failed to load fonts:", e);
+    }
 
     const container = document.getElementById("game");
     if (!container) {

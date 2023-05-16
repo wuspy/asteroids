@@ -9,7 +9,7 @@ export const UI_BACKGROUND_ALPHA = 0.6;
 export const UI_DIVIDER_COLOR = 0x606060;
 
 export const FONT_STYLE = {
-    fontFamily: "Consolas, Monaco, Noto Sans Mono, Roboto Mono, monospace",
+    fontFamily: "Noto Sans Mono, Consolas, Monaco, Roboto Mono, monospace",
     fill: UI_FOREGROUND_COLOR,
 };
 

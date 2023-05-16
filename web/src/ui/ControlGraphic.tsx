@@ -169,7 +169,7 @@ export const ControlGraphic = (_props: ControlGraphicProps) => {
                     }}
                 >
                     <text
-                        style:fontSize={props.size * 0.66}
+                        style:fontSize={props.size / 1.618}
                         style:fontWeight="bold"
                         style:fill={props.color}
                         text={capitalizeFirstLetter(control().name in KEY_LABELS ? KEY_LABELS[control().name] : control().name)}

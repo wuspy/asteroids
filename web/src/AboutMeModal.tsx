@@ -1,5 +1,5 @@
 import { ITextStyle } from "@pixi/text";
-import { createEffect, splitProps } from "solid-js";
+import { createEffect, createMemo, splitProps } from "solid-js";
 import { ContainerProps } from "./solid-pixi";
 import { Button, Image, Modal } from "./ui";
 
@@ -13,10 +13,12 @@ const Cat = (_props: CatProps) => {
     const [props, childProps] = splitProps(_props, ["imageUrl", "name", "caption"]);
     return (
         <container {...childProps} flexContainer yg:flexDirection="column" yg:alignItems="center" yg:marginX={8}>
-            <Image url={props.imageUrl} yg:width={144} yg:aspectRatio={1} yg:marginBottom={8} />
+            <Image url={props.imageUrl} yg:width={144} yg:aspectRatio={1} />
             <text
                 text={props.name}
-                style:fontSize={20}
+                yg:marginTop={8}
+                yg:marginBottom={4}
+                style:fontSize={18}
                 style:lineHeight={24}
             />
             <text
@@ -32,7 +34,7 @@ const Cat = (_props: CatProps) => {
 }
 
 const headerTextStyle: Partial<ITextStyle> = {
-    fontSize: 50,
+    fontSize: 48,
     lineHeight: 60,
     fontWeight: "bold",
 };
@@ -57,7 +59,7 @@ export const AboutMeModal = (props: AboutMeModalProps) => {
             <text
                 text={"Thanks for checking out my\nsite and my little game :)"}
                 style:fontSize={28}
-                style:lineHeight={32}
+                style:lineHeight={34}
                 style:fontWeight="bold"
             />
             <Image
@@ -72,17 +74,17 @@ export const AboutMeModal = (props: AboutMeModalProps) => {
         <text
             text={
                 "I'm a programmer, among other things. I currently work as a full-stack web developer using " +
-                "Typescript, React, C#, PHP & MySQL, and I also have experience with Android/Kotlin, Rust, and C++/Qt/QML. " +
+                "Typescript, React, C#, PHP & MySQL, and I also have experience with Android/Kotlin, Rust, Svelte, SolidJS, C++, Arduino, and Qt/QML. " +
                 "You can check out the source code for this website and other projects I've made on GitHub.\n\n" +
 
-                "Besides programming? Hmm... I like cycling, mountain biking, 3D printing & 3D modeling... " +
+                "Besides programming? I like cycling, mountain biking, 3D printing & 3D modeling... " +
                 "ok instead of boring you with my life story I'm just gonna show you some pictures of my cats."
             }
-            style:fontSize={20}
+            style:fontSize={18}
             style:lineHeight={24}
             style:wordWrap
         />
-        <container flexContainer yg:marginY={32} yg:justifyContent="space-around">
+        <container flexContainer yg:marginBottom={32} yg:marginTop={28} yg:justifyContent="space-around">
             <Cat name="Stormy" caption={"a very fitting name\nbut he's very sweet"} imageUrl="/assets/stormy.webp" />
             <Cat name="Booties" caption={"cause her feet look\nlike little booties"} imageUrl="/assets/booties.webp" />
             <Cat name="G.K." caption={"it stands for gray\nkitty don't judge me"} imageUrl="/assets/gk.webp" />
