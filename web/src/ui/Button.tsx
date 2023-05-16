@@ -90,7 +90,7 @@ export const Button = (_props: ButtonProps) => {
         <container
             {...childProps}
             flexContainer
-            interactive={props.enabled}
+            eventMode={props.enabled ? "static" : "auto"}
             cursor="pointer"
             on:pointertap={onPointerTap}
             on:pointerover={onPointerOver}

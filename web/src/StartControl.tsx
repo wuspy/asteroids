@@ -40,7 +40,7 @@ export const StartControl = (_props: StartControlProps) => {
         <ControlDescription
             {...childProps}
             control="start"
-            interactive
+            eventMode="static"
             cursor="pointer"
             filters={[glowFilter]}
             size={32}

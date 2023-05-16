@@ -43,7 +43,7 @@ export const LeaderboardListItem = (_props: LeaderboardListItemProps) => {
     return (
         <container
             {...childProps}
-            interactive
+            eventMode="static"
             cursor="pointer"
             on:pointertap={e => e.button === 0 && props.onClick(props.index)}
             backgroundStyle={props.selected ? activeBackground : inactiveBackground}

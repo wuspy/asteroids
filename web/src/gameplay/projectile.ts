@@ -1,5 +1,5 @@
 import { PROJECTILE_LIFETIME, Projectile, Ship, TickFn, UFO } from "@wuspy/asteroids-core";
-import { IRenderer, Texture, utils } from "@pixi/core";
+import { Color, IRenderer, Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
@@ -68,7 +68,7 @@ export const displayProjectile = ({ projectile, theme, mainContainer, background
             config: { scale: { start: 0.75, end: 0 } },
         }, {
             type: "colorStatic",
-            config: { color: utils.hex2string(color) }
+            config: { color: new Color(color).toHex() }
         }, {
             type: "moveSpeed",
             config: { speed: { start: 50, end: 10 } },

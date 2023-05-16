@@ -1,4 +1,4 @@
-import { ISize, Renderer, utils } from "@pixi/core";
+import { Color, ColorSource, ISize, Renderer } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { MeasureMode } from "../layout";
@@ -10,7 +10,7 @@ export class DOMTextInput extends Container {
     readonly element: HTMLInputElement;
     private _inputAppended: boolean;
     private _lastWorldAlpha: number;
-    private _color: number;
+    private readonly _color: Color;
     private _focusNextRender: boolean;
     private _fontSize: number;
     private _padding: number;
@@ -26,7 +26,7 @@ export class DOMTextInput extends Container {
         this.respectAlphaFilter = false;
         this._padding = 0;
         this._lastWorldAlpha = 0;
-        this._color = 0;
+        this._color = new Color(0);
         this._focusNextRender = false;
         this.element = document.createElement("input");
         this.element.type = "text";
@@ -91,12 +91,12 @@ export class DOMTextInput extends Container {
         this.updateWidth();
     }
 
-    get color(): number {
-        return this._color;
+    get color(): ColorSource {
+        return this._color.toNumber();
     }
 
-    set color(color: number) {
-        this._color = color;
+    set color(color: ColorSource) {
+        this._color.setValue(color);
         this.updateColor();
     }
 
@@ -206,8 +206,9 @@ export class DOMTextInput extends Container {
     }
 
     private updateColor() {
-        const rgb = (utils.hex2rgb(this._color) as number[]).map(x => (x * 255).toFixed()).join(",");
-        this.element.style.color = `rgba(${rgb},${this._lastWorldAlpha.toFixed(2)})`;
+        const rgb = this._color.toUint8RgbArray().join(",");
+        const a = (this._lastWorldAlpha * this._color.alpha).toFixed(2);
+        this.element.style.color = `rgba(${rgb},${a})`;
     }
 
     private updateWidth() {

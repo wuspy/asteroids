@@ -1,5 +1,5 @@
 import { HYPERSPACE_DELAY, Ship, TickFn } from "@wuspy/asteroids-core";
-import { IRenderer, Texture, utils } from "@pixi/core";
+import { Color, IRenderer, Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
@@ -119,7 +119,7 @@ export const displayShip = ({ ship, theme, mainContainer, backgroundContainer, f
                         config: { scale: { start: 0.5, end: 0 } },
                     }, {
                         type: "colorStatic",
-                        config: { color: utils.hex2string(shipSprite.tint as number) }
+                        config: { color: new Color(shipSprite.tint).toHex() }
                     }, {
                         type: "textureSingle",
                         config: { texture: createShadowTexture(renderer, shipTexture) },

@@ -229,7 +229,7 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
         {...props}
         ref={root}
         flexContainer
-        interactive={!isBlockingMove()}
+        eventMode={isBlockingMove() ? "auto" : "static"}
         backgroundStyle={LIST_BACKGROUND}
         on:layout={onLayout}
         on:pointerup={onPointerup}
