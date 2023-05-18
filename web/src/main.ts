@@ -1,10 +1,10 @@
 import ismobilejs from "ismobilejs";
 
 if (ismobilejs().phone) {
-    window.location.href = "/about.html";
+    window.location.replace("/about.html");
 } else {
     const asteroids = import("./asteroids.tsx");
-    window.addEventListener("load", async () => {
+    window.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("loader-placeholder")!.id = "loader";
         (await asteroids).run();
     });

@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
+import sitemap from "vite-plugin-sitemap";
 import solidPlugin from "vite-plugin-solid";
 
 const version = JSON.parse(readFileSync("./package.json", "utf8")).version;
@@ -15,6 +16,11 @@ export default defineConfig({
                 generate: "universal",
                 moduleName: "/src/solid-pixi",
             },
+        }),
+        sitemap({
+            // TODO don't hardcode this here
+            hostname: "https://jacobjordan.tech",
+            readable: true,
         }),
         visualizer(),
     ],

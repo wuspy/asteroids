@@ -23,7 +23,12 @@ svg {
     @apply border-neutral-100 hover:bg-neutral-700 focus:ring-neutral-700;
 }
 
+.button-text {
+    @apply rounded-md relative inline-flex text-center px-2 py-1.5 focus:ring-4;
+    @apply hover:bg-neutral-700 focus:ring-neutral-800;
+}
+
 .button-icon {
     @apply rounded-full text-center p-2 focus:ring-4;
-    @apply hover:bg-neutral-700 focus:ring-neutral-700;
+    @apply hover:bg-neutral-700 focus:ring-neutral-800;
 }
