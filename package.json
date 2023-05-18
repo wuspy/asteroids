@@ -18,7 +18,7 @@
     "scripts": {
         "lint": "npm run lint --workspaces",
         "dev:web": "npm run dev -w web",
-        "dev:api": "npm run dev --w api",
+        "dev:api": "npm run dev -w api",
         "build:web": "npm run build -w web",
         "build:api": "npm run build -w api",
         "clean:dependencies": "rimraf node_modules",
