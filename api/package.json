@@ -28,7 +28,7 @@
     "scripts": {
         "lint": "eslint src",
         "dev": "cross-env NODE_ENV=development nodemon --signal SIGTERM src/main.ts",
-        "build": "NODE_ENV=production ncc build src/main.ts -C --target es2020 --v8-cache --license ../LICENSE -o dist",
+        "build": "NODE_ENV=production ncc build src/main.ts -C -e pg-cloudflare -e http-proxy-middleware --target es2020 --license ../LICENSE -o dist",
         "storeReservedName": "ts-node src/scripts/storeReservedName.ts",
         "clean": "rimraf dist node_modules",
         "storeNameFilter": "ts-node src/scripts/storeNameFilter.ts",
