@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@400;700&display=swap');
+
+body {
+    font-family: Noto Sans Mono, Consolas, Monaco, Roboto Mono, Liberation Mono, monospace;
+    background: black;
+    color: rgba(255, 255, 255, .8);
+    text-shadow: 0 0 .5em rgba(255, 255, 255, .8);
+    font-size: 12pt;
+    line-height: 1.2;
+}
+
+a {
+    color: inherit;
+}
+
+svg {
+    fill: rgba(255, 255, 255, 0.8);
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, .5));
+}
+
+.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+#background {
+    display: block;
+    opacity: 0;
+    transition: opacity 1s;
+    pointer-events: none;
+}
+
+#background-overlay {
+    display: block;
+    background: repeating-linear-gradient(7deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px), repeating-linear-gradient(97deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px);
+    pointer-events: none;
+}
+
+#striped-overlay {
+    background-size: 16px 3pt;
+    background-position: 50%;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, .05) 1pt, rgba(255, 255, 255, .025) 1pt);
+    pointer-events: none;
+}
+
+#radial-overlay {
+    background: radial-gradient(circle at center, transparent, transparent, rgba(255, 255, 255, 0.05));
+    pointer-events: none;
+}
+
+#branding {
+    color: rgba(255, 255, 255, 0.25);
+    user-select: none;
+    font-size: 10pt;
+    position: fixed;
+    display: block;
+    text-align: center;
+    bottom: 10pt;
+    left: 0;
+    right: 0;
+}
+
+#branding svg {
+    fill: rgba(255, 255, 255, 0.25);
+    filter: drop-shadow(0 0 6px white);
+    width: 10pt;
+    height: 10pt;
+    margin-bottom: -3px;
+    margin-right: 4px;
+}
+
+@media(max-width: 320px),
+(max-height: 500px) {
+    #branding {
+        display: none;
+    }
+}
+
+#loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -62px;
+    margin-left: -62px;
+    border: 12px solid transparent;
+    border-top: 12px solid white;
+    border-bottom: 12px solid white;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    animation: spin 1s linear infinite;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

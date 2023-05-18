@@ -1,5 +1,6 @@
 import { Polygon } from "@pixi/core";
 import { InputLogConfig, InputMappingType } from "./engine";
+import "./engine";
 
 /**
  * Constants and types that configure core gameplay mechanics.

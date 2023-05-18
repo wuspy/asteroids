@@ -1,0 +1,12 @@
+FROM node:18-slim AS builder
+
+WORKDIR /usr/src/asteroids
+
+COPY . .
+RUN npm ci
+RUN npm run build:web
+
+FROM nginxinc/nginx-unprivileged:stable
+
+COPY --from=builder --chmod=555 /usr/src/asteroids/web/dist/ /usr/share/nginx/html
+COPY --from=builder --chmod=555 /usr/src/asteroids/web/nginx/ /etc/nginx/conf.d

@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: Inter, sans-serif;
+    @apply text-neutral-100 bg-gray-950;
+}
+
+svg {
+    @apply fill-neutral-100;
+}
+
+.button-contained {
+    @apply rounded-md relative inline-flex text-center px-4 py-2 text-sm focus:ring-4;
+    @apply text-gray-950 focus:ring-gray-700 bg-neutral-100 hover:bg-neutral-200;
+}
+
+.button-outlined {
+    @apply rounded-md relative inline-flex text-center px-4 py-2 border text-sm focus:ring-4;
+    @apply border-neutral-100 hover:bg-neutral-700 focus:ring-neutral-700;
+}
+
+.button-icon {
+    @apply rounded-full text-center p-2 focus:ring-4;
+    @apply hover:bg-neutral-700 focus:ring-neutral-700;
+}
