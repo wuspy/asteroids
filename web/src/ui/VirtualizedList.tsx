@@ -2,7 +2,6 @@ import { Point } from "@pixi/core";
 import { Container, DisplayObject, DisplayObjectEvents } from "@pixi/display";
 import { EventBoundary, FederatedPointerEvent, FederatedWheelEvent } from "@pixi/events";
 import { SmoothGraphics } from "@pixi/graphics-smooth";
-import anime from "animejs";
 import { For, JSX, Setter, createMemo, createRenderEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { onTick, useApp } from "../AppContext";
 import { clamp, lineSegmentLength } from "@wuspy/asteroids-core";
@@ -31,8 +30,8 @@ export interface VirtualizedListActions {
     scrollToIndexImmediate: (index: number, middle?: boolean) => void;
 }
 
-export interface VirtualizedListProps<Data> extends ContainerProps {
-    itemRenderer: (data: Data, index: number) => JSX.Element;
+export interface VirtualizedListProps<Data> extends Omit<ContainerProps, "children"> {
+    children: (props: { data: Data, index: number }) => JSX.Element;
     data: readonly Data[];
     itemHeight: number;
     overscroll?: number;
@@ -49,18 +48,20 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
     let pointerDownAt: Point | undefined = undefined;
     let scrollCaptured = false;
     let targetPosition = -(props.overscroll || 0);
-    let lastTimestamp = 0;
     const [isBlockingMove, setIsBlockingMove] = createSignal(false);
 
     const [position, setPosition] = createSignal(-(props.overscroll || 0));
     const [height, setHeight] = createSignal(0);
-    let anim: anime.AnimeTimelineInstance | undefined;
 
     const maxScrollPosition = createMemo(() => Math.max(Math.ceil((props.data.length * props.itemHeight - height() + (props.overscroll || 0)) / props.itemHeight) * props.itemHeight, 0));
 
-    onTick("app", (timestamp) => {
-        lastTimestamp = timestamp;
-        anim?.tick(timestamp);
+    onTick("app", (timestamp, elapsed) => {
+        const diff = targetPosition - position();
+        if (diff) {
+            setPosition(Math.abs(diff) < 1 ? targetPosition : position() + diff * elapsed * 15);
+        } else if (isBlockingMove()) {
+            setIsBlockingMove(false);
+        }
     });
 
     const hitTest = (x: number, y: number): DisplayObject | undefined => {
@@ -83,7 +84,6 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
         }
         pos = clamp(pos, maxScrollPosition(), -(props.overscroll || 0));
         targetPosition = pos;
-        anim = undefined;
         setPosition(pos);
     };
 
@@ -92,25 +92,7 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
             return;
         }
         targetPosition = clamp(pos, maxScrollPosition(), -(props.overscroll || 0));
-        if (position() !== targetPosition) {
-            setIsBlockingMove(blocking);
-            const target = { position: position() };
-            anim = anime.timeline({
-                autoplay: false,
-                easing: "easeOutQuart",
-                complete: () => {
-                    anim = undefined;
-                    setIsBlockingMove(false);
-                    setPosition(targetPosition);
-                },
-            }).add({
-                targets: target,
-                position: targetPosition,
-                duration: blocking ? Math.sqrt(Math.abs(position() - targetPosition)) * 36 : 250,
-                change: () => setPosition(target.position),
-            });
-            anim.tick(lastTimestamp);
-        }
+        setIsBlockingMove(blocking);
     };
 
     const getIndexPosition = (index: number, middle?: boolean): number => {
@@ -181,7 +163,6 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
                 && Math.abs(lineSegmentLength([pointerDownAt, { x: e.offsetX, y: e.offsetY }])) > SCROLL_CAPTURE_THRESHOLD
             ) {
                 scrollCaptured = true;
-                anim = undefined;
             }
             if (scrollCaptured) {
                 scrollToPositionImmediate(position() + (pointerDownAt.y - e.offsetY) / root.worldTransform.d);
@@ -219,11 +200,9 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
         }
     };
 
-    const indexedItems = createMemo(() => props.data.map((item, i): [Data, number] => [item, i]));
-    const range = createMemo(() => [
-        Math.max(0, Math.floor(position() / props.itemHeight)),
-        Math.min(props.data.length, Math.ceil((position() + height()) / props.itemHeight)),
-    ]);
+    const indexedItems = createMemo(() => props.data.map((data, index) => ({ data, index })));
+    const start = createMemo(() => Math.max(0, Math.floor(position() / props.itemHeight)));
+    const end = createMemo(() => Math.min(props.data.length, Math.ceil((position() + height()) / props.itemHeight)));
 
     return <container
         {...props}
@@ -249,8 +228,8 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
             yg:left={0}
             yg:right={0}
         >
-            <For each={indexedItems().slice(...range())}>
-                {item => props.itemRenderer(...item)}
+            <For each={indexedItems().slice(start(), end())}>
+                {props.children}
             </For>
         </container>
     </container>;

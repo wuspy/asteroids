@@ -75,7 +75,7 @@ const Content = (props: ContentProps) => {
                 setSelectedIndex(selectedIndex);
                 setTimeout(() => {
                     listActions()?.scrollToIndex(selectedIndex, true, true);
-                }, 150);
+                }, 100);
             }
         }
     });
@@ -97,20 +97,18 @@ const Content = (props: ContentProps) => {
                 <VirtualizedList
                     data={items()}
                     actions={setListActions}
-                    itemRenderer={(data: HighScoreResponse, index: number) =>
-                        <LeaderboardListItem
-                            data={data}
-                            index={index}
-                            selected={index === selectedIndex()}
-                            onClick={setSelectedIndex}
-                        />}
                     overscroll={12}
                     itemHeight={LEADERBOARD_LIST_ITEM_HEIGHT}
-                    // actions={listActions}
                     yg:width={400}
                     yg:height="100%"
                     yg:flexShrink={0}
-                />
+                >
+                    {props => <LeaderboardListItem
+                        {...props}
+                        selected={props.index === selectedIndex()}
+                        onClick={setSelectedIndex}
+                    />}
+                </VirtualizedList>
                 <Divider direction="vertical" yg:marginX={16} />
                 <container
                     flexContainer

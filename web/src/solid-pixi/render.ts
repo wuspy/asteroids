@@ -23,6 +23,9 @@ export const {
         node.__solidpixi.setProp(node, name, newValue, oldValue);
     },
     insertNode(parent: SolidPixiInstance<Container>, node, anchor) {
+        if (node.destroyed) {
+            throw new Error(`Cannot insert a destroyed Pixi node\nNode type: ${node.constructor.name}\nParent type: ${parent.constructor.name}`);
+        }
         if (anchor) {
             parent.addChildAt(node, parent.children.indexOf(anchor));
         } else {
@@ -33,7 +36,14 @@ export const {
     removeNode(parent, node) {
         const destroyOptions = node.__solidpixi.willUnmount(node);
         parent.removeChild(node);
-        node.destroy(destroyOptions);
+        // Destroy the node only after this reconciliation cycle has completed, in case the node got inserted
+        // somewhere else. This can happen in VirtualizedList, but I'm not sure if that's due to incorrect usage
+        // of For, or if nodes are supposed to be remountable at all in Solid.
+        setTimeout(() => {
+            if (!node.parent) {
+                node.destroy(destroyOptions);
+            }
+        }, 0);
     },
     getParentNode(node) {
         return node.parent as SolidPixiInstance<Container>;
