@@ -77,14 +77,6 @@ svg {
     #branding {
         display: none;
     }
-
-    /* .branding-separator {
-        display: none;
-    }
-    .branding-line {
-        display: block;
-        line-height: 1.5;
-    } */
 }
 
 #loader {

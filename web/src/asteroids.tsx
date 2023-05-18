@@ -3,12 +3,14 @@ import { IRenderer, Renderer } from '@pixi/core';
 import { Container } from "@pixi/display";
 import "@pixi/events";
 import { MIN_FPS, TickQueue } from "@wuspy/asteroids-core";
+import FontFaceObserver from "fontfaceobserver";
 import { AppProvider } from "./AppContext";
 import { AsteroidsGameContainer } from "./AsteroidsGameContainer";
 import "./layout";
-import FontFaceObserver from "fontfaceobserver";
 import { initYoga } from "./layout";
-import * as SolidPixi from './solid-pixi';
+import * as SolidPixi from "./solid-pixi";
+import github64pxWebpUrl from "/assets/github-64px.webp";
+import linkedin64pxWebpUrl from "/assets/linkedin-64px.webp";
 
 const MAX_DEVICE_PIXEL_RATIO = 2;
 const MAX_ELAPSED_MS = 1000 / MIN_FPS;
@@ -16,8 +18,8 @@ const MAX_ELAPSED_MS = 1000 / MIN_FPS;
 export const run = async () => {
     // Prefetch some assets
     Assets.backgroundLoad([
-        "/assets/github-64px.webp",
-        "/assets/linkedin-64px.webp",
+        github64pxWebpUrl,
+        linkedin64pxWebpUrl,
     ]);
 
     await initYoga();

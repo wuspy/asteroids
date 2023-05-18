@@ -1,7 +1,13 @@
 import { ITextStyle } from "@pixi/text";
-import { createEffect, createMemo, splitProps } from "solid-js";
+import { createEffect, splitProps } from "solid-js";
 import { ContainerProps } from "./solid-pixi";
 import { Button, Image, Modal } from "./ui";
+import bootiesRoundedWebpUrl from "/assets/booties-rounded.webp";
+import github64pxWebpUrl from "/assets/github-64px.webp";
+import gkRoundedWebpUrl from "/assets/gk-rounded.webp";
+import linkedin64pxWebpUrl from "/assets/linkedin-64px.webp";
+import meRoundedWebpUrl from "/assets/me-rounded.webp";
+import stormyRoundedWebpUrl from "/assets/stormy-rounded.webp";
 
 interface CatProps extends ContainerProps {
     imageUrl: string;
@@ -63,7 +69,7 @@ export const AboutMeModal = (props: AboutMeModalProps) => {
                 style:fontWeight="bold"
             />
             <Image
-                url="/assets/me.webp"
+                url={meRoundedWebpUrl}
                 yg:width={144}
                 yg:aspectRatio={1}
                 yg:position="absolute"
@@ -85,22 +91,22 @@ export const AboutMeModal = (props: AboutMeModalProps) => {
             style:wordWrap
         />
         <container flexContainer yg:marginBottom={32} yg:marginTop={28} yg:justifyContent="space-around">
-            <Cat name="Stormy" caption={"a very fitting name\nbut he's very sweet"} imageUrl="/assets/stormy.webp" />
-            <Cat name="Booties" caption={"cause her feet look\nlike little booties"} imageUrl="/assets/booties.webp" />
-            <Cat name="G.K." caption={"it stands for gray\nkitty don't judge me"} imageUrl="/assets/gk.webp" />
+            <Cat name="Stormy" caption={"a very fitting name\nbut he's very sweet"} imageUrl={stormyRoundedWebpUrl} />
+            <Cat name="Booties" caption={"cause her feet look\nlike little booties"} imageUrl={bootiesRoundedWebpUrl} />
+            <Cat name="G.K." caption={"it stands for gray\nkitty don't judge me"} imageUrl={gkRoundedWebpUrl} />
         </container>
         <container flexContainer yg:alignSelf="center">
             <Button
                 type="secondary"
                 text="GitHub"
-                imageUrl="/assets/github-64px.webp"
+                imageUrl={github64pxWebpUrl}
                 onClick={() => window.open("https://github.com/wuspy", "_blank")}
                 yg:marginX={12}
             />
             <Button
                 type="secondary"
                 text="LinkedIn"
-                imageUrl="/assets/linkedin-64px.webp"
+                imageUrl={linkedin64pxWebpUrl}
                 onClick={() => window.open("https://linkedin.com/in/jacob-jordan-0b6831128", "_blank")}
                 yg:marginX={12}
             />

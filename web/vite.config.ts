@@ -23,13 +23,14 @@ export default defineConfig({
     },
     server: {
         hmr,
+        host: "0.0.0.0",
         port: 8081,
     },
     build: {
         target: "ES2017",
         rollupOptions: {
             input: {
-                main: "./index.html",
+                index: "./index.html",
                 about: "./about.html",
             },
         },
