@@ -9,17 +9,18 @@ export interface RevealTextProps extends ContainerProps {
     style: TextStyle | Partial<ITextStyle>;
     duration: number;
     revealed: boolean;
+    initiallyRevealed?: boolean;
 }
 
 export const RevealText = (_props: RevealTextProps) => {
-    const [props, childProps] = splitProps(_props, ["text", "style", "duration", "revealed"]);
+    const [props, childProps] = splitProps(_props, ["text", "style", "duration", "revealed", "initiallyRevealed"]);
 
     let text!: Text;
     let leftBracket!: Text;
     let rightBracket!: Text;
 
     const [anim, setAnim] = createSignal<anime.AnimeTimelineInstance>();
-    let wasRevealed = props.revealed;
+    let wasRevealed = props.initiallyRevealed ?? props.revealed;
 
     const onLayoutMeasure = () => {
         return {
@@ -32,10 +33,10 @@ export const RevealText = (_props: RevealTextProps) => {
 
     onMount(() => {
         const center = getCenterline();
-        text.alpha = props.revealed ? 1 : 0;
+        text.alpha = wasRevealed ? 1 : 0;
         text.x = leftBracket.width;
-        rightBracket.x = props.revealed ? text.width + text.x : center;
-        leftBracket.x = props.revealed ? 0 : center - leftBracket.width;
+        rightBracket.x = wasRevealed ? text.width + text.x : center;
+        leftBracket.x = wasRevealed ? 0 : center - leftBracket.width;
     });
 
     createEffect(() => {
@@ -61,7 +62,7 @@ export const RevealText = (_props: RevealTextProps) => {
         }
     });
 
-    onTick("app", (timestamp) => anim()!.tick(timestamp), anim);
+    onTick("app", timestamp => anim()!.tick(timestamp), anim);
 
     return (
         <container {...childProps} flexContainer={false} onLayoutMeasure={onLayoutMeasure}>

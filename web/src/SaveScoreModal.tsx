@@ -3,27 +3,10 @@ import { Show, createEffect, createSignal } from "solid-js";
 import { useApp } from "./AppContext";
 import { ApiErrorType, saveGame } from "./api";
 import { ContainerBackgroundShape } from "./layout";
-import { Button, DOMTextInput, FONT_STYLE, InputProps, Modal, TEXT_INPUT_THEME } from "./ui";
+import { Button, DOMTextInput, InputProps, Modal, TEXT_INPUT_THEME } from "./ui";
+import { useTextStyle } from "./solid-pixi";
 
 const DEFAULT_INFO_TEXT = `${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH} characters`;
-
-const defaultInputProps: Partial<InputProps> = {
-    padding: 8,
-    fontSize: 32,
-    respectAlphaFilter: true,
-    fontFamily: FONT_STYLE.fontFamily,
-    color: TEXT_INPUT_THEME.textColor,
-    alpha: TEXT_INPUT_THEME.textAlpha,
-    backgroundStyle: {
-        shape: ContainerBackgroundShape.Rectangle,
-        cornerRadius: 8,
-        fill: TEXT_INPUT_THEME.fill,
-        stroke: TEXT_INPUT_THEME.stroke,
-    },
-    "yg:width": "100%",
-    "yg:marginBottom": 32,
-};
-
 export interface SaveScoreModalProps {
     open: boolean;
     onClose: () => void;
@@ -38,6 +21,23 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
     const [saving, setSaving] = createSignal(false);
     const [nameInput, setNameInput] = createSignal<DOMTextInput>();
     const [passwordInput, setPasswordInput] = createSignal<DOMTextInput>();
+
+    const inputStyle: Partial<InputProps> = {
+        padding: 8,
+        fontSize: 32,
+        respectAlphaFilter: true,
+        fontFamily: useTextStyle().fontFamily as string,
+        color: TEXT_INPUT_THEME.textColor,
+        alpha: TEXT_INPUT_THEME.textAlpha,
+        backgroundStyle: {
+            shape: ContainerBackgroundShape.Rectangle,
+            cornerRadius: 8,
+            fill: TEXT_INPUT_THEME.fill,
+            stroke: TEXT_INPUT_THEME.stroke,
+        },
+        "yg:width": "100%",
+        "yg:marginBottom": 32,
+    };
 
     if (!token() || !game.enableLogging) {
         throw new Error("Game is not saveable");
@@ -138,11 +138,13 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
             >
                 <text
                     text={infoText()}
-                    style={{ ...FONT_STYLE, fontSize: 20, wordWrap: true, align: "center" }}
+                    style:align={"center"}
+                    style:fontSize={20}
+                    style:wordWrap
                     yg:marginBottom={12}
                 />
                 <input
-                    {...defaultInputProps}
+                    {...inputStyle}
                     ref={setNameInput}
                     disabled={saving()}
                     on:beforeinput={onNameBeforeinput}
@@ -151,11 +153,13 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
                 <Show when={needsPassword()}>
                     <text
                         text={passwordInfoText()}
-                        style={{ ...FONT_STYLE, fontSize: 20, wordWrap: true, align: "center" }}
+                        style:align={"center"}
+                        style:fontSize={20}
+                        style:wordWrap
                         yg:marginBottom={12}
                     />
                     <input
-                        {...defaultInputProps}
+                        {...inputStyle}
                         ref={setPasswordInput}
                         type="password"
                         disabled={saving()}

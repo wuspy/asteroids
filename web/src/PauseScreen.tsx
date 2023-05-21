@@ -1,22 +1,19 @@
 import { FederatedPointerEvent } from "@pixi/events";
 import { GlowFilter } from "@pixi/filter-glow";
 import { createEffect, createSignal, on } from "solid-js";
+import { onInputEvent, useApp } from "./AppContext";
+import { StartControl } from "./StartControl";
 import { ChromaticAbberationFilter } from "./filters";
 import { ContainerBackgroundShape } from "./layout";
 import { ContainerProps } from "./solid-pixi";
-import { Button, FONT_STYLE, FadeContainer, RevealText, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
-// import { StartControl } from "./StartControl";
-import { onInputEvent, useApp } from "./AppContext";
-import { StartControl } from "./StartControl";
+import { Button, FadeContainer, RevealText, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
 
 export const PauseScreen = (props: ContainerProps) => {
     const { isPaused, resume, quit, reset } = useApp();
 
     const [visible, setVisible] = createSignal(isPaused());
 
-    // Causes the content to mount just before it becomes visible
-    // so the RevealText animation will work
-    createEffect(on(isPaused, isPaused => requestAnimationFrame(() => setVisible(isPaused))));
+    createEffect(() => setVisible(isPaused()));
 
     const onQuit = () => {
         setVisible(false);
@@ -43,7 +40,6 @@ export const PauseScreen = (props: ContainerProps) => {
         <FadeContainer
             {...props}
             visible={visible()}
-            keepMounted={isPaused()}
             fadeInDuration={100}
             fadeOutDuration={120}
             flexContainer
@@ -62,8 +58,9 @@ export const PauseScreen = (props: ContainerProps) => {
             <RevealText
                 text="PAUSED"
                 revealed={visible()}
+                initiallyRevealed={false}
                 duration={500}
-                style={{ ...FONT_STYLE, fontSize: 64 }}
+                style={{ fontSize: 64 }}
                 yg:margin={24}
                 yg:marginBottom={18}
                 filters={[

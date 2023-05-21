@@ -12,7 +12,6 @@ import { ContainerProps } from "./solid-pixi";
 import {
     BUTTON_THEMES,
     Button,
-    FONT_STYLE,
     FadeContainer,
     RevealText,
     ScoreText,
@@ -108,9 +107,6 @@ export const GameOverScreen = (props: ContainerProps) => {
         <FadeContainer
             {...props}
             visible={visibility()}
-            // Causes the content to mount just before it becomes visible
-            // so the RevealText animation will work
-            // keepMounted={gameOver}
             fadeInDuration={100}
             fadeOutDuration={200}
             flexContainer
@@ -129,8 +125,9 @@ export const GameOverScreen = (props: ContainerProps) => {
             <RevealText
                 text="GAME OVER"
                 revealed={visible()}
+                initiallyRevealed={false}
                 duration={500}
-                style={{ ...FONT_STYLE, fontSize: 64 }}
+                style={{ fontSize: 64 }}
                 yg:margin={24}
                 yg:marginBottom={18}
                 filters={[titleGlowFilter, titleAbberationFilter]}
@@ -138,7 +135,7 @@ export const GameOverScreen = (props: ContainerProps) => {
             <ScoreText
                 score={game.state.score}
                 zeroAlpha={0.2}
-                style={{ ...FONT_STYLE, fontSize: 104 }}
+                style={{ fontSize: 104 }}
                 filters={[scoreGlowFilter, scoreAbberationFilter]}
             />
             <container flexContainer yg:margin={24} yg:marginTop={18}>
@@ -202,10 +199,7 @@ const disabledSaveButton = () =>
     >
         <text
             text="  Saved!  "
-            style={{
-                ...FONT_STYLE,
-                fontSize: 20,
-                fill: BUTTON_THEMES.primary.inactive.fill?.color as TextStyleFill ?? 0xffffff
-            }}
+            style:fontSize={20}
+            style:fill={BUTTON_THEMES.primary.inactive.fill?.color as TextStyleFill ?? 0xffffff}
         />
     </container>;
