@@ -1,12 +1,11 @@
-import vertex from "./glsl/vertex.glsl?raw";
+import { defaultVertex, Filter, ISize } from "@pixi/core";
 import fragment from "./glsl/warp.glsl?raw";
-import { Filter, ISize } from "@pixi/core";
 
 export class WarpFilter extends Filter
 {
     constructor(warpAmount?: number)
     {
-        super(vertex, fragment);
+        super(defaultVertex, fragment);
         this.warpAmount = warpAmount ?? 10;
     }
 

@@ -1,12 +1,11 @@
-import vertex from "./glsl/vertex.glsl?raw";
+import { defaultVertex, Filter } from "@pixi/core";
 import fragment from "./glsl/chromatic-abberation.glsl?raw";
-import { Filter } from "@pixi/core";
 
 export class ChromaticAbberationFilter extends Filter
 {
     constructor(maxDisplacement?: number, exponent?: number, swapDirection?: boolean)
     {
-        super(vertex, fragment);
+        super(defaultVertex, fragment);
         this.maxDisplacement = maxDisplacement ?? 2;
         this.exponent = exponent ?? 1;
         this.swapDirection = swapDirection ?? false;

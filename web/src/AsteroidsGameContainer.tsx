@@ -1,7 +1,7 @@
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { createEffect, createRenderEffect } from "solid-js";
 import { onInputEvent, onTick, useApp } from "./AppContext";
-import { BackgroundAsteroidsContainer } from "./BackgroundAsteroidsContainer";
+import { BackgroundContainer } from "./BackgroundContainer";
 import { BoundsGraphics } from "./BoundsGraphics";
 import { GameOverScreen } from "./GameOverScreen";
 import { PauseScreen } from "./PauseScreen";
@@ -68,7 +68,7 @@ export const AsteroidsGameContainer = () => {
 
     return <>
         <container interactiveChildren={false}>
-            <BackgroundAsteroidsContainer />
+            <BackgroundContainer filterArea={renderer.screen} filters={[mainAbberationFilter]} />
             <BoundsGraphics mainWarpFilter={mainWarpFilter} />
         </container>
         <container filterArea={renderer.screen} filters={[mainAbberationFilter, mainWarpFilter]}>

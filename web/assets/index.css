@@ -33,12 +33,6 @@ svg {
     pointer-events: none;
 }
 
-#background-overlay {
-    display: block;
-    background: repeating-linear-gradient(7deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px), repeating-linear-gradient(97deg, transparent, transparent 100px, rgba(255, 255, 255, 0.05) 100px, rgba(255, 255, 255, 0.05) 101px);
-    pointer-events: none;
-}
-
 #striped-overlay {
     background-size: 16px 3pt;
     background-position: 50%;

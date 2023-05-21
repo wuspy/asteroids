@@ -1,4 +1,4 @@
-import { IRenderer, ISize, Rectangle, Texture } from "@pixi/core";
+import { DEG_TO_RAD, IRenderer, ISize, Rectangle, Texture } from "@pixi/core";
 import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
@@ -18,6 +18,7 @@ import {
 } from "@wuspy/asteroids-core";
 import { For, createRenderEffect } from "solid-js";
 import { useApp } from "./AppContext";
+import { ContainerProps } from "./solid-pixi";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
 
@@ -34,6 +35,9 @@ const HITAREAS = BACKGROUND_POLYGONS.map((generations) => {
     const boundingBox = generations[0].getBoundingBox();
     return Math.max(boundingBox.width, boundingBox.height) / 2;
 });
+
+const GRID_ANGLE = 7;
+const GRID_SPACING = 95;
 
 const createAsteroidTexture = (renderer: IRenderer, model: number, generation: number): Texture => {
     const graphics = new Graphics();
@@ -133,9 +137,9 @@ class BackgroundAsteroid extends GameObject<GameState, undefined, GameEvents> {
     }
 }
 
-export const BackgroundAsteroidsContainer = () => {
+export const BackgroundContainer = (props: ContainerProps) => {
     const { renderer, game, queue, worldSize, theme } = useApp();
-    let lastWorldSize = worldSize();
+    let lastWorldSize = { width: 0, height: 0 };
 
     const asteroids = BackgroundAsteroid.create({
         count: 20,
@@ -145,43 +149,72 @@ export const BackgroundAsteroidsContainer = () => {
         worldSize: game.worldSize,
     });
 
+    // Reposition background asteroids
     createRenderEffect(() => {
-        const xDiff = worldSize().width / lastWorldSize.width;
-        const yDiff = worldSize().height / lastWorldSize.height;
-        lastWorldSize = worldSize();
+        if (lastWorldSize.width && lastWorldSize.height) {
+            const xDiff = worldSize().width / lastWorldSize.width;
+            const yDiff = worldSize().height / lastWorldSize.height;
 
-        for (const asteroid of asteroids) {
-            asteroid.position.set(
-                asteroid.x * xDiff,
-                asteroid.y * yDiff,
-            );
+            for (const asteroid of asteroids) {
+                asteroid.position.set(
+                    asteroid.x * xDiff,
+                    asteroid.y * yDiff,
+                );
+            }
+        }
+
+        lastWorldSize = worldSize();
+    });
+
+    let gridGraphics!: Graphics;
+    const grid = <graphics ref={gridGraphics} alpha={theme().backgroundAlpha} />;
+
+    // Draw background grid
+    createRenderEffect(() => {
+        const {width, height} = worldSize();
+
+        gridGraphics.clear();
+        gridGraphics.lineStyle({
+            width: 1,
+            color: theme().backgroundColor,
+        });
+        const xOffset = height * Math.sin(GRID_ANGLE * DEG_TO_RAD);
+        const yOffset = width * Math.sin(GRID_ANGLE * DEG_TO_RAD);
+        for (let i = xOffset * 0.8; i <= width + xOffset; i += GRID_SPACING) {
+            gridGraphics.moveTo(i, 0);
+            gridGraphics.lineTo(i - xOffset, height);
+        }
+        for (let i = -yOffset; i <= height; i += GRID_SPACING) {
+            gridGraphics.moveTo(0, i);
+            gridGraphics.lineTo(width, i + yOffset);
         }
     });
 
-    return (
-        <container>
-            <For each={asteroids}>
-                {(asteroid) => {
-                    if (!TEXTURE_CACHE.has(renderer)) {
-                        generateTextureCache(renderer);
-                    }
-                
-                    let sprite: Sprite;
-                    asteroid.onPositionChange = position => sprite.position.copyFrom(position);
-                    asteroid.onRotationChange = rotation => sprite.rotation = rotation;
-                
-                    return (
-                        <sprite
-                            ref={sprite!}
-                            texture={TEXTURE_CACHE.get(renderer)![asteroid.model][asteroid.generation]}
-                            alpha={theme().backgroundAlpha}
-                            tint={theme().backgroundColor}
-                            position={asteroid.position}
-                            rotation={asteroid.rotation}
-                        />
-                    );
-                }}
-            </For>
-        </container>
-    )
+    return <container {...props}>
+        {grid}
+        <For each={asteroids}>
+            {(asteroid) => {
+                if (!TEXTURE_CACHE.has(renderer)) {
+                    generateTextureCache(renderer);
+                }
+                const texture = TEXTURE_CACHE.get(renderer)![asteroid.model][asteroid.generation];
+            
+                let sprite: Sprite;
+                asteroid.onPositionChange = position => sprite.position.copyFrom(position);
+                asteroid.onRotationChange = rotation => sprite.rotation = rotation;
+            
+                return (
+                    <sprite
+                        ref={sprite!}
+                        texture={texture}
+                        anchor={texture.defaultAnchor}
+                        alpha={theme().backgroundAlpha}
+                        tint={theme().backgroundColor}
+                        position={asteroid.position}
+                        rotation={asteroid.rotation}
+                    />
+                );
+            }}
+        </For>
+    </container>;
 };
