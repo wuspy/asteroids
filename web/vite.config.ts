@@ -1,10 +1,8 @@
-import { readFileSync } from "fs";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import sitemap from "vite-plugin-sitemap";
 import solidPlugin from "vite-plugin-solid";
-
-const version = JSON.parse(readFileSync("./package.json", "utf8")).version;
+import { version } from "./package.json";
 
 const hmr = true;
 
