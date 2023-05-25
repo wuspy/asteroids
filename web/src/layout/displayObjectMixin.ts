@@ -1,6 +1,6 @@
 import { DisplayObject, IDestroyOptions } from "@pixi/display";
 import { ISize } from "@pixi/core";
-import FlexLayout, { MeasureMode } from "./FlexLayout";
+import FlexLayout from "./FlexLayout";
 
 const displayObject = DisplayObject.prototype;
 
@@ -33,16 +33,7 @@ displayObject.destroy = function (options?: boolean | IDestroyOptions) {
     }
 }
 
-displayObject.onLayoutMeasure = function (
-    width: number,
-    widthMeasureMode: MeasureMode,
-    height: number,
-    heightMeasureMode: MeasureMode
-): ISize {
-    const bounds = this.getLocalBounds();
-    const scale = this.scale;
-    return {
-        width: bounds.width * scale.x,
-        height: bounds.height * scale.y,
-    };
+displayObject.onLayoutMeasure = function (): ISize {
+    const { width, height } = this.layout.cachedLocalBounds;
+    return { width, height };
 }

@@ -1,5 +1,6 @@
 import { DisplayObject } from "@pixi/display";
-import yoga, { Value, Node, Layout } from "@wuspy/yoga-layout-wasm";
+import { Point, Rectangle } from "@pixi/math";
+import yoga, { Value, Node, Layout, MeasureFunc } from "@wuspy/yoga-layout-wasm";
 import getYoga from "./getYoga";
 
 export enum FlexDirection {
@@ -67,11 +68,11 @@ export class FlexLayoutStyleProxy {
 
     constructor(node: Node) {
         this._node = node;
-        this.originAtCenter = false;
         this.excluded = false;
+        this.anchor = new Point(0, 0);
     }
 
-    originAtCenter: boolean;
+    anchor: Point;
     excluded: boolean;
 
     get alignContent(): keyof typeof Align {
@@ -294,6 +295,10 @@ export class FlexLayoutStyleProxy {
         this._node.setPosition(yoga.EDGE_BOTTOM, bottom);
     }
 
+    set inset(inset: Value) {
+        this._node.setPosition(yoga.EDGE_ALL, inset);
+    }
+
     get width(): Value {
         return this._node.getWidth();
     }
@@ -350,6 +355,7 @@ export default class FlexLayout {
     private _children: FlexLayout[];
 
     readonly style: FlexLayoutStyleProxy;
+    readonly cachedLocalBounds: Rectangle;
 
     constructor(displayObject: DisplayObject) {
         const yoga = getYoga();
@@ -359,6 +365,7 @@ export default class FlexLayout {
         this._node = yoga.Node.createWithConfig(config);
         this._displayObject = displayObject;
         this.style = new FlexLayoutStyleProxy(this._node);
+        this.cachedLocalBounds = Rectangle.EMPTY;
         this._children = [];
         this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
     }
@@ -403,7 +410,7 @@ export default class FlexLayout {
 
     reset(): void {
         this._node.reset();
-        this.style.originAtCenter = false;
+        this.style.anchor.set(0, 0);
         this.style.excluded = false;
     }
 
@@ -441,6 +448,14 @@ export default class FlexLayout {
         return this.getComputedEdges("Border");
     }
 
+    isDirty(): boolean {
+        return this._node.isDirty();
+    }
+
+    markDirty() {
+        this._node.markDirty();
+    }
+
     private prepareLayout(): void {
         if (this.style.excluded || !this._displayObject.visible) {
             this._node.setDisplay(yoga.DISPLAY_NONE);
@@ -451,7 +466,11 @@ export default class FlexLayout {
                     child.prepareLayout();
                 }
             } else {
-                this._node.markDirty();
+                const { width, height } = this.cachedLocalBounds;
+                this._displayObject.getLocalBounds(this.cachedLocalBounds);
+                if (width !== this.cachedLocalBounds.width || height !== this.cachedLocalBounds.height) {
+                    this.markDirty();
+                }
             }
         }
     }
@@ -463,11 +482,10 @@ export default class FlexLayout {
         if (this._node.getHasNewLayout()) {
             const layout = this.computedLayout;
             if (this._parent) {
-                if (this.style.originAtCenter) {
-                    this._displayObject.position.set(layout.left + layout.width / 2, layout.top + layout.height / 2);
-                } else {
-                    this._displayObject.position.set(layout.left, layout.top);
-                }
+                this._displayObject.position.set(
+                    layout.left + layout.width * this.style.anchor.x,
+                    layout.top + layout.height * this.style.anchor.y,
+                );
             }
             this._displayObject.emit("layout", layout);
             this._node.setHasNewLayout(false);

@@ -1,13 +1,13 @@
 import { FederatedPointerEvent } from "@pixi/events";
 import { GlowFilter } from "@pixi/filter-glow";
-import { SmoothGraphics } from "@pixi/graphics-smooth";
-import { Show, mergeProps, splitProps } from "solid-js";
+import { Show, createRenderEffect, mergeProps, splitProps } from "solid-js";
 import { onTick } from "../AppContext";
 import { ContainerBackgroundShape } from "../layout";
 import { ContainerProps } from "../solid-pixi";
 import { Image } from "./Image";
 import { LoadingAnimation } from "./LoadingAnimation";
 import { BUTTON_THEMES, ButtonType } from "./theme";
+import { Container } from "@pixi/display";
 
 const TRANSITION_TIME = 0.25;
 
@@ -34,19 +34,24 @@ export const Button = (_props: ButtonProps) => {
     const theme = () => BUTTON_THEMES[props.type];
     let active = false;
     let hovering = false;
-    let activeGraphics!: SmoothGraphics;
+    let activeBackground!: Container;
 
     const inactiveGlowFilter = new GlowFilter({
         innerStrength: 0,
         outerStrength: 0,
         distance: 24,
-        color: theme().inactive.glow,
     });
+    inactiveGlowFilter.enabled = false;
+
     const activeGlowFilter = new GlowFilter({
         innerStrength: 0,
         outerStrength: 2,
         distance: 24,
-        color: theme().active.glow,
+    });
+
+    createRenderEffect(() => {
+        inactiveGlowFilter.color = theme().inactive.glow;
+        activeGlowFilter.color = theme().active.glow;
     });
 
     onTick("app", (timestamp, elapsed) => {
@@ -55,16 +60,20 @@ export const Button = (_props: ButtonProps) => {
 
         if (!active && hovering) {
             inactiveGlowFilter.outerStrength = Math.min(2, inactiveGlowFilter.outerStrength + glowDiff);
+            inactiveGlowFilter.enabled = true;
         } else if (inactiveGlowFilter.outerStrength) {
             inactiveGlowFilter.outerStrength = Math.max(0, inactiveGlowFilter.outerStrength - glowDiff);
+        } else {
+            inactiveGlowFilter.enabled = false;
         }
 
         if (active) {
-            activeGraphics.alpha = Math.min(1, activeGraphics.alpha + alphaDiff);
-            activeGraphics.visible = true;
-        } else if (activeGraphics.visible) {
-            activeGraphics.alpha = Math.max(0, activeGraphics.alpha - alphaDiff);
-            activeGraphics.visible = activeGraphics.alpha > 0;
+            activeBackground.alpha = Math.min(1, activeBackground.alpha + alphaDiff);
+            activeBackground.visible = true;
+        } else if (activeBackground.alpha) {
+            activeBackground.alpha = Math.max(0, activeBackground.alpha - alphaDiff);
+        } else {
+            activeBackground.visible = false;
         }
     });
 
@@ -89,6 +98,13 @@ export const Button = (_props: ButtonProps) => {
     return (
         <container
             {...childProps}
+            backgroundStyle={{
+                shape: ContainerBackgroundShape.Rectangle,
+                cornerRadius: 8,
+                fill: theme().inactive.fill,
+                stroke: theme().inactive.stroke,
+            }}
+            filters={[inactiveGlowFilter]}
             flexContainer
             eventMode={props.enabled ? "static" : "auto"}
             cursor="pointer"
@@ -103,24 +119,10 @@ export const Button = (_props: ButtonProps) => {
             yg:flexDirection="row"
             yg:alignItems="center"
         >
-            <graphics
-                backgroundStyle={{
-                    shape: ContainerBackgroundShape.Rectangle,
-                    cornerRadius: 8,
-                    fill: theme().inactive.fill,
-                    stroke: theme().inactive.stroke,
-                }}
-                yg:position="absolute"
-                yg:top={0}
-                yg:left={0}
-                yg:right={0}
-                yg:bottom={0}
-                filters={[inactiveGlowFilter]}
-            />
-            <graphics
+            <container
                 alpha={0}
                 visible={false}
-                ref={activeGraphics}
+                ref={activeBackground}
                 backgroundStyle={{
                     shape: ContainerBackgroundShape.Rectangle,
                     cornerRadius: 8,
@@ -128,10 +130,7 @@ export const Button = (_props: ButtonProps) => {
                     stroke: theme().active.stroke,
                 }}
                 yg:position="absolute"
-                yg:top={0}
-                yg:left={0}
-                yg:right={0}
-                yg:bottom={0}
+                yg:inset={0}
                 filters={[activeGlowFilter]}
             />
             <Show when={props.imageUrl}>
@@ -157,10 +156,7 @@ export const Button = (_props: ButtonProps) => {
                     color={theme().textColor}
                     alpha={theme().textAlpha}
                     yg:position="absolute"
-                    yg:top={0}
-                    yg:left={0}
-                    yg:right={0}
-                    yg:bottom={0}
+                    yg:inset={0}
                 />
             </Show>
         </container>

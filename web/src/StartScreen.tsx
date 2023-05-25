@@ -88,7 +88,7 @@ export const StartScreen = (props: ContainerProps) => {
                 alpha={theme().foregroundAlpha}
                 skew={[-0.02, 0.02]}
                 yg:position="absolute"
-                yg:originAtCenter
+                yg:anchor={0.5}
             >
                 <Pointer
                     position={[0, -40]}

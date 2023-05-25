@@ -1,6 +1,6 @@
 import { AlphaFilter } from "@pixi/filter-alpha";
 import { KawaseBlurFilter } from "@pixi/filter-kawase-blur";
-import { Show, createEffect, createMemo, createRenderEffect, createSignal, mergeProps, splitProps } from "solid-js";
+import { Show, createMemo, createRenderEffect, createSignal, mergeProps, splitProps } from "solid-js";
 import { onTick } from "../AppContext";
 import { ContainerProps } from "../solid-pixi";
 
@@ -67,9 +67,9 @@ export const FadeContainer = (_props: FadeContainerProps) => {
     onTick("app", (timestamp, elapsed) => {
         let target = Number(props.visible);
         if (target > amount()) {
-            setAmount(Math.min(target, amount() + elapsed * 1000 / props.fadeInDuration));
+            setAmount(amount => Math.min(target, amount + elapsed * 1000 / props.fadeInDuration));
         } else if (target < amount()) {
-            setAmount(Math.max(target, amount() - elapsed * 1000 / props.fadeOutDuration));
+            setAmount(amount => Math.max(target, amount - elapsed * 1000 / props.fadeOutDuration));
         }
     }, () => Number(props.visible) !== amount());
 

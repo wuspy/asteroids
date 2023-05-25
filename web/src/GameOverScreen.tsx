@@ -40,7 +40,7 @@ export const GameOverScreen = (props: ContainerProps) => {
         outerStrength: 1,
         distance: 36,
         color: UI_FOREGROUND_COLOR,
-        quality: 0.035,
+        quality: 0.05,
     });
     const scoreAbberationFilter = new ChromaticAbberationFilter(4, 2);
 

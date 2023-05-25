@@ -1,7 +1,6 @@
 import { SmoothGraphics } from "@pixi/graphics-smooth";
 import { GameObject } from "@wuspy/asteroids-core";
 import { Component, createSignal, onCleanup, onMount } from "solid-js";
-import Stats from "stats.js";
 import { onTick, useApp } from "./AppContext";
 
 declare global {
@@ -9,6 +8,8 @@ declare global {
         asteroids: any;
     }
 }
+
+let spectorImported = false;
 
 export let DebugContainer: Component;
 
@@ -37,39 +38,11 @@ if (process.env.NODE_ENV === "development") {
         const { game } = useApp();
         const [visible, setVisible] = createSignal(false);
 
-        const fpsStats = new Stats();
-        fpsStats.showPanel(0);
-        fpsStats.dom.style.position = "relative";
-        fpsStats.dom.style.display = "inline-block";
-
-        const memoryStats = new Stats();
-        memoryStats.showPanel(2);
-        memoryStats.dom.style.position = "relative";
-        memoryStats.dom.style.display = "inline-block";
-
-        const statsDiv = document.createElement("div");
-
         let graphics!: SmoothGraphics;
 
         onMount(() => {
-            statsDiv.style.position = "absolute";
-            statsDiv.style.right = "0";
-            statsDiv.style.bottom = "0";
-            statsDiv.appendChild(fpsStats.dom);
-            statsDiv.appendChild(memoryStats.dom);
-            document.body.appendChild(statsDiv);
-
-            fpsStats.begin();
-            memoryStats.begin();
-
             window.asteroids = {
                 state: () => game.state,
-                showStats: () => {
-                    statsDiv.style.display = "block";
-                },
-                hideStats: () => {
-                    statsDiv.style.display = "none";
-                },
                 showHitareas: () => setVisible(true),
                 hideHitareas: () => setVisible(false),
                 kill: () => {
@@ -78,19 +51,21 @@ if (process.env.NODE_ENV === "development") {
                         game.state.ship.destroy({ hit: true });
                     }
                 },
+                spector: () => {
+                    if (!spectorImported) {
+                        spectorImported = true;
+                        // @ts-ignore No type definitions
+                        import("spectorjs").then(SPECTOR => {
+                            const spector = new SPECTOR.Spector();
+                            spector.displayUI();
+                        });
+                    };
+                },
             };
         });
 
         onCleanup(() => {
-            fpsStats.end();
-            memoryStats.end();
-            statsDiv.remove();
             window.asteroids = undefined;
-        });
-
-        onTick("app", () => {
-            fpsStats.update();
-            memoryStats.update();
         });
 
         onTick("game", () => {

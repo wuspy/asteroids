@@ -42,7 +42,7 @@ export const LoadingAnimation = (_props: LoadingAnimationParams) => {
                 ref={g}
                 yg:width={props.diameter}
                 yg:aspectRatio={1}
-                yg:originAtCenter
+                yg:anchor={0.5}
             />
         </container>
     );

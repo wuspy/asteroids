@@ -9,11 +9,15 @@ Text.prototype.onLayoutMeasure = function (
     height: number,
     heightMeasureMode: MeasureMode
 ): ISize {
-    if (widthMeasureMode === undefined) {
-        this.style.wordWrap = false;
-    }
+    const styleID = this.style.styleID;
+
+    this.style.wordWrap = widthMeasureMode !== undefined;
     if (this.style.wordWrap) {
         this.style.wordWrapWidth = width / this.scale.x;
+    }
+
+    if (styleID !== this.style.styleID) {
+        this.getLocalBounds(this.layout.cachedLocalBounds);
     }
 
     return DisplayObject.prototype.onLayoutMeasure.call(this, width, widthMeasureMode, height, heightMeasureMode);

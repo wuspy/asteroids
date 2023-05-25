@@ -56,7 +56,7 @@ export const LifeIndicator = (props: LifeIndicatorProps) => {
                     tint={UI_FOREGROUND_COLOR}
                     alpha={lives() > i ? 1 : 0.25}
                     anchor={0.5}
-                    yg:originAtCenter
+                    yg:anchor={0.5}
                     yg:paddingX={5}
                 />}
             </Index>

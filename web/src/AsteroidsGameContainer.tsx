@@ -3,6 +3,7 @@ import { createEffect, createRenderEffect } from "solid-js";
 import { onInputEvent, onTick, useApp } from "./AppContext";
 import { BackgroundContainer } from "./BackgroundContainer";
 import { BoundsGraphics } from "./BoundsGraphics";
+import { DebugContainer } from "./DebugContainer";
 import { GameOverScreen } from "./GameOverScreen";
 import { PauseScreen } from "./PauseScreen";
 import { StartScreen } from "./StartScreen";
@@ -70,6 +71,7 @@ export const AsteroidsGameContainer = () => {
         <container interactiveChildren={false}>
             <BackgroundContainer filterArea={renderer.screen} filters={[mainAbberationFilter]} />
             <BoundsGraphics mainWarpFilter={mainWarpFilter} />
+            <DebugContainer />
         </container>
         <container filterArea={renderer.screen} filters={[mainAbberationFilter, mainWarpFilter]}>
             <GameplayContainer filters={[mainAlphaFilter]} />

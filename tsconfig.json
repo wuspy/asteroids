@@ -13,6 +13,9 @@
         "noImplicitOverride": true,
         "forceConsistentCasingInFileNames": true,
         "importHelpers": true,
+        "types": [
+            "node"
+        ]
     },
     "exclude": [
         "node_modules"

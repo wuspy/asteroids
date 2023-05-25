@@ -4,7 +4,6 @@ import { FlexDirection } from "../layout";
 import { ContainerProps } from "../solid-pixi";
 import { ControlGraphic } from "./ControlGraphic";
 
-
 export interface ControlDescriptionProps extends ContainerProps {
     control: typeof controls[number];
     analogValue?: number;
@@ -33,7 +32,6 @@ export const ControlDescription = (_props: ControlDescriptionProps) => {
     return (
         <container
             {...childProps}
-            // ref={ref}
             flexContainer
             yg:alignItems="center"
             yg:flexDirection={props.direction}

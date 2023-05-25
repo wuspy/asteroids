@@ -1,17 +1,9 @@
 import { Container, DisplayObject, DisplayObjectEvents, IDestroyOptions } from "@pixi/display";
 import { JSX, Ref } from "solid-js";
-import { AnyProps, PointLike, displayObjectSetProp } from './props'
+import { PointLike, displayObjectSetProp } from './props'
 import { FlexLayoutStyleProxy } from "../layout";
 
-type Events = {
-    [P in keyof DisplayObjectEvents as `on:${P}`]?: (...args: DisplayObjectEvents[P]) => void;
-};
-
-type Yoga = {
-    [P in keyof FlexLayoutStyleProxy as `yg:${P}`]?: FlexLayoutStyleProxy[P];
-};
-
-type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
+export type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
 
 export type ReadonlyKeys<T> = {
     [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>
@@ -19,13 +11,29 @@ export type ReadonlyKeys<T> = {
 
 export type WithPointLike<T extends keyof any> = { [P in T]: PointLike };
 
+export type WithPrefix<P extends string, T> = {
+    [K in keyof T as K extends string | number ? `${P}:${K}` : never]: T[K];
+};
+
+type FlexLayoutPointLikes = "anchor";
+
+export type YogaLayoutProps = Partial<WithPrefix<"yg", Omit<
+    FlexLayoutStyleProxy, FlexLayoutPointLikes | ReadonlyKeys<FlexLayoutStyleProxy>
+> & WithPointLike<FlexLayoutPointLikes>>>;
+
 type DisplayObjectPointLikes = "position" | "scale" | "pivot" | "anchor" | "skew";
+
+export type DisplayObjectEventProps = WithPrefix<"on", {
+    [P in keyof DisplayObjectEvents]?: (...args: DisplayObjectEvents[P]) => void;
+}>;
 
 export type PixiDisplayObjectProps<T extends DisplayObject> = Partial<
     Omit<T, "children" | "style" | "layout" | DisplayObjectPointLikes | ReadonlyKeys<T>> & WithPointLike<DisplayObjectPointLikes>
-> & Events & Yoga & { ref?: Ref<T> };
+> & DisplayObjectEventProps & YogaLayoutProps & { ref?: Ref<T> };
 
 export type PixiContainerProps<T extends Container> = PixiDisplayObjectProps<T> & { children?: JSX.Element };
+
+type AnyProps = Record<string, any>;
 
 export interface PixiComponentLifecycle<Props extends AnyProps, PixiInstance extends DisplayObject> {
     /**
