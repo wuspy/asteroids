@@ -152,7 +152,7 @@ export const GameOverScreen = (props: ContainerProps) => {
                         onClick={() => setLeaderboardOpen(true)}
                         yg:marginX={12}
                     />
-                    <Show when={!savedScoreId()} fallback={disabledSaveButton()}>
+                    <Show when={!savedScoreId()} fallback={<DisabledSaveButton />}>
                         <Button
                             type="primary"
                             text={"Save Score"}
@@ -179,7 +179,7 @@ export const GameOverScreen = (props: ContainerProps) => {
 };
 
 // TODO add native disabled state to button
-const disabledSaveButton = () =>
+const DisabledSaveButton = () =>
     <container
         flexContainer
         yg:paddingX={14}
@@ -198,8 +198,9 @@ const disabledSaveButton = () =>
         alpha={(BUTTON_THEMES.primary.inactive.fill?.alpha || 1) * 0.5}
     >
         <text
-            text="  Saved!  "
+            text="Saved!"
             style:fontSize={20}
             style:fill={BUTTON_THEMES.primary.inactive.fill?.color as TextStyleFill ?? 0xffffff}
+            yg:marginX={24}
         />
     </container>;

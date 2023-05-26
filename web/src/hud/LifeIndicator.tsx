@@ -23,9 +23,13 @@ export const LifeIndicator = (props: LifeIndicatorProps) => {
     const indicators: Sprite[] = Array(LIVES).fill(undefined);
 
     onGameEvent("livesChanged", lives => {
-        console.log("livesChanged", lives, indicators[lives]);
+        if (indicators[lives]) {
+            container.addChild(new LifeAnimation(queue, indicators[lives]));
+        } else {
+            // intermittent bug
+            console.error("Life indicator is undefined", indicators);
+        }
         setLives(lives);
-        container.addChild(new LifeAnimation(queue, indicators[lives]));
     });
 
     onGameEvent("reset", () => setLives(LIVES));
