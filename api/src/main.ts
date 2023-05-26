@@ -13,7 +13,7 @@ import express from "express";
 import morgan from "morgan";
 import multer from "multer";
 import { promisify } from "util";
-import { GameValidatorError, validateAsteroidsGame } from "./asteroidsGameValidator";
+import { validateAsteroidsGame } from "./asteroidsGameValidator";
 import config from "./config";
 import { createGameToken, destroyConnection, findGame, findGameLog, findHighScores, findUnusedGameToken, storeGame } from "./db";
 import { SaveGameRequest } from "./models";
@@ -147,8 +147,6 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
                 ...params,
                 ...gameResult
             })));
-        } else if (gameResult.error === GameValidatorError.VersionMismatch) {
-            response.json(errorResponse("You're playing an old version of the game, so your score can't be saved."));
         } else {
             if (config.ASTEROIDS_SAVE_FAILED_GAMES) {
                 await storeGame({

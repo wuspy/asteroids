@@ -18,7 +18,7 @@ if (isNaN(offset) || isNaN(limit)) {
     const start = performance.now();
     for (const game of games) {
         stdout.write(`  - Game #${game.id} [v${game.version}]...`);
-        const result = validateAsteroidsGame(game, true);
+        const result = validateAsteroidsGame(game);
         if (result.success) {
             stdout.write("  OK\n");
             passed++;

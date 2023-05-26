@@ -1,7 +1,5 @@
 import { AsteroidsGame, GameState, GameStatus, createRandom, inputLogConfig, parseGameLog } from "@wuspy/asteroids-core";
 
-const [V_MAJOR, V_MINOR, V_PATCH] = process.env.npm_package_version!.split(".");
-
 export const enum GameValidatorError {
     InvalidRandomSeed,
     EmptyLog,
@@ -9,7 +7,6 @@ export const enum GameValidatorError {
     PrematureEndOfLog,
     ScoreMismatch,
     LevelMismatch,
-    VersionMismatch,
 }
 
 export type GameValidatorResult = {
@@ -34,13 +31,7 @@ export interface GameValidatorRequest {
     level: number;
 }
 
-export const validateAsteroidsGame = (request: GameValidatorRequest, allowVersionMismatch = false): GameValidatorResult => {
-    const [major, minor, patch] = request.version.split(".");
-
-    if (!allowVersionMismatch && (major !== V_MAJOR || minor !== V_MINOR)) {
-        return { success: false, error: GameValidatorError.VersionMismatch };
-    }
-
+export const validateAsteroidsGame = (request: GameValidatorRequest): GameValidatorResult => {
     const game = new AsteroidsGame();
 
     let shotsFired = 0;
