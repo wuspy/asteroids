@@ -1,60 +1,72 @@
 import { DisplayObject } from "@pixi/display";
 import { Point, Rectangle } from "@pixi/math";
-import yoga, { Value, Node, Layout, MeasureFunc } from "@wuspy/yoga-layout-wasm";
+import * as yg from "yoga-wasm-web";
 import getYoga from "./getYoga";
 
-export enum FlexDirection {
-    "column" = 0,
-    "column-reverse",
-    "row",
-    "row-reverse",
+function withInverse<M extends Record<string, number>>(map: M): M & { [K in number]: keyof M } {
+    const inverse: { [K in number]: keyof M } = {} as any;
+    for (const k in map) {
+        inverse[map[k]] = k;
+    }
+    return { ...map, ...inverse };
 }
 
-export enum JustifyContent {
-    "flex-start" = 0,
-    "center",
-    "flex-end",
-    "space-between",
-    "space-around",
-    "space-evenly",
+const flexDirection = withInverse({
+    "row": yg.FLEX_DIRECTION_ROW,
+    "row-reverse": yg.FLEX_DIRECTION_ROW_REVERSE,
+    "column": yg.FLEX_DIRECTION_COLUMN,
+    "column-reverse": yg.FLEX_DIRECTION_COLUMN_REVERSE,
+} as const);
+
+export type FlexDirection = Extract<keyof typeof flexDirection, string>;
+
+const justifyContent = withInverse({
+    "flex-start": yg.JUSTIFY_FLEX_START,
+    "center": yg.JUSTIFY_CENTER,
+    "flex-end": yg.JUSTIFY_FLEX_END,
+    "space-between": yg.JUSTIFY_SPACE_BETWEEN,
+    "space-around": yg.JUSTIFY_SPACE_AROUND,
+    "space-evenly": yg.JUSTIFY_SPACE_EVENLY,
+} as const);
+
+export type JustifyContent = Extract<keyof typeof justifyContent, string>;
+
+const flexWrap = withInverse({
+    "nowrap": yg.WRAP_NO_WRAP,
+    "wrap": yg.WRAP_WRAP,
+    "wrap-reverse": yg.WRAP_WRAP_REVERSE,
+} as const);
+
+export type FlexWrap = Extract<keyof typeof flexWrap, string>;
+
+const align = withInverse({
+    "auto": yg.ALIGN_AUTO,
+    "flex-start": yg.ALIGN_FLEX_START,
+    "center": yg.ALIGN_CENTER,
+    "flex-end": yg.ALIGN_FLEX_END,
+    "stretch": yg.ALIGN_STRETCH,
+    "baseline": yg.ALIGN_BASELINE,
+    "space-between": yg.ALIGN_SPACE_BETWEEN,
+    "space-around": yg.ALIGN_SPACE_AROUND,
+} as const);
+
+export type Align = Extract<keyof typeof align, string>;
+
+const positionType = withInverse({
+    "static": yg.POSITION_TYPE_STATIC,
+    "relative": yg.POSITION_TYPE_RELATIVE,
+    "absolute": yg.POSITION_TYPE_ABSOLUTE,
+} as const);
+
+export type PositionType = Extract<keyof typeof positionType, string>;
+
+export type Value = number | string | undefined;
+
+export enum MeasureMode {
+    Undefined = yg.MEASURE_MODE_UNDEFINED,
+    Exactly = yg.MEASURE_MODE_EXACTLY,
+    AtMost = yg.MEASURE_MODE_AT_MOST,
 }
-
-export enum FlexWrap {
-    "nowrap" = 0,
-    "wrap",
-    "wrap-reverse",
-}
-
-export enum Align {
-    "auto" = 0,
-    "flex-start",
-    "center",
-    "flex-end",
-    "stretch",
-    "baseline",
-    "space-between",
-    "space-around",
-}
-
-export enum PositionType {
-    "static" = 0,
-    "relative",
-    "absolute",
-};
-
-export enum Direction {
-    "inherit" = 0,
-    "ltr",
-    "rtl",
-}
-
-export const enum MeasureMode {
-    Undefined = 0,
-    Exactly,
-    AtMost,
-}
-
-export type ComputedLayout = Layout;
 
 export interface ComputedEdges {
     top: number;
@@ -63,10 +75,35 @@ export interface ComputedEdges {
     right: number;
 }
 
-export class FlexLayoutStyleProxy {
-    private readonly _node: Node;
+function fromNativeValue(value: { unit: yg.Unit, value: number }): Value {
+    switch (value.unit) {
+        case yg.UNIT_AUTO:
+            return "auto";
+        case yg.UNIT_PERCENT:
+            return `${value.value}%`;
+        case yg.UNIT_POINT:
+            return value.value;
+        default:
+            return undefined;
+    }
+}
 
-    constructor(node: Node) {
+type YgValueSetter =
+    | "setPosition"
+    | "setMargin"
+    | "setFlexBasis"
+    | "setWidth"
+    | "setHeight"
+    | "setMinWidth"
+    | "setMinHeight"
+    | "setMaxWidth"
+    | "setMaxHeight"
+    | "setPadding";
+
+export class FlexLayoutStyleProxy {
+    private readonly _node: yg.Node;
+
+    constructor(node: yg.Node) {
         this._node = node;
         this.excluded = false;
         this.anchor = new Point(0, 0);
@@ -75,28 +112,28 @@ export class FlexLayoutStyleProxy {
     anchor: Point;
     excluded: boolean;
 
-    get alignContent(): keyof typeof Align {
-        return Align[this._node.getAlignContent()] as keyof typeof Align;
+    get alignContent(): Align {
+        return align[this._node.getAlignContent()];
     }
 
-    set alignContent(alignContent: keyof typeof Align) {
-        this._node.setAlignContent(Align[alignContent]);
+    set alignContent(value: Align) {
+        this._node.setAlignContent(align[value]);
     }
 
-    get alignItems(): keyof typeof Align {
-        return Align[this._node.getAlignItems()] as keyof typeof Align;
+    get alignItems(): Align {
+        return align[this._node.getAlignItems()];
     }
 
-    set alignItems(alignItems: keyof typeof Align) {
-        this._node.setAlignItems(Align[alignItems]);
+    set alignItems(value: Align) {
+        this._node.setAlignItems(align[value]);
     }
 
-    get alignSelf(): keyof typeof Align {
-        return Align[this._node.getAlignSelf()] as keyof typeof Align;
+    get alignSelf(): Align {
+        return align[this._node.getAlignSelf()];
     }
 
-    set alignSelf(alignSelf: keyof typeof Align) {
-        this._node.setAlignSelf(Align[alignSelf]);
+    set alignSelf(value: Align) {
+        this._node.setAlignSelf(align[value]);
     }
 
     get aspectRatio(): number {
@@ -127,234 +164,253 @@ export class FlexLayoutStyleProxy {
         this._node.setFlexShrink(flexShrink);
     }
 
-    get flexWrap(): keyof typeof FlexWrap {
-        return FlexWrap[this._node.getFlexWrap()] as keyof typeof FlexWrap;
+    get flexWrap(): FlexWrap {
+        return flexWrap[this._node.getFlexWrap()];
     }
 
-    set flexWrap(flexWrap: keyof typeof FlexWrap) {
-        this._node.setFlexWrap(FlexWrap[flexWrap]);
+    set flexWrap(value: FlexWrap) {
+        this._node.setFlexWrap(flexWrap[value]);
     }
 
-    get flexDirection(): keyof typeof FlexDirection {
-        return FlexDirection[this._node.getFlexDirection()] as keyof typeof FlexDirection;
+    get flexDirection(): FlexDirection {
+        return flexDirection[this._node.getFlexDirection()];
     }
 
-    set flexDirection(flexDirection: keyof typeof FlexDirection) {
-        this._node.setFlexDirection(FlexDirection[flexDirection]);
+    set flexDirection(value: FlexDirection) {
+        this._node.setFlexDirection(flexDirection[value]);
     }
 
     get flexBasis(): Value {
-        return this._node.getFlexBasis();
+        return fromNativeValue(this._node.getFlexBasis());
     }
 
-    set flexBasis(flexBasis: Value) {
-        this._node.setFlexBasis(flexBasis);
+    set flexBasis(value: Value) {
+        this.setNativeValue("setFlexBasis", value);
     }
 
-    get justifyContent(): keyof typeof JustifyContent {
-        return JustifyContent[this._node.getJustifyContent()] as keyof typeof JustifyContent;
+    get justifyContent(): JustifyContent {
+        return justifyContent[this._node.getJustifyContent()];
     }
 
-    set justifyContent(justifyContent: keyof typeof JustifyContent) {
-        this._node.setJustifyContent(JustifyContent[justifyContent]);
-    }
-
-    get direction(): Direction {
-        return this._node.getDirection();
-    }
-
-    set direction(direction: Direction) {
-        this._node.setDirection(direction);
+    set justifyContent(value: JustifyContent) {
+        this._node.setJustifyContent(justifyContent[value]);
     }
 
     get marginTop(): Value {
-        return this._node.getMargin(yoga.EDGE_TOP);
+        return fromNativeValue(this._node.getMargin(yg.EDGE_TOP));
     }
 
-    set marginTop(margin: Value) {
-        this._node.setMargin(yoga.EDGE_TOP, margin);
+    set marginTop(value: Value) {
+        this.setNativeValue("setMargin", yg.EDGE_TOP, value);
     }
 
     get marginBottom(): Value {
-        return this._node.getMargin(yoga.EDGE_BOTTOM);
+        return fromNativeValue(this._node.getMargin(yg.EDGE_BOTTOM));
     }
 
-    set marginBottom(margin: Value) {
-        this._node.setMargin(yoga.EDGE_BOTTOM, margin);
+    set marginBottom(value: Value) {
+        this.setNativeValue("setMargin", yg.EDGE_BOTTOM, value);
     }
 
     get marginLeft(): Value {
-        return this._node.getMargin(yoga.EDGE_LEFT);
+        return fromNativeValue(this._node.getMargin(yg.EDGE_LEFT));
     }
 
-    set marginLeft(margin: Value) {
-        this._node.setMargin(yoga.EDGE_LEFT, margin);
+    set marginLeft(value: Value) {
+        this.setNativeValue("setMargin", yg.EDGE_LEFT, value);
     }
 
     get marginRight(): Value {
-        return this._node.getMargin(yoga.EDGE_RIGHT);
+        return fromNativeValue(this._node.getMargin(yg.EDGE_RIGHT));
     }
 
-    set marginRight(margin: Value) {
-        this._node.setMargin(yoga.EDGE_RIGHT, margin);
+    set marginRight(value: Value) {
+        this.setNativeValue("setMargin", yg.EDGE_RIGHT, value);
     }
 
-    set marginY(margin: Value) {
-        this._node.setMargin(yoga.EDGE_VERTICAL, margin);
+    set marginY(value: Value) {
+        this.setNativeValue("setMargin", yg.EDGE_VERTICAL, value);
     }
 
-    set marginX(margin: Value) {
-        this._node.setMargin(yoga.EDGE_HORIZONTAL, margin);
+    set marginX(value: Value) {
+        this.setNativeValue("setMargin", yg.EDGE_HORIZONTAL, value);
     }
 
-    set margin(margin: Value) {
-        this._node.setMargin(yoga.EDGE_ALL, margin);
+    set margin(value: Value) {
+        this.setNativeValue("setMargin", yg.EDGE_ALL, value);
     }
 
     get paddingTop(): Value {
-        return this._node.getPadding(yoga.EDGE_TOP);
+        return fromNativeValue(this._node.getPadding(yg.EDGE_TOP));
     }
 
-    set paddingTop(padding: Value) {
-        this._node.setPadding(yoga.EDGE_TOP, padding);
+    set paddingTop(value: Value) {
+        this.setNativeValue("setPadding", yg.EDGE_TOP, value);
     }
 
     get paddingBottom(): Value {
-        return this._node.getPadding(yoga.EDGE_BOTTOM);
+        return fromNativeValue(this._node.getPadding(yg.EDGE_BOTTOM));
     }
 
-    set paddingBottom(padding: Value) {
-        this._node.setPadding(yoga.EDGE_BOTTOM, padding);
+    set paddingBottom(value: Value) {
+        this.setNativeValue("setPadding", yg.EDGE_BOTTOM, value);
     }
 
     get paddingLeft(): Value {
-        return this._node.getPadding(yoga.EDGE_LEFT);
+        return fromNativeValue(this._node.getPadding(yg.EDGE_LEFT));
     }
 
-    set paddingLeft(padding: Value) {
-        this._node.setPadding(yoga.EDGE_LEFT, padding);
+    set paddingLeft(value: Value) {
+        this.setNativeValue("setPadding", yg.EDGE_LEFT, value);
     }
 
     get paddingRight(): Value {
-        return this._node.getPadding(yoga.EDGE_RIGHT);
+        return fromNativeValue(this._node.getPadding(yg.EDGE_RIGHT));
     }
 
-    set paddingRight(padding: Value) {
-        this._node.setPadding(yoga.EDGE_RIGHT, padding);
+    set paddingRight(value: Value) {
+        this.setNativeValue("setPadding", yg.EDGE_RIGHT, value);
     }
 
-    set paddingY(padding: Value) {
-        this._node.setPadding(yoga.EDGE_VERTICAL, padding);
+    set paddingY(value: Value) {
+        this.setNativeValue("setPadding", yg.EDGE_VERTICAL, value);
     }
 
-    set paddingX(padding: Value) {
-        this._node.setPadding(yoga.EDGE_HORIZONTAL, padding);
+    set paddingX(value: Value) {
+        this.setNativeValue("setPadding", yg.EDGE_HORIZONTAL, value);
     }
 
-    set padding(padding: Value) {
-        this._node.setPadding(yoga.EDGE_ALL, padding);
+    set padding(value: Value) {
+        this.setNativeValue("setPadding", yg.EDGE_ALL, value);
     }
 
-    get position(): keyof typeof PositionType {
-        return PositionType[this._node.getPositionType()] as keyof typeof PositionType;
+    get position(): PositionType {
+        return positionType[this._node.getPositionType()];
     }
 
-    set position(position: keyof typeof PositionType) {
-        this._node.setPositionType(PositionType[position]);
+    set position(value: PositionType) {
+        this._node.setPositionType(positionType[value]);
     }
 
     get top(): Value {
-        return this._node.getPosition(yoga.EDGE_TOP);
+        return fromNativeValue(this._node.getPosition(yg.EDGE_TOP));
     }
 
-    set top(top: Value) {
-        this._node.setPosition(yoga.EDGE_TOP, top);
+    set top(value: Value) {
+        this.setNativeValue("setPosition", yg.EDGE_TOP, value);
     }
 
     get left(): Value {
-        return this._node.getPosition(yoga.EDGE_LEFT);
+        return fromNativeValue(this._node.getPosition(yg.EDGE_LEFT));
     }
 
-    set left(left: Value) {
-        this._node.setPosition(yoga.EDGE_LEFT, left);
+    set left(value: Value) {
+        this.setNativeValue("setPosition", yg.EDGE_LEFT, value);
     }
 
     get right(): Value {
-        return this._node.getPosition(yoga.EDGE_RIGHT);
+        return fromNativeValue(this._node.getPosition(yg.EDGE_RIGHT));
     }
 
-    set right(right: Value) {
-        this._node.setPosition(yoga.EDGE_RIGHT, right);
+    set right(value: Value) {
+        this.setNativeValue("setPosition", yg.EDGE_RIGHT, value);
     }
 
     get bottom(): Value {
-        return this._node.getPosition(yoga.EDGE_BOTTOM);
+        return fromNativeValue(this._node.getPosition(yg.EDGE_BOTTOM));
     }
 
-    set bottom(bottom: Value) {
-        this._node.setPosition(yoga.EDGE_BOTTOM, bottom);
+    set bottom(value: Value) {
+        this.setNativeValue("setPosition", yg.EDGE_BOTTOM, value);
     }
 
-    set inset(inset: Value) {
-        this._node.setPosition(yoga.EDGE_ALL, inset);
+    set inset(value: Value) {
+        this.setNativeValue("setPosition", yg.EDGE_ALL, value);
     }
 
     get width(): Value {
-        return this._node.getWidth();
+        return fromNativeValue(this._node.getWidth());
     }
 
-    set width(width: Value) {
-        this._node.setWidth(width);
+    set width(value: Value) {
+        this.setNativeValue("setWidth", value);
     }
 
     get height(): Value {
-        return this._node.getHeight();
+        return fromNativeValue(this._node.getHeight());
     }
 
-    set height(height: Value) {
-        this._node.setHeight(height);
+    set height(value: Value) {
+        this.setNativeValue("setHeight", value);
     }
 
     get maxWidth(): Value {
-        return this._node.getMaxWidth();
+        return fromNativeValue(this._node.getMaxWidth());
     }
 
-    set maxWidth(maxWidth: Value) {
-        this._node.setMaxWidth(maxWidth);
+    set maxWidth(value: Value) {
+        this.setNativeValue("setMaxWidth", value);
     }
 
     get maxHeight(): Value {
-        return this._node.getMaxHeight();
+        return fromNativeValue(this._node.getMaxHeight());
     }
 
-    set maxHeight(maxHeight: Value) {
-        this._node.setMaxHeight(maxHeight);
+    set maxHeight(value: Value) {
+        this.setNativeValue("setMaxHeight", value);
     }
 
     get minWidth(): Value {
-        return this._node.getMinWidth();
+        return fromNativeValue(this._node.getMinWidth());
     }
 
-    set minWidth(minWidth: Value) {
-        this._node.setMinWidth(minWidth);
+    set minWidth(value: Value) {
+        this.setNativeValue("setMinWidth", value);
     }
 
     get minHeight(): Value {
-        return this._node.getMinHeight();
+        return fromNativeValue(this._node.getMinHeight());
     }
 
-    set minHeight(minHeight: Value) {
-        this._node.setMinHeight(minHeight);
+    set minHeight(value: Value) {
+        this.setNativeValue("setMinHeight", value);
+    }
+
+    private setNativeValue<T extends YgValueSetter>(
+        method: T,
+        ...args: Parameters<yg.Node[T]> extends [...infer R, any]
+            ? [...R, Value]
+            : [Value]
+    ) {
+        const value = args.pop() as Value;
+        if (value === "auto") {
+            const setMethodAuto = `${method}Auto`;
+            if (!(setMethodAuto in this._node)) {
+                throw new Error(`${method} cannot take value 'auto'`);
+            }
+            // @ts-expect-error
+            this._node[setMethodAuto](...args);
+        } else if (value === undefined) {
+            // @ts-expect-error
+            this._node[method](...args, NaN);
+        } else if (typeof value === "string" && value.endsWith("%")) {
+            // @ts-expect-error
+            this._node[`${method}Percent`](...args, parseFloat(value));
+        } else {
+            // @ts-expect-error
+            this._node[method](...args, Number(value));
+        }
     }
 }
 
 export default class FlexLayout {
-    private readonly _node: Node;
+    private readonly _node: yg.Node;
     private readonly _displayObject: DisplayObject;
     private _parent?: FlexLayout;
     private _children: FlexLayout[];
 
     readonly style: FlexLayoutStyleProxy;
+    readonly computedLayout: Rectangle;
     readonly cachedLocalBounds: Rectangle;
 
     constructor(displayObject: DisplayObject) {
@@ -362,6 +418,7 @@ export default class FlexLayout {
         const config = yoga.Config.create();
         config.setUseWebDefaults(true);
         config.setPointScaleFactor(10);
+        this.computedLayout = Rectangle.EMPTY;
         this._node = yoga.Node.createWithConfig(config);
         this._displayObject = displayObject;
         this.style = new FlexLayoutStyleProxy(this._node);
@@ -424,18 +481,6 @@ export default class FlexLayout {
         this._node.free();
     }
 
-    get computedLayout(): Layout {
-        return this._node.getComputedLayout();
-    }
-
-    get comptedWidth(): number {
-        return this._node.getComputedWidth();
-    }
-
-    get computedHeight(): number {
-        return this._node.getComputedHeight();
-    }
-
     get computedMargin(): ComputedEdges {
         return this.getComputedEdges("Margin");
     }
@@ -458,9 +503,9 @@ export default class FlexLayout {
 
     private prepareLayout(): void {
         if (this.style.excluded || !this._displayObject.visible) {
-            this._node.setDisplay(yoga.DISPLAY_NONE);
+            this._node.setDisplay(yg.DISPLAY_NONE);
         } else {
-            this._node.setDisplay(yoga.DISPLAY_FLEX);
+            this._node.setDisplay(yg.DISPLAY_FLEX);
             if (this._children.length) {
                 for (const child of this._children) {
                     child.prepareLayout();
@@ -479,17 +524,27 @@ export default class FlexLayout {
         if (this.style.excluded || !this._displayObject.visible) {
             return;
         }
-        if (this._node.getHasNewLayout()) {
-            const layout = this.computedLayout;
+
+        const layout = this._node.getComputedLayout();
+        if (this.computedLayout.x !== layout.left
+            || this.computedLayout.y !== layout.top
+            || this.computedLayout.width !== layout.width
+            || this.computedLayout.height !== layout.height
+        ) {
+            this.computedLayout.x = layout.left;
+            this.computedLayout.y = layout.top;
+            this.computedLayout.width = layout.width;
+            this.computedLayout.height = layout.height;
+
             if (this._parent) {
                 this._displayObject.position.set(
                     layout.left + layout.width * this.style.anchor.x,
                     layout.top + layout.height * this.style.anchor.y,
                 );
             }
-            this._displayObject.emit("layout", layout);
-            this._node.setHasNewLayout(false);
+            this._displayObject.emit("layout", this.computedLayout);
         }
+
         for (const child of this._children) {
             child.applyLayout();
         }
@@ -497,10 +552,10 @@ export default class FlexLayout {
 
     private getComputedEdges(type: "Margin" | "Padding" | "Border"): ComputedEdges {
         return {
-            top: this._node[`getComputed${type}`](yoga.EDGE_TOP),
-            bottom: this._node[`getComputed${type}`](yoga.EDGE_BOTTOM),
-            left: this._node[`getComputed${type}`](yoga.EDGE_LEFT),
-            right: this._node[`getComputed${type}`](yoga.EDGE_RIGHT),
+            top: this._node[`getComputed${type}`](yg.EDGE_TOP),
+            bottom: this._node[`getComputed${type}`](yg.EDGE_BOTTOM),
+            left: this._node[`getComputed${type}`](yg.EDGE_LEFT),
+            right: this._node[`getComputed${type}`](yg.EDGE_RIGHT),
         };
     }
 }

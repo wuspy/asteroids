@@ -26,7 +26,6 @@
         "@types/animejs": "^3.1.7",
         "@types/fontfaceobserver": "^2.1.0",
         "@wuspy/asteroids-core": "*",
-        "@wuspy/yoga-layout-wasm": "https://github.com/wuspy/yoga-layout-wasm",
         "animejs": "^3.2.1",
         "fontfaceobserver": "^2.3.0",
         "ismobilejs": "^1.1.1",
@@ -37,7 +36,8 @@
         "typescript": "^5.0.4",
         "vite": "^4.3.7",
         "vite-plugin-sitemap": "^0.4.2",
-        "vite-plugin-solid": "^2.7.0"
+        "vite-plugin-solid": "^2.7.0",
+        "yoga-wasm-web": "^0.3.3"
     },
     "scripts": {
         "lint": "eslint src",

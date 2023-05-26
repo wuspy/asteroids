@@ -11,7 +11,7 @@ export interface ControlDescriptionProps extends ContainerProps {
     beforeLabel?: string;
     afterLabel?: string;
     size: number;
-    direction: keyof typeof FlexDirection;
+    direction: FlexDirection;
 }
 
 export const ControlDescription = (_props: ControlDescriptionProps) => {

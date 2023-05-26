@@ -1,18 +1,29 @@
-import yoga, { YogaWasm } from "@wuspy/yoga-layout-wasm";
-import yogaWasmUrl from "@wuspy/yoga-layout-wasm/dist/yoga.wasm?url";
+import yoga, { Yoga } from "yoga-wasm-web";
+import url from "yoga-wasm-web/dist/yoga.wasm?url";
 
-let instance: YogaWasm | undefined;
+let instance: Yoga | undefined;
 
-const getYoga = (): YogaWasm => {
+function getYoga(): Yoga {
     if (instance === undefined) {
         throw new Error("Yoga is not initialized");
     }
     return instance;
 }
 
-export const initYoga = async (): Promise<YogaWasm> => {
+export async function initYoga(): Promise<Yoga> {
     if (instance === undefined) {
-        instance = await yoga.init(yogaWasmUrl);
+        try {
+            const load = fetch(url);
+
+            const source = typeof WebAssembly.compileStreaming === "function"
+                ? WebAssembly.compileStreaming(load)
+                : WebAssembly.compile(await (await load).arrayBuffer());
+
+            instance = await yoga(await source);
+        } catch (e) {
+            console.error("yoga wasm initialization failed, falling back to asm", e);
+            instance = (await import("yoga-wasm-web/asm")).default();
+        }
     }
     return instance;
 }

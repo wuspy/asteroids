@@ -1,14 +1,13 @@
 declare namespace GlobalMixins
 {
     type FlexLayout = import("./FlexLayout").default;
-    type ComputedLayout = import ("./FlexLayout").ComputedLayout;
     type MeasureMode = import ("./FlexLayout").MeasureMode;
     type ISize = import ("@pixi/core").ISize;
     type ContainerBackground = import("./containerMixin").ContainerBackground;
     type BackgroundGraphics = import("@pixi/graphics-smooth").SmoothGraphics;
 
     interface DisplayObjectEvents {
-        layout: [computedLayout: ComputedLayout];
+        layout: [computedLayout: Rectangle];
     }
 
     interface DisplayObject {
