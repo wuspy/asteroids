@@ -19,9 +19,11 @@ import {
 import {
     Accessor,
     ParentProps,
+    Resource,
     batch,
     createContext,
     createEffect,
+    createResource,
     createSignal,
     onCleanup,
     useContext
@@ -46,9 +48,8 @@ export interface AppState {
     input: InputProvider<typeof controls>;
     isQuit: Accessor<boolean>;
     isPaused: Accessor<boolean>;
-    token: Accessor<GameTokenResponse | null>;
-    nextToken: Accessor<GameTokenResponse | null>;
-    nextTokenLoading: Accessor<boolean>;
+    token: Accessor<GameTokenResponse | undefined>;
+    nextToken: Resource<GameTokenResponse | undefined>;
 }
 
 export interface AppActions {
@@ -90,12 +91,15 @@ export const AppProvider = (
     const [theme, setTheme] = createSignal(getRandomTheme());
     const [isPaused, setPaused] = createSignal(false);
     const [isQuit, setQuit] = createSignal(false);
-    const [token, setToken] = createSignal<GameTokenResponse | null>(null);
-    const [nextToken, setNextToken] = createSignal<GameTokenResponse | null>(null);
-    const [nextTokenLoading, setNextTokenLoading] = createSignal(true);
+    const [token, setToken] = createSignal<GameTokenResponse>();
     // eslint-disable-next-line solid/reactivity
     const [scale, setScale] = createSignal(props.stage.scale.x);
     const [worldSize, setWorldSize] = createSignal({ ...game.worldSize });
+
+    const [nextToken, { refetch: refetchNextToken }] = createResource(async () => {
+        const response = await getGameToken();
+        return response.ok ? response.data : undefined;
+    });
 
     const pause = () => {
         if (game.state.status === GameStatus.Running) {
@@ -159,39 +163,25 @@ export const AppProvider = (
     performResize();
     window.addEventListener("resize", performResize);
 
-    // TODO maybe make this a resource
-    const loadGameToken = async () => {
-        batch(() => {
-            setToken(nextToken());
-            setNextTokenLoading(true);
-            setNextToken(null);
-        });
-        const response = await getGameToken();
-        batch(() => {
-            setNextToken(response.ok ? response.data : null);
-            setNextTokenLoading(false);
-        });
-    };
-
-    // eslint-disable-next-line solid/reactivity
-    loadGameToken();
-
     const start = () => {
-        if (game.state.status === GameStatus.Init && !nextTokenLoading()) {
+        if (game.state.status === GameStatus.Init && !nextToken.loading) {
             if (nextToken()) {
                 try {
                     game.random = createRandom(decodeIntArray(nextToken()!.randomSeed));
+                    setToken(nextToken());
                     game.enableLogging = true;
                 } catch (e) {
                     console.error("Failed to seed random from token");
+                    setToken(undefined);
                     game.random = createRandom(createRandomSeed());
                     game.enableLogging = false;
                 }
             } else {
+                setToken(undefined);
                 game.random = createRandom(createRandomSeed());
                 game.enableLogging = false;
             }
-            loadGameToken();
+            refetchNextToken();
             game.start();
         }
     };
@@ -201,7 +191,7 @@ export const AppProvider = (
         batch(() => {
             setPaused(false);
             setQuit(false);
-            setToken(null);
+            setToken(undefined);
             setTheme(getRandomTheme());
         });
     };
@@ -215,7 +205,6 @@ export const AppProvider = (
         worldSize,
         token,
         nextToken,
-        nextTokenLoading,
         isPaused,
         pause,
         resume,

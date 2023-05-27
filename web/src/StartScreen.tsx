@@ -14,7 +14,7 @@ import { createDropShadowTexture } from "./util";
 const delayBetweenControls = 120;
 
 export const StartScreen = (props: ContainerProps) => {
-    const { game, renderer, theme, nextToken, nextTokenLoading, start } = useApp();
+    const { game, renderer, theme, nextToken, start } = useApp();
 
     const [started, setStarted] = createSignal(game.state.status !== GameStatus.Init);
     const [visible, setVisible] = createSignal(false);
@@ -30,7 +30,7 @@ export const StartScreen = (props: ContainerProps) => {
     onGameEvent("reset", () => setStarted(false));
 
     const onStart = () => {
-        if (!nextTokenLoading()) {
+        if (!nextToken.loading) {
             setVisible(false)
             setTimeout(start, 1000);
         }
