@@ -1,9 +1,21 @@
 import { DEG_TO_RAD } from "@pixi/core";
-import { UFOType, UFO_HITAREAS, UFO_SCORES, UFO_SPEEDS, UFO_PROJECTILE_SPEEDS, QUEUE_PRIORITIES, UFO_INACCURACY, UFO_FIRE_INTERVALS, UFO_SHIFT_INTERVALS, UFO_SHIFT_AMOUNTS, UFO_HARD_INACCURACY_SCORE } from "./constants";
-import { GameState } from "./GameState";
 import { GameEvents } from "./GameEvents";
-import { atan2, calculateVelocityToIntercept, CoreGameObjectParams, GameObject, WrapMode } from "./engine";
+import { GameState } from "./GameState";
 import { Projectile } from "./Projectile";
+import {
+    QUEUE_PRIORITIES,
+    UFOType,
+    UFO_FIRE_INTERVALS,
+    UFO_HARD_INACCURACY_SCORE,
+    UFO_HITAREAS,
+    UFO_INACCURACY,
+    UFO_PROJECTILE_SPEEDS,
+    UFO_SCORES,
+    UFO_SHIFT_AMOUNTS,
+    UFO_SHIFT_INTERVALS,
+    UFO_SPEEDS
+} from "./constants";
+import { CoreGameObjectParams, GameObject, WrapMode, atan2, calculateVelocityToIntercept } from "./engine";
 
 export interface UFODestroyOptions {
     hit: boolean;
@@ -20,10 +32,18 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
     constructor(params: CoreGameObjectParams<GameState, GameEvents> & {
         type: UFOType,
     }) {
-        super({ ...params, hitArea: UFO_HITAREAS[params.type], wrapMode: WrapMode.Vertical, queuePriority: QUEUE_PRIORITIES.ufo });
+        super({
+            ...params,
+            hitArea: UFO_HITAREAS[params.type],
+            wrapMode: WrapMode.Vertical,
+            queuePriority: QUEUE_PRIORITIES.ufo
+        });
         this._type = params.type;
 
-        const startY = this._random(Math.floor(this.boundingBox.height), Math.floor(this.worldSize.height - this.boundingBox.height));
+        const startY = this._random(
+            Math.floor(this.boundingBox.height),
+            Math.floor(this.worldSize.height - this.boundingBox.height)
+        );
         const left = -this.boundingBox.width / 2;
         const right = this.worldSize.width - left;
         this._direction = [-1, 1][this._random(0, 1)];
@@ -42,7 +62,10 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
             this._nextYShift = undefined;
             this.velocity.x = this.velocity.x / Math.SQRT2;
             this.velocity.y = [-1, 1][this._random(0, 1)] * this.velocity.x;
-            this._currentYShiftEnd = timestamp + this._random(UFO_SHIFT_AMOUNTS[this._type][0], UFO_SHIFT_AMOUNTS[this._type][1]) / Math.abs(this.velocity.y) * 1000;
+            this._currentYShiftEnd = timestamp + this._random(
+                UFO_SHIFT_AMOUNTS[this._type][0],
+                UFO_SHIFT_AMOUNTS[this._type][1]
+            ) / Math.abs(this.velocity.y) * 1000;
         } else if (this._currentYShiftEnd && timestamp >= this._currentYShiftEnd) {
             if (process.env.NODE_ENV === "development" && timestamp > this._currentYShiftEnd) {
                 console.warn("Frame tick not synced to UFO y-shift end");
@@ -105,7 +128,10 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
             if (v) {
                 angle = atan2(v.y, v.x);
                 // Calculate inaccuracy at current score
-                const inaccuracy = Math.min(1, this.state.score / UFO_HARD_INACCURACY_SCORE) * (UFO_INACCURACY.hard - UFO_INACCURACY.easy) + UFO_INACCURACY.easy;
+                const inaccuracy = UFO_INACCURACY.easy + Math.min(
+                    1,
+                    this.state.score / UFO_HARD_INACCURACY_SCORE) * (UFO_INACCURACY.hard - UFO_INACCURACY.easy
+                );
                 if (inaccuracy) {
                     angle += this._random(-Math.floor(inaccuracy * 100), Math.floor(inaccuracy * 100)) / 100;
                 }
@@ -133,11 +159,17 @@ export class UFO extends GameObject<GameState, UFODestroyOptions, GameEvents> {
     }
 
     private setNextFireTime(): void {
-        this._nextFireTime = this.state.timestamp + this._random(UFO_FIRE_INTERVALS[this._type][0] * 1000, UFO_FIRE_INTERVALS[this._type][1] * 1000);
+        this._nextFireTime = this.state.timestamp + this._random(
+            UFO_FIRE_INTERVALS[this._type][0] * 1000,
+            UFO_FIRE_INTERVALS[this._type][1] * 1000
+        );
     }
 
     private setNextYShift(): void {
-        this._nextYShift = this.state.timestamp + this._random(UFO_SHIFT_INTERVALS[this._type][0] * 1000, UFO_SHIFT_INTERVALS[this._type][1] * 1000);
+        this._nextYShift = this.state.timestamp + this._random(
+            UFO_SHIFT_INTERVALS[this._type][0] * 1000,
+            UFO_SHIFT_INTERVALS[this._type][1] * 1000
+        );
     }
 
     override destroy(options: UFODestroyOptions): void {

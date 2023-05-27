@@ -1,10 +1,15 @@
-import { GameResponse, MAX_PLAYER_NAME_LENGTH, MIN_PLAYER_NAME_LENGTH, isValidPlayerNameCodePoint } from "@wuspy/asteroids-core";
+import {
+    GameResponse,
+    MAX_PLAYER_NAME_LENGTH,
+    MIN_PLAYER_NAME_LENGTH,
+    isValidPlayerNameCodePoint
+} from "@wuspy/asteroids-core";
 import { Show, createEffect, createSignal } from "solid-js";
 import { useApp } from "./AppContext";
 import { ApiErrorType, saveGame } from "./api";
 import { ContainerBackgroundShape } from "./layout";
-import { Button, DOMTextInput, InputProps, Modal, TEXT_INPUT_THEME } from "./ui";
 import { useTextStyle } from "./solid-pixi";
+import { Button, DOMTextInput, InputProps, Modal, TEXT_INPUT_THEME } from "./ui";
 
 const DEFAULT_INFO_TEXT = `${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH} characters`;
 export interface SaveScoreModalProps {

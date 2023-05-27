@@ -1,4 +1,11 @@
-import { AsteroidsGame, GameState, GameStatus, createRandom, inputLogConfig, parseGameLog } from "@wuspy/asteroids-core";
+import {
+    AsteroidsGame,
+    GameState,
+    GameStatus,
+    createRandom,
+    inputLogConfig,
+    parseGameLog
+} from "@wuspy/asteroids-core";
 
 export const enum GameValidatorError {
     InvalidRandomSeed,
@@ -41,7 +48,9 @@ export const validateAsteroidsGame = (request: GameValidatorRequest): GameValida
     let smallUfosDestroyed = 0;
 
     game.events.on("projectileCreated", (projectile) => projectile.from === game.state.ship && ++shotsFired);
-    game.events.on("projectileDestroyed", (projectile, hit) => projectile.from === game.state.ship && hit && ++shotsHit);
+    game.events.on("projectileDestroyed", (projectile, hit) =>
+        projectile.from === game.state.ship && hit && ++shotsHit
+    );
     game.events.on("asteroidDestroyed", (asteroid, scored) => scored && ++asteroidsDestroyed);
     game.events.on("ufoDestroyed", (ufo, scored) => {
         if (scored) {

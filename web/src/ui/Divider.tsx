@@ -1,5 +1,5 @@
+import { Rectangle } from "@pixi/core";
 import { SmoothGraphics } from "@pixi/graphics-smooth";
-import { ComputedLayout } from "../layout";
 import { GraphicsProps } from "../solid-pixi";
 import { UI_DIVIDER_COLOR } from "./theme";
 
@@ -13,7 +13,7 @@ export const Divider = (props: DividerProps) => {
 
     const vertical = () => props.direction === "vertical";
 
-    const onLayout = (layout: ComputedLayout) => {
+    const onLayout = (layout: Rectangle) => {
         if (lastSize.width !== layout.width || lastSize.height !== layout.height) {
             g.clear();
             g.beginFill(UI_DIVIDER_COLOR);

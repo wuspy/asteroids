@@ -21,7 +21,10 @@ export type ApiResponse<T> = {
     reason: any,
 };
 
-export const mapApiResponse = async <T, R>(response: Promise<ApiResponse<T>>, fn: (data: T) => R | Promise<R>): Promise<ApiResponse<R>> =>
+export const mapApiResponse = async <T, R>(
+    response: Promise<ApiResponse<T>>,
+    fn: (data: T) => R | Promise<R>
+): Promise<ApiResponse<R>> =>
     response.then(async (response) =>
         response.ok ? {
             ok: true,

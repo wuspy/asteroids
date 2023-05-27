@@ -9,6 +9,11 @@ export type InputLogConfig<Controls extends readonly string[]> = {
     }
 }
 
+type InputLogConfigEntries<Controls extends readonly string[]> = [
+    keyof InputLogConfig<Controls>,
+    InputLogConfig<Controls>[Controls[number]]
+];
+
 const MAX_ELAPSED_VALUE_PER_BYTE = 240;
 const FRAME_MULTIPLIER = 241;
 const WORLD_SIZE_CHANGE = 242;
@@ -41,7 +46,11 @@ export class GameLog<Controls extends readonly string[]> {
         this._buffer[this._i++] = val & 0xff;
     }
 
-    logFrame(elapsedMs: number, input: InputState<Controls>, worldSize: Readonly<ISize>): [number, InputState<Controls>] {
+    logFrame(
+        elapsedMs: number,
+        input: InputState<Controls>,
+        worldSize: Readonly<ISize>
+    ): [number, InputState<Controls>] {
         if (this._buffer.length - this._i < 100) {
             const old = this._buffer;
             this._buffer = new Uint8Array(old.length + 10000);
@@ -57,7 +66,7 @@ export class GameLog<Controls extends readonly string[]> {
 
         this.logWorldSize(worldSize);
 
-        for (const [control, { type }] of Object.entries(this._inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
+        for (const [control, { type }] of Object.entries(this._inputLogConfig) as InputLogConfigEntries<Controls>[]) {
             if (type === InputMappingType.Digital) {
                 this.logDigitalInput(control, input[control]);
             } else {
@@ -198,7 +207,7 @@ const consumeInput = <Controls extends readonly string[]>(
     while (i < log.length && log[i] >= INPUT_START) {
         const code = log[i++];
         let found = false;
-        for (const [control, { code: currentCode, type }] of Object.entries(inputLogConfig) as [Controls[number], InputLogConfig<Controls>[Controls[number]]][]) {
+        for (const [control, { code: currentCode, type }] of Object.entries(inputLogConfig) as InputLogConfigEntries<Controls>[]) {
             if (code === currentCode) {
                 if (type === InputMappingType.Digital) {
                     input[control] = +!input[control];

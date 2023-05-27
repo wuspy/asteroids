@@ -43,7 +43,11 @@ export class TickQueue {
     }
 
     tick(timestamp: number, elapsed: number): void {
-        this._priorities.forEach((priority) => this._items[priority]!.forEach(([cb, ta]) => cb.call(ta, timestamp, elapsed)));
+        this._priorities.forEach(priority =>
+            this._items[priority]!.forEach(
+                ([cb, ta]) => cb.call(ta, timestamp, elapsed)
+            )
+        );
     }
 
     get length(): number {

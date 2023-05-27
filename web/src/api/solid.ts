@@ -1,5 +1,5 @@
-import { ApiErrorType, ApiResponse } from "./request";
 import { Resource } from "solid-js";
+import { ApiErrorType, ApiResponse } from "./request";
 
 export function ok<T>(resource: Resource<ApiResponse<T>>): T | undefined {
     const value = resource();

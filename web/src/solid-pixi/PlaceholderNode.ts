@@ -1,6 +1,8 @@
 import { DisplayObject } from "@pixi/display";
 import { SolidPixiInstance } from "./element";
 
+/* eslint-disable @typescript-eslint/no-empty-function */
+
 /**
  * A DisplayObject that does absolutely nothing, used as a text node placeholder in SolidJS.
  * See `createTextNode` in render.ts for why this is needed.

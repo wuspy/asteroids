@@ -22,7 +22,7 @@ import { ContainerProps } from "./solid-pixi";
 
 const GENERATION_LINE_WIDTHS: readonly number[] = [4, 3.5, 3];
 
-const BACKGROUND_POLYGONS = ASTEROID_HITAREAS.map((generation) => generation.map((polygon) => polygon.clone().scale(0.6)));
+const BACKGROUND_POLYGONS = ASTEROID_HITAREAS.map(generation => generation.map(polygon => polygon.clone().scale(0.6)));
 
 // Since background asteroids are never used for hit detection, don't bother adding the overhead
 // of giving them polygon hitareas. Just give them point hitareas with a radius that will produce
@@ -198,11 +198,11 @@ export const BackgroundContainer = (props: ContainerProps) => {
                     generateTextureCache(renderer);
                 }
                 const texture = TEXTURE_CACHE.get(renderer)![asteroid.model][asteroid.generation];
-            
+
                 let sprite: Sprite;
                 asteroid.onPositionChange = position => sprite.position.copyFrom(position);
                 asteroid.onRotationChange = rotation => sprite.rotation = rotation;
-            
+
                 return (
                     <sprite
                         ref={sprite!}

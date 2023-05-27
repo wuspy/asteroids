@@ -1,6 +1,6 @@
 import { FederatedPointerEvent } from "@pixi/events";
 import { GlowFilter } from "@pixi/filter-glow";
-import { createEffect, createSignal, on } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 import { onInputEvent, useApp } from "./AppContext";
 import { StartControl } from "./StartControl";
 import { ChromaticAbberationFilter } from "./filters";
@@ -30,6 +30,7 @@ export const PauseScreen = (props: ContainerProps) => {
 
     const onResumeClick = (e: FederatedPointerEvent) => e.button === 0 && onResume();
 
+    // eslint-disable-next-line solid/reactivity
     onInputEvent("poll", (state, lastState) => {
         if (state.start && !lastState.start) {
             onResume();

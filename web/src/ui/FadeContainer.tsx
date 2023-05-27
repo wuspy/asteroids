@@ -29,7 +29,7 @@ const defaultProps = {
 
 export const FadeContainer = (_props: FadeContainerProps) => {
     const [props, childProps] = splitProps(
-        mergeProps(defaultProps, _props),
+        mergeProps(defaultProps, _props), //eslint-disable-line solid/reactivity
         [
             "children",
             "visible",
@@ -47,7 +47,8 @@ export const FadeContainer = (_props: FadeContainerProps) => {
         ]
     );
 
-    let [amount, setAmount] = createSignal(Number(props.visible));
+    // eslint-disable-next-line solid/reactivity
+    const [amount, setAmount] = createSignal(Number(props.visible));
     const renderable = createMemo(() => !!amount());
 
     const alphaFilter = new AlphaFilter();
@@ -57,21 +58,21 @@ export const FadeContainer = (_props: FadeContainerProps) => {
         alphaFilter.enabled = renderable() && amount() < 1;
         blurFilter.enabled = renderable() && !!props.blur && amount() < 1;
         alphaFilter.alpha = amount();
-        blurFilter.blur = (1 - amount()) * props.blur;    
+        blurFilter.blur = (1 - amount()) * props.blur;
     });
 
     createRenderEffect(() => {
         blurFilter.padding = alphaFilter.padding = props.filterPadding + props.blur;
     });
 
-    onTick("app", (timestamp, elapsed) => {
-        let target = Number(props.visible);
+    onTick("app", (timestamp, elapsed) => { // eslint-disable-line solid/reactivity
+        const target = Number(props.visible);
         if (target > amount()) {
             setAmount(amount => Math.min(target, amount + elapsed * 1000 / props.fadeInDuration));
         } else if (target < amount()) {
             setAmount(amount => Math.max(target, amount - elapsed * 1000 / props.fadeOutDuration));
         }
-    }, () => Number(props.visible) !== amount());
+    }, () => Number(props.visible) !== amount()); // eslint-disable-line solid/reactivity
 
     return <container
         {...childProps}

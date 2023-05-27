@@ -1,19 +1,19 @@
 import {
-    Rectangle,
     IPointData,
     ISize,
-    Polygon,
     ObservablePoint,
-    PI_2
+    PI_2,
+    Polygon,
+    Rectangle
 } from "@pixi/core";
-import {
-    HitArea,
-    pointsCoincident,
-    Vec2,
-    atan2,
-} from "./math";
 import { EventManager, EventMap } from "./EventManager";
 import { TickQueue } from "./TickQueue";
+import {
+    HitArea,
+    Vec2,
+    atan2,
+    pointsCoincident,
+} from "./math";
 import { RandomFn } from "./random";
 
 export const enum WrapMode {
@@ -83,7 +83,10 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
         this._random = params.random;
         this._ignoreNextPositionChange = false;
         this._destroyed = false;
-        this.position = new ObservablePoint(this.updatePosition, this, params.position?.x || 0, params.position?.y || 0);
+        this.position = new ObservablePoint(
+            this.updatePosition,
+            this, params.position?.x || 0, params.position?.y || 0
+        );
         this.wrapMode = params.wrapMode ?? WrapMode.Both;
         this._rotation = params.rotation ?? 0;
         this._sinRotation = Math.sin(this._rotation);

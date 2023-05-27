@@ -1,7 +1,6 @@
-import { Renderer } from "@pixi/core";
+import { Rectangle, Renderer } from "@pixi/core";
 import { Container, DisplayObject } from "@pixi/display";
-import { IFillStyleOptions, ILineStyleOptions, SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
-import { ComputedLayout } from "./FlexLayout";
+import { SmoothGraphics as Graphics, IFillStyleOptions, ILineStyleOptions } from "@pixi/graphics-smooth";
 
 export const enum ContainerBackgroundShape {
     Rectangle,
@@ -15,7 +14,12 @@ export interface ContainerBackground {
     cornerRadius?: number;
 }
 
-export const drawContainerBackground = (graphics: Graphics, background: ContainerBackground, width: number, height: number) => {
+export function drawContainerBackground(
+    graphics: Graphics,
+    background: ContainerBackground,
+    width: number,
+    height: number
+ ) {
     const { shape, fill, stroke, cornerRadius } = background;
     if (fill) {
         graphics.beginTextureFill(fill);
@@ -35,7 +39,7 @@ export const drawContainerBackground = (graphics: Graphics, background: Containe
     if (fill) {
         graphics.endFill();
     }
-};
+}
 
 const container = Container.prototype;
 
@@ -217,7 +221,7 @@ container.render = function (renderer: Renderer) {
     _super.render.call(this, renderer);
 }
 
-container._backgroundGraphicsHandler = function (layout: ComputedLayout) {
+container._backgroundGraphicsHandler = function (layout: Rectangle) {
     const { width, height } = layout;
     if (width !== this._backgroundSize!.width || height !== this._backgroundSize!.height) {
         this._backgroundGraphics!.clear();
@@ -227,7 +231,7 @@ container._backgroundGraphicsHandler = function (layout: ComputedLayout) {
 }
 
 if (process.env.NODE_ENV === "development") {
-    container._debugGraphicsHandler = function (layout: ComputedLayout) {
+    container._debugGraphicsHandler = function (layout: Rectangle) {
         const { width, height } = layout;
         if (!this._debugGraphics) {
             return;
@@ -249,7 +253,12 @@ if (process.env.NODE_ENV === "development") {
             this._debugGraphics.drawRect(0, padding.top, padding.left, height - padding.top - padding.bottom);
         }
         if (padding.right) {
-            this._debugGraphics.drawRect(width - padding.right, padding.top, padding.right, height - padding.top - padding.bottom);
+            this._debugGraphics.drawRect(
+                width - padding.right,
+                padding.top,
+                padding.right,
+                height - padding.top - padding.bottom
+            );
         }
         this._debugGraphics.endFill();
 
@@ -260,7 +269,12 @@ if (process.env.NODE_ENV === "development") {
             const border = child.layout.computedBorder;
             const margin = child.layout.computedMargin;
 
-            const { left: childLeft, top: childTop, width: childWidth, height: childHeight } = child.layout.computedLayout;
+            const {
+                left: childLeft,
+                top: childTop,
+                width: childWidth,
+                height: childHeight
+            } = child.layout.computedLayout;
 
             // Draw margin
             this._debugGraphics.beginFill(0xffff00, 0.125, false);
@@ -271,10 +285,16 @@ if (process.env.NODE_ENV === "development") {
                 this._debugGraphics.drawRect(childLeft, childTop + childHeight, childWidth, margin.bottom);
             }
             if (margin.left) {
-                this._debugGraphics.drawRect(childLeft - margin.left, childTop - margin.top, margin.left, childHeight + margin.top + margin.bottom);
+                this._debugGraphics.drawRect(
+                    childLeft - margin.left, childTop - margin.top,
+                    margin.left, childHeight + margin.top + margin.bottom
+                );
             }
             if (margin.right) {
-                this._debugGraphics.drawRect(childLeft + childWidth, childTop - margin.top, margin.right, childHeight + margin.top + margin.bottom);
+                this._debugGraphics.drawRect(
+                    childLeft + childWidth, childTop - margin.top,
+                    margin.right, childHeight + margin.top + margin.bottom
+                );
             }
             this._debugGraphics.endFill();
 
@@ -293,7 +313,10 @@ if (process.env.NODE_ENV === "development") {
                 width: Math.max(2, border.right),
                 smooth: false,
             });
-            this._debugGraphics.lineTo(childLeft + childWidth + border.right / 2, childTop + childHeight + border.bottom / 2);
+            this._debugGraphics.lineTo(
+                childLeft + childWidth + border.right / 2,
+                childTop + childHeight + border.bottom / 2
+            );
             this._debugGraphics.lineStyle({
                 color: 0x808080,
                 alpha: 1,

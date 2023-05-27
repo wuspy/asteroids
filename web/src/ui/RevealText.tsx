@@ -20,6 +20,7 @@ export const RevealText = (_props: RevealTextProps) => {
     let rightBracket!: Text;
 
     const [anim, setAnim] = createSignal<anime.AnimeTimelineInstance>();
+    // eslint-disable-next-line solid/reactivity
     let wasRevealed = props.initiallyRevealed ?? props.revealed;
 
     const onLayoutMeasure = () => {
@@ -62,6 +63,7 @@ export const RevealText = (_props: RevealTextProps) => {
         }
     });
 
+    // eslint-disable-next-line solid/reactivity
     onTick("app", timestamp => anim()!.tick(timestamp), anim);
 
     return (

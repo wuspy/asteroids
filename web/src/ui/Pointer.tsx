@@ -29,8 +29,11 @@ export const Pointer = (_props: PointerProps) => {
         "children",
     ]);
 
+    // eslint-disable-next-line solid/reactivity
     const [progress, setProgress] = createSignal(props.revealed ? 1 : 0);
+    // eslint-disable-next-line solid/reactivity
     const [contentAlpha, setContentAlpha] = createSignal(props.revealed ? 1 : 0);
+    // eslint-disable-next-line solid/reactivity
     let wasRevealed = props.revealed;
 
     let target!: Container;
@@ -70,6 +73,7 @@ export const Pointer = (_props: PointerProps) => {
         }
     });
 
+    // eslint-disable-next-line solid/reactivity
     onTick("app", timestamp => anim()!.tick(timestamp), anim);
 
     createEffect(() => {

@@ -1,9 +1,9 @@
-import { ASTEROID_HITAREAS, Asteroid, TickFn } from "@wuspy/asteroids-core";
 import { IRenderer, Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
+import { ASTEROID_HITAREAS, Asteroid, TickFn } from "@wuspy/asteroids-core";
 import { GameTheme } from "../GameTheme";
 import { Explosion, PopAnimation } from "../animations";
 import { PowerupFilter } from "../filters";
@@ -54,7 +54,13 @@ export interface AsteroidDisplayProps {
     renderer: IRenderer;
 }
 
-export const displayAsteroid = ({ asteroid, theme, mainContainer, foregroundContainer, renderer }: AsteroidDisplayProps) => {
+export const displayAsteroid = ({
+    asteroid,
+    theme,
+    mainContainer,
+    foregroundContainer,
+    renderer
+}: AsteroidDisplayProps) => {
     if (!TEXTURE_CACHE.has(renderer)) {
         generateTextureCache(renderer);
     }

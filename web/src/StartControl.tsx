@@ -1,9 +1,9 @@
 import { GlowFilter } from "@pixi/filter-glow";
 import anime from "animejs";
-import { useApp, onTick } from "./AppContext";
-import { ControlDescription } from "./ui";
 import { createRenderEffect, splitProps } from "solid-js";
+import { onTick, useApp } from "./AppContext";
 import { ContainerProps } from "./solid-pixi";
+import { ControlDescription } from "./ui";
 
 export interface StartControlProps extends ContainerProps {
     color: number;

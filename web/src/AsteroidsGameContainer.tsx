@@ -16,7 +16,7 @@ const RGB_SPLIT_SEPARATION = 3;
 
 export const AsteroidsGameContainer = () => {
     // This is necessary and I have no idea why
-    if (!useApp()) return null;
+    if (!useApp()) return null; //eslint-disable-line solid/components-return-once
 
     const {
         renderer,

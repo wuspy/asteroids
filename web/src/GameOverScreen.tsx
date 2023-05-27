@@ -83,6 +83,7 @@ export const GameOverScreen = (props: ContainerProps) => {
             = !inBackground();
     });
 
+    // eslint-disable-next-line solid/reactivity
     onTick("app", timestamp => anim()!.tick(timestamp), anim);
 
     const enableSave = () => visible() && token() && game.enableLogging;

@@ -1,5 +1,5 @@
-import { GameObject, GameObjectParams } from "./GameObject";
 import { EventMap } from "./EventManager";
+import { GameObject, GameObjectParams } from "./GameObject";
 import { clamp } from "./math";
 
 export interface DynamicGameObjectParams<State, Events extends EventMap<keyof Events>> extends GameObjectParams<State, Events> {

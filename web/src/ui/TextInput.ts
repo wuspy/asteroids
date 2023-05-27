@@ -1,7 +1,13 @@
 import { Color, ColorSource, ISize, Renderer } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
 import { AlphaFilter } from "@pixi/filter-alpha";
-import { DisplayObjectEventProps, PixiContainerProps, WithPrefix, displayObjectSetProp, registerPixiComponent } from "../solid-pixi";
+import {
+    DisplayObjectEventProps,
+    PixiContainerProps,
+    WithPrefix,
+    displayObjectSetProp,
+    registerPixiComponent
+} from "../solid-pixi";
 
 export type DOMTextInputAlign = "left" | "right" | "center" | "inherit";
 

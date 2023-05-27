@@ -1,3 +1,6 @@
+import { DEG_TO_RAD, ISize, Rectangle } from "@pixi/core";
+import { GameEvents } from "./GameEvents";
+import { GameState } from "./GameState";
 import {
     ASTEROID_CHILDREN_COUNT,
     ASTEROID_COUNT_INCREASE_PER_LEVEL,
@@ -10,18 +13,15 @@ import {
     MAX_ASTEROID_COUNT,
     QUEUE_PRIORITIES
 } from "./constants";
-import { DEG_TO_RAD, ISize, Rectangle } from "@pixi/core";
 import {
-    GameObject,
-    findUnoccupiedPosition,
-    TickQueue,
-    EventManager,
     CoreGameObjectParams,
-    Vec2,
+    EventManager,
+    GameObject,
     RandomFn,
+    TickQueue,
+    Vec2,
+    findUnoccupiedPosition,
 } from "./engine";
-import { GameState } from "./GameState";
-import { GameEvents } from "./GameEvents";
 
 // Generates a random angle that isn't within +/-15deg of horizontal or vertical, to prevent
 // an asteroid from being stuck near the screen margin.
@@ -110,7 +110,10 @@ export class Asteroid extends GameObject<GameState, AsteroidDestroyOptions, Game
                 }
                 lastAngle = angle;
                 const [sin, cos] = [Math.sin(angle), Math.cos(angle)];
-                const speed = this._random(ASTEROID_GENERATION_SPEEDS[generation][0], ASTEROID_GENERATION_SPEEDS[generation][1]);
+                const speed = this._random(
+                    ASTEROID_GENERATION_SPEEDS[generation][0],
+                    ASTEROID_GENERATION_SPEEDS[generation][1]
+                );
                 const distance = this._random(this.boundingBox.width / 8, this.boundingBox.width / 4);
                 asteroids.push(new Asteroid({
                     state: this.state,

@@ -1,8 +1,8 @@
-import { TickQueue } from "@wuspy/asteroids-core";
 import { PI_2 } from "@pixi/core";
 import { IDestroyOptions } from "@pixi/display";
 import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
+import { TickQueue } from "@wuspy/asteroids-core";
 import anime from "animejs";
 
 export class ShipSpawnAnimation extends Graphics {

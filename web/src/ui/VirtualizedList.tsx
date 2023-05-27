@@ -1,11 +1,11 @@
-import { Point } from "@pixi/core";
+import { Point, Rectangle } from "@pixi/core";
 import { Container, DisplayObject, DisplayObjectEvents } from "@pixi/display";
 import { EventBoundary, FederatedPointerEvent, FederatedWheelEvent } from "@pixi/events";
 import { SmoothGraphics } from "@pixi/graphics-smooth";
+import { clamp, lineSegmentLength } from "@wuspy/asteroids-core";
 import { For, JSX, Setter, createMemo, createRenderEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { onTick, useApp } from "../AppContext";
-import { clamp, lineSegmentLength } from "@wuspy/asteroids-core";
-import { ComputedLayout, drawContainerBackground } from "../layout";
+import { drawContainerBackground } from "../layout";
 import { ContainerProps } from "../solid-pixi";
 import { LIST_BACKGROUND } from "./theme";
 
@@ -47,14 +47,16 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
 
     let pointerDownAt: Point | undefined = undefined;
     let scrollCaptured = false;
+    // eslint-disable-next-line solid/reactivity
     let targetPosition = -(props.overscroll || 0);
     const [isBlockingMove, setIsBlockingMove] = createSignal(false);
-
+    // eslint-disable-next-line solid/reactivity
     const [position, setPosition] = createSignal(-(props.overscroll || 0));
     const [height, setHeight] = createSignal(0);
 
     const maxScrollPosition = createMemo(() => Math.max(Math.ceil((props.data.length * props.itemHeight - height() + (props.overscroll || 0)) / props.itemHeight) * props.itemHeight, 0));
 
+    // eslint-disable-next-line solid/reactivity
     onTick("app", (timestamp, elapsed) => {
         const diff = targetPosition - position();
         if (diff) {
@@ -159,9 +161,9 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
 
     const onPointermove = (e: PointerEvent) => {
         if (pointerDownAt) {
-            if (!scrollCaptured
-                && Math.abs(lineSegmentLength([pointerDownAt, { x: e.offsetX, y: e.offsetY }])) > SCROLL_CAPTURE_THRESHOLD
-            ) {
+            if (!scrollCaptured && Math.abs(
+                lineSegmentLength([pointerDownAt, { x: e.offsetX, y: e.offsetY }])
+            ) > SCROLL_CAPTURE_THRESHOLD) {
                 scrollCaptured = true;
             }
             if (scrollCaptured) {
@@ -177,7 +179,7 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
     onMount(() => renderer.view.addEventListener("pointermove", onPointermove));
     onCleanup(() => renderer.view.removeEventListener("pointermove", onPointermove));
 
-    const onLayout = (layout: ComputedLayout) => {
+    const onLayout = (layout: Rectangle) => {
         if (layout.height !== height()) {
             mask.clear();
             drawContainerBackground(

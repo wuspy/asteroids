@@ -21,11 +21,11 @@ export interface ModalProps extends Omit<FadeContainerProps,
 const DEFAULT_PADDING = 16;
 
 export const Modal = (props: ModalProps) => {
-    onInputEvent("poll", (state, prevState) => {
+    onInputEvent("poll", (state, prevState) => { // eslint-disable-line solid/reactivity
         if (state.back && !prevState.back) {
             props.onRequestClose();
         }
-    }, () => props.open);
+    }, () => props.open); // eslint-disable-line solid/reactivity
 
     return <FadeContainer
         {...props}

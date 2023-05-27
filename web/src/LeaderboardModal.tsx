@@ -1,4 +1,3 @@
-import { HighScoreResponse } from "@wuspy/asteroids-core";
 import { Match, Show, Switch, createEffect, createResource, createSignal } from "solid-js";
 import { LEADERBOARD_LIST_ITEM_HEIGHT, LeaderboardListItem } from "./LeaderboardListItem";
 import { empty, error, getHighScores, some } from "./api";

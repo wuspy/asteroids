@@ -1,5 +1,6 @@
 console.log(`Version ${process.env.npm_package_version}`);
 
+import { promisify } from "util";
 import {
     GameResponse,
     GameTokenResponse,
@@ -12,10 +13,17 @@ import bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
 import multer from "multer";
-import { promisify } from "util";
 import { validateAsteroidsGame } from "./asteroidsGameValidator";
 import config from "./config";
-import { createGameToken, destroyConnection, findGame, findGameLog, findHighScores, findUnusedGameToken, storeGame } from "./db";
+import {
+    createGameToken,
+    destroyConnection,
+    findGame,
+    findGameLog,
+    findHighScores,
+    findUnusedGameToken,
+    storeGame
+} from "./db";
 import { SaveGameRequest } from "./models";
 import { validatePlayerName } from "./playerNameValidator";
 

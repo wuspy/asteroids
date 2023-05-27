@@ -1,7 +1,7 @@
-import { createRenderer } from 'solid-js/universal';
 import { Container } from '@pixi/display';
+import { JSX } from "solid-js";
+import { createRenderer } from 'solid-js/universal';
 import { createPixiElement, SolidPixiInstance } from './element';
-import { JSX } from "solid-js"
 import { PlaceholderNode } from './PlaceholderNode';
 
 export const {
@@ -68,7 +68,7 @@ export const {
         // aren't supported we still have to handle this.
         return new PlaceholderNode();
     },
-    replaceText(textNode, value) {
+    replaceText() {
         // noop
     },
     isTextNode(node) {

@@ -68,7 +68,14 @@ export interface ShipDisplayProps {
     renderer: IRenderer;
 }
 
-export const displayShip = ({ ship, theme, mainContainer, backgroundContainer, foregroundContainer, renderer }: ShipDisplayProps) => {
+export const displayShip = ({
+    ship,
+    theme,
+    mainContainer,
+    backgroundContainer,
+    foregroundContainer,
+    renderer
+}: ShipDisplayProps) => {
     const shipTexture = createShipTexture(renderer);
     const container = new Container();
     container.position.copyFrom(ship.position);

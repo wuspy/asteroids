@@ -1,0 +1,6 @@
+plugins:
+  - solid
+extends:
+  - plugin:solid/typescript
+rules:
+  "solid/style-prop": off

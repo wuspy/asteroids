@@ -1,3 +1,4 @@
+import { Container } from "@pixi/display";
 import { FederatedPointerEvent } from "@pixi/events";
 import { GlowFilter } from "@pixi/filter-glow";
 import { Show, createRenderEffect, mergeProps, splitProps } from "solid-js";
@@ -7,7 +8,6 @@ import { ContainerProps } from "../solid-pixi";
 import { Image } from "./Image";
 import { LoadingAnimation } from "./LoadingAnimation";
 import { BUTTON_THEMES, ButtonType } from "./theme";
-import { Container } from "@pixi/display";
 
 const TRANSITION_TIME = 0.25;
 
@@ -27,7 +27,7 @@ const defaultProps = {
 
 export const Button = (_props: ButtonProps) => {
     const [props, childProps] = splitProps(
-        mergeProps(defaultProps, _props),
+        mergeProps(defaultProps, _props), //eslint-disable-line solid/reactivity
         ["type", "text", "imageUrl", "enabled", "loading", "onClick"]
     );
 

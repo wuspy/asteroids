@@ -1,8 +1,8 @@
-import { PROJECTILE_LIFETIME, Projectile, Ship, TickFn, UFO } from "@wuspy/asteroids-core";
 import { Color, IRenderer, Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
+import { PROJECTILE_LIFETIME, Projectile, Ship, TickFn, UFO } from "@wuspy/asteroids-core";
 import { GameTheme } from "../GameTheme";
 import { Emitter } from "../animations";
 import { createDropShadowTexture } from "../util";
@@ -28,7 +28,13 @@ const generateTextureCache = (renderer: IRenderer) => {
     TEXTURE_CACHE.set(renderer, texture);
 }
 
-export const displayProjectile = ({ projectile, theme, mainContainer, backgroundContainer, renderer }: ProjectileDisplayProps) => {
+export const displayProjectile = ({
+    projectile,
+    theme,
+    mainContainer,
+    backgroundContainer,
+    renderer
+}: ProjectileDisplayProps) => {
     if (!TEXTURE_CACHE.has(renderer)) {
         generateTextureCache(renderer);
     }
@@ -82,7 +88,10 @@ export const displayProjectile = ({ projectile, theme, mainContainer, background
     });
 
     const tick: TickFn = () => {
-        emitterContainer.alpha = sprite.alpha = Math.min(1, (PROJECTILE_LIFETIME - projectile.life) / (PROJECTILE_LIFETIME * 0.2));
+        emitterContainer.alpha = sprite.alpha = Math.min(
+            (PROJECTILE_LIFETIME - projectile.life) / (PROJECTILE_LIFETIME * 0.2),
+            1
+        );
     };
 
     projectile.queue.add(100, tick);

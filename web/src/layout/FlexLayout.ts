@@ -1,5 +1,5 @@
+import { Point, Rectangle } from "@pixi/core";
 import { DisplayObject } from "@pixi/display";
-import { Point, Rectangle } from "@pixi/math";
 import * as yg from "yoga-wasm-web";
 import getYoga from "./getYoga";
 

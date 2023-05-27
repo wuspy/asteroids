@@ -1,27 +1,27 @@
 import { ISize } from "@pixi/core";
-import { Ship } from "./Ship";
 import { Asteroid } from "./Asteroid";
+import { GameEvents } from "./GameEvents";
+import { GameState, GameStatus } from "./GameState";
+import { Ship } from "./Ship";
+import { UFO } from "./UFO";
 import {
-    controls,
-    inputLogConfig,
-    LIVES,
-    NEXT_LEVEL_DELAY,
-    RESPAWN_DELAY,
-    WORLD_AREA,
-    UFO_SPAWN_TIME,
-    UFO_DISTRIBUTION,
-    UFOType,
-    UFO_HARD_DISTRIBUTION_SCORE,
     EXTRA_LIFE_AT_SCORE,
+    LIVES,
     MAX_ASPECT_RATIO,
     MIN_ASPECT_RATIO,
+    MIN_FPS,
+    NEXT_LEVEL_DELAY,
+    RESPAWN_DELAY,
     SHIP_POWERUP_FIRE_INTERVAL,
-    MIN_FPS
+    UFOType,
+    UFO_DISTRIBUTION,
+    UFO_HARD_DISTRIBUTION_SCORE,
+    UFO_SPAWN_TIME,
+    WORLD_AREA,
+    controls,
+    inputLogConfig
 } from "./constants";
-import { GameState, GameStatus } from "./GameState";
-import { GameEvents } from "./GameEvents";
-import { urandom, TickQueue, EventManager, InputState, GameLog, RandomFn } from "./engine";
-import { UFO } from "./UFO";
+import { EventManager, GameLog, InputState, RandomFn, TickQueue, urandom } from "./engine";
 
 const WORLD_AREA_PX = WORLD_AREA * 1000000;
 const MAX_ELAPSED_MS = 1000 / MIN_FPS;
@@ -326,7 +326,10 @@ export class AsteroidsGame {
             let currentChance = 0;
             const type = Object.entries(UFO_DISTRIBUTION)
                 // Find what the distribution is at the current score
-                .map(([type, { easy, hard }]) => [type, Math.min(1, this.state.score / UFO_HARD_DISTRIBUTION_SCORE) * (hard - easy) + easy] as [UFOType, number])
+                .map(([type, { easy, hard }]) => [
+                    type,
+                    Math.min(1, this.state.score / UFO_HARD_DISTRIBUTION_SCORE) * (hard - easy) + easy
+                ] as [UFOType, number])
                 // Sort distribution by least to most likely
                 .sort(([, chance1], [, chance2]) => chance1 - chance2)
                 // Map chances to a running total
@@ -383,7 +386,10 @@ export class AsteroidsGame {
         }
     }
 
-    private addGameObjects<T extends "asteroids" | "ufos" | "projectiles">(type: T, ...objects: GameState[T][0][]): void {
+    private addGameObjects<T extends "asteroids" | "ufos" | "projectiles">(
+        type: T,
+        ...objects: GameState[T][0][]
+    ): void {
         this.state[type].push(...objects as any[]);
     }
 

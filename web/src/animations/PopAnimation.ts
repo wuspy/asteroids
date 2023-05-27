@@ -1,7 +1,7 @@
-import { TickQueue } from "@wuspy/asteroids-core";
 import { Texture } from "@pixi/core";
 import { IDestroyOptions } from "@pixi/display";
 import { Sprite } from "@pixi/sprite";
+import { TickQueue } from "@wuspy/asteroids-core";
 import anime from "animejs";
 
 export class PopAnimation extends Sprite {

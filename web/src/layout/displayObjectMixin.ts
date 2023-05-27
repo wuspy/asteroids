@@ -1,5 +1,5 @@
-import { DisplayObject, IDestroyOptions } from "@pixi/display";
 import { ISize } from "@pixi/core";
+import { DisplayObject, IDestroyOptions } from "@pixi/display";
 import FlexLayout from "./FlexLayout";
 
 const displayObject = DisplayObject.prototype;

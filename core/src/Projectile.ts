@@ -1,7 +1,7 @@
+import { GameEvents } from "./GameEvents";
+import { GameState } from "./GameState";
 import { PROJECTILE_LIFETIME, QUEUE_PRIORITIES } from "./constants";
 import { CoreGameObjectParams, GameObject, Vec2 } from "./engine";
-import { GameState } from "./GameState";
-import { GameEvents } from "./GameEvents";
 
 export interface ProjectileDestroyOptions {
     hit: boolean;

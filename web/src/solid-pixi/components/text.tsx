@@ -1,7 +1,7 @@
-import { ITextStyle, Text } from "@pixi/text"
-import { registerPixiComponent, PixiContainerProps } from "../element";
-import { displayObjectSetProp } from "../props";
+import { ITextStyle, Text } from "@pixi/text";
 import { ParentProps, createContext, mergeProps, splitProps, useContext } from "solid-js";
+import { PixiContainerProps, registerPixiComponent } from "../element";
+import { displayObjectSetProp } from "../props";
 
 const TextStyleContext = createContext<Partial<ITextStyle>>({ });
 
@@ -9,7 +9,7 @@ export const useTextStyle = () => useContext(TextStyleContext);
 
 export const TextStyleProvider = (props: ParentProps<Partial<ITextStyle>>) => {
     const [children, style] = splitProps(
-        mergeProps(props, useTextStyle()),
+        mergeProps(props, useTextStyle()), //eslint-disable-line solid/reactivity
         ["children"]
     );
 

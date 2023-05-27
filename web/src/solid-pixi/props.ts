@@ -1,5 +1,5 @@
+import { IPoint, IPointData, ObservablePoint, Point } from "@pixi/core";
 import { DisplayObject, DisplayObjectEvents } from "@pixi/display";
-import { Point, ObservablePoint, IPoint, IPointData } from "@pixi/core";
 
 export type PointLike = IPointData | [number, number] | number;
 

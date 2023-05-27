@@ -1,32 +1,32 @@
+import { DEG_TO_RAD } from "@pixi/core";
+import { GameEvents } from "./GameEvents";
+import { GameState } from "./GameState";
+import { Projectile } from "./Projectile";
 import {
     ACCELERATION,
+    BASE_SHIP_PROJECTILE_SPEED,
     FRICTION,
+    HYPERSPACE_COOLDOWN,
+    HYPERSPACE_DELAY,
     INVULNERABLE_TIME,
     MAX_ROTATION_SPEED,
+    MAX_SHIP_PROJECTILE_SPEED,
     MAX_SPEED,
+    MIN_SHIP_PROJECTILE_SPEED,
+    QUEUE_PRIORITIES,
     RECOIL,
     ROTATION_ACCELERATION,
     ROTATION_FRICTION,
+    SHIP_FIRE_COOLDOWN,
     SHIP_HITAREA,
-    HYPERSPACE_DELAY,
-    BASE_SHIP_PROJECTILE_SPEED,
-    MIN_SHIP_PROJECTILE_SPEED,
-    MAX_SHIP_PROJECTILE_SPEED,
-    QUEUE_PRIORITIES,
-    HYPERSPACE_COOLDOWN,
     SHIP_POWERUP_DURATION,
     SHIP_POWERUP_PROJECTILE_SPEED_MULTIPLIER,
-    SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY,
-    SHIP_FIRE_COOLDOWN,
     SHIP_POWERUP_RECOIL_MULTIPLER,
     SHIP_PROJECTILE_CAPACITY,
+    SHIP_PROJECTILE_ENABLE_TANGENTIAL_VELOCITY,
     SHIP_PROJECTILE_RECHARGE_RATE
 } from "./constants";
-import { GameState } from "./GameState";
-import { GameEvents } from "./GameEvents";
-import { DynamicGameObject, CoreGameObjectParams, Vec2 } from "./engine";
-import { DEG_TO_RAD } from "@pixi/core";
-import { Projectile } from "./Projectile";
+import { CoreGameObjectParams, DynamicGameObject, Vec2 } from "./engine";
 
 const HYPERSPACE_COOLDOWN_MS = HYPERSPACE_COOLDOWN * 1000;
 const FIRE_COOLDOWN_MS = SHIP_FIRE_COOLDOWN * 1000;
@@ -82,8 +82,11 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         super.tick(timestamp, elapsed);
 
         if (this._hyperspaceCountdown) {
-            if (this._hyperspaceCountdown >= HYPERSPACE_DELAY / 2 && this._hyperspaceCountdown - elapsed < HYPERSPACE_DELAY / 2) {
-                // We're in the middle of the hyperspace delay, the ship is invisible, so find a new location and move the ship to it
+            if (this._hyperspaceCountdown >= HYPERSPACE_DELAY / 2
+                && this._hyperspaceCountdown - elapsed < HYPERSPACE_DELAY / 2
+            ) {
+                // We're in the middle of the hyperspace delay, the ship is invisible,
+                // so find a new location and move the ship to it
                 this.stop();
                 const oldPosition = { x: this.position.x, y: this.position.y };
                 const oldRotation = this.rotation;
@@ -118,7 +121,10 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
             }
         }
 
-        this._projectiles = Math.min(SHIP_PROJECTILE_CAPACITY, this._projectiles + elapsed * SHIP_PROJECTILE_RECHARGE_RATE);
+        this._projectiles = Math.min(
+            SHIP_PROJECTILE_CAPACITY,
+            this._projectiles + elapsed * SHIP_PROJECTILE_RECHARGE_RATE
+        );
     }
 
     override destroy(options: ShipDestroyOptions): void {

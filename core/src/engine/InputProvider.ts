@@ -169,7 +169,9 @@ export class InputProvider<Controls extends readonly string[]> {
         if (this._gamepad && this._gamepad.connected) {
             if (this._mapping.buttons) {
                 for (const [button, mapping] of Object.entries(this._mapping.buttons)) {
-                    const pressed = gamepadButtonPressed(this._gamepad.buttons[GAMEPAD_BUTTON_INDEX[button as GamepadButtonName]]);
+                    const pressed = gamepadButtonPressed(
+                        this._gamepad.buttons[GAMEPAD_BUTTON_INDEX[button as GamepadButtonName]]
+                    );
                     this.applyDigitalInput(mapping, pressed, state);
                 }
             }
@@ -179,7 +181,9 @@ export class InputProvider<Controls extends readonly string[]> {
                     if (mapping.type === InputMappingType.Analog) {
                         state[mapping.control] = value * (mapping.invert ? -1 : 1);
                     } else {
-                        const pressed = Math.sign(mapping.threshold) === Math.sign(value) && Math.abs(value) >= Math.abs(mapping.threshold);
+                        const pressed =
+                            Math.sign(mapping.threshold) === Math.sign(value)
+                            && Math.abs(value) >= Math.abs(mapping.threshold);
                         state[mapping.control] = +pressed;
                     }
                 }

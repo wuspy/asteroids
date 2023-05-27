@@ -1,8 +1,8 @@
-import { TickQueue, urandom } from "@wuspy/asteroids-core";
 import { ColorSource, DEG_TO_RAD, IRenderer, Texture } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
+import { TickQueue, urandom } from "@wuspy/asteroids-core";
 import anime from "animejs";
 import { createDropShadowTexture } from "../util";
 

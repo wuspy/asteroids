@@ -16,7 +16,16 @@ import {
     createRandomSeed,
     decodeIntArray
 } from "@wuspy/asteroids-core";
-import { Accessor, ParentProps, batch, createContext, createEffect, createSignal, onCleanup, useContext } from "solid-js";
+import {
+    Accessor,
+    ParentProps,
+    batch,
+    createContext,
+    createEffect,
+    createSignal,
+    onCleanup,
+    useContext
+} from "solid-js";
 import { GameTheme, getRandomTheme } from "./GameTheme";
 import { getGameToken } from "./api";
 import { controls, wasdMapping } from "./input";
@@ -84,6 +93,7 @@ export const AppProvider = (
     const [token, setToken] = createSignal<GameTokenResponse | null>(null);
     const [nextToken, setNextToken] = createSignal<GameTokenResponse | null>(null);
     const [nextTokenLoading, setNextTokenLoading] = createSignal(true);
+    // eslint-disable-next-line solid/reactivity
     const [scale, setScale] = createSignal(props.stage.scale.x);
     const [worldSize, setWorldSize] = createSignal({ ...game.worldSize });
 
@@ -92,6 +102,14 @@ export const AppProvider = (
             setPaused(true);
         }
     };
+
+    const resume = () => setPaused(false);
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            pause();
+        }
+    });
 
     const performResize = () => {
         const [nativeWidth, nativeHeight] = [
@@ -112,8 +130,10 @@ export const AppProvider = (
             props.stage.scale.set(nativeWidth / game.worldSize.width);
         }
         // Position view in center of screen
-        props.renderer.view.style.top = `${Math.round((props.container.clientHeight - props.renderer.view.clientHeight) / 2)}px`;
-        props.renderer.view.style.left = `${Math.round((props.container.clientWidth - props.renderer.view.clientWidth) / 2)}px`;
+        props.renderer.view.style.top =
+            `${Math.round((props.container.clientHeight - props.renderer.view.clientHeight) / 2)}px`;
+        props.renderer.view.style.left =
+            `${Math.round((props.container.clientWidth - props.renderer.view.clientWidth) / 2)}px`;
         // Resize background to view
         props.background.style.top = props.renderer.view.style.top;
         props.background.style.left = props.renderer.view.style.left;
@@ -135,16 +155,9 @@ export const AppProvider = (
         }
     };
 
+    // eslint-disable-next-line solid/reactivity
     performResize();
     window.addEventListener("resize", performResize);
-
-    const resume = () => setPaused(false);
-
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-            pause();
-        }
-    });
 
     // TODO maybe make this a resource
     const loadGameToken = async () => {
@@ -160,6 +173,7 @@ export const AppProvider = (
         });
     };
 
+    // eslint-disable-next-line solid/reactivity
     loadGameToken();
 
     const start = () => {

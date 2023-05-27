@@ -1,4 +1,4 @@
-import { ISize, IPointData, Rectangle, Polygon, PI_2 } from "@pixi/core";
+import { IPointData, ISize, PI_2, Polygon, Rectangle } from "@pixi/core";
 import { RandomFn } from "./random";
 
 export const PI_1_2 = Math.PI / 2;
@@ -28,12 +28,17 @@ export const linesIntersect = (a: LineSegment, b: LineSegment) =>
     && ccw(a[0], a[1], b[0]) != ccw(a[0], a[1], b[1]);
 
 // Returns true if points a and b are within a certain distance from eachother
-export const pointsCoincident = (a: Vec2, b: Vec2, distance = 0) => Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2) <= distance;
+export const pointsCoincident = (a: Vec2, b: Vec2, distance = 0) =>
+    Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2) <= distance;
 
 // Gets the midpoint of a line segment
-export const lineMidpoint = (line: LineSegment): Vec2 => ({ x: (line[0].x + line[1].x) / 2, y: (line[0].y + line[1].y) / 2 })
+export const lineMidpoint = (line: LineSegment): Vec2 => ({
+    x: (line[0].x + line[1].x) / 2,
+    y: (line[0].y + line[1].y) / 2
+});
 
-export const lineSegmentLength = (line: LineSegment): number => Math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2)
+export const lineSegmentLength = (line: LineSegment): number =>
+    Math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2);
 
 // atan2 where the result is adjusted to the game's coordinate system
 export const atan2 = (y: number, x: number): number => {
@@ -145,8 +150,14 @@ Polygon.prototype.intersects = function (other: Polygon): boolean {
         const a1 = { x: this.points[ai], y: this.points[ai + 1] };
         const a2 = { x: this.points[(ai + 2) % this.points.length], y: this.points[(ai + 3) % this.points.length] };
         for (let bi = 0; bi < other.points.length; bi += 2) {
-            const b1 = { x: other.points[bi], y: other.points[bi + 1] };
-            const b2 = { x: other.points[(bi + 2) % other.points.length], y: other.points[(bi + 3) % other.points.length] };
+            const b1 = {
+                x: other.points[bi],
+                y: other.points[bi + 1]
+            };
+            const b2 = {
+                x: other.points[(bi + 2) % other.points.length],
+                y: other.points[(bi + 3) % other.points.length]
+            };
             if (linesIntersect([a1, a2], [b1, b2])) {
                 return true;
             }
@@ -175,10 +186,11 @@ Polygon.prototype.contains2 = function (point: Vec2, center: Vec2, margin = 0): 
     return intersections % 2 === 1;
 }
 
-// Finds a random unoccupied location to plce an an object of size objectSize within a bounding box with a list of obstacles.
+// Finds a random unoccupied location to plce an an object of size objectSize within a bounding box
+// with a list of obstacles.
 //
-// This is currently just a brute force algorithm and although it doesn't matter for the number of objects
-// we're dealing with in this game, it should probably be rewritten at some point.
+// This is currently just a brute force algorithm and although it doesn't matter for the number of
+// objects we're dealing with in this game, it should probably be rewritten at some point.
 export const findUnoccupiedPosition = (params: {
     bounds: Rectangle,
     objectSize: ISize,

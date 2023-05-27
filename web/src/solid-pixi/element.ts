@@ -1,9 +1,10 @@
 import { Container, DisplayObject, DisplayObjectEvents, IDestroyOptions } from "@pixi/display";
 import { JSX, Ref } from "solid-js";
-import { PointLike, displayObjectSetProp } from './props'
 import { FlexLayoutStyleProxy } from "../layout";
+import { PointLike, displayObjectSetProp } from './props';
 
-export type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
+export type IfEquals<X, Y, A = X, B = never> =
+    (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
 
 export type ReadonlyKeys<T> = {
     [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>
@@ -28,7 +29,8 @@ export type DisplayObjectEventProps = WithPrefix<"on", {
 }>;
 
 export type PixiDisplayObjectProps<T extends DisplayObject> = Partial<
-    Omit<T, "children" | "style" | "layout" | DisplayObjectPointLikes | ReadonlyKeys<T>> & WithPointLike<DisplayObjectPointLikes>
+    Omit<T, "children" | "style" | "layout" | DisplayObjectPointLikes | ReadonlyKeys<T>>
+        & WithPointLike<DisplayObjectPointLikes>
 > & DisplayObjectEventProps & YogaLayoutProps & { ref?: Ref<T> };
 
 export type PixiContainerProps<T extends Container> = PixiDisplayObjectProps<T> & { children?: JSX.Element };
@@ -54,7 +56,12 @@ export interface PixiComponentLifecycle<Props extends AnyProps, PixiInstance ext
     /**
      * Apply props for this custom component.
      */
-    setProp?<P extends keyof Props>(instance: PixiInstance, prop: P, newValue: Props[P] | undefined, oldValue: Props[P] | undefined): void;
+    setProp?<P extends keyof Props>(
+        instance: PixiInstance,
+        prop: P,
+        newValue: Props[P] | undefined,
+        oldValue: Props[P] | undefined
+    ): void;
 }
 
 export type SolidPixiInstance<PixiInstance extends DisplayObject = DisplayObject> = PixiInstance & {
@@ -82,7 +89,7 @@ export function createPixiElement(tagName: string): SolidPixiInstance {
     return instance;
 }
 
-function defaultDidMount() { }
+function defaultDidMount() { } // eslint-disable-line
 function defaultWillUnmount() {
     return { children: true };
 }

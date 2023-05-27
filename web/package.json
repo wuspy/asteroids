@@ -26,6 +26,7 @@
         "@types/fontfaceobserver": "^2.1.0",
         "@wuspy/asteroids-core": "*",
         "animejs": "^3.2.1",
+        "eslint-plugin-solid": "^0.12.1",
         "fontfaceobserver": "^2.3.0",
         "ismobilejs": "^1.1.1",
         "rollup-plugin-visualizer": "^5.9.0",

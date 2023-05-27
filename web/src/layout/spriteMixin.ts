@@ -1,5 +1,5 @@
-import { Sprite } from "@pixi/sprite";
 import { ISize } from "@pixi/core";
+import { Sprite } from "@pixi/sprite";
 import { MeasureMode } from "./FlexLayout";
 
 Sprite.prototype.onLayoutMeasure = function (

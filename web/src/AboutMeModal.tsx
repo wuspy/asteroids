@@ -80,7 +80,8 @@ export const AboutMeModal = (props: AboutMeModalProps) => {
         <text
             text={
                 "I'm a programmer, among other things. I currently work as a full-stack web developer using " +
-                "Typescript, React, C#, PHP & MySQL, and I also have experience with Android/Kotlin, Rust, Svelte, SolidJS, C++, Arduino, and Qt/QML. " +
+                "Typescript, React, C#, PHP & MySQL, and I also have experience with Android/Kotlin, Rust, " +
+                "Svelte, SolidJS, C++, Arduino, and Qt/QML. " +
                 "You can check out the source code for this website and other projects I've made on GitHub.\n\n" +
 
                 "Besides programming? I like cycling, mountain biking, 3D printing & 3D modeling... " +

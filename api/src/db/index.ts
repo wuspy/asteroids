@@ -1,9 +1,9 @@
-import config from "../config";
 import { InsertResult, Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
+import config from "../config";
+import { Game, GameToken, HighScore } from "../models";
 import { ValidUnsavedGame } from "../models/ValidUnsavedGame";
 import { Database, PlayerNameFilterAction } from "./schema";
-import { Game, GameToken, HighScore } from "../models";
 import { bufferToUintArray, uintArrayToBuffer } from "./util";
 
 console.log(`Using database at ${config.ASTEROIDS_DB_HOST}:${config.ASTEROIDS_DB_PORT}`);

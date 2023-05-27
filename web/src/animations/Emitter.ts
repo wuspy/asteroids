@@ -1,6 +1,6 @@
-import { TickQueue } from "@wuspy/asteroids-core";
 import { Container } from "@pixi/display";
 import { EmitterConfigV3, Emitter as PixiEmitter } from "@pixi/particle-emitter";
+import { TickQueue } from "@wuspy/asteroids-core";
 
 export interface EmitterOwner {
     x: number;

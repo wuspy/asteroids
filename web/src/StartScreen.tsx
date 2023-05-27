@@ -38,6 +38,7 @@ export const StartScreen = (props: ContainerProps) => {
 
     const onStartClick = (e: FederatedPointerEvent) => e.button === 0 && onStart();
 
+    // eslint-disable-next-line solid/reactivity
     onInputEvent("poll", (state, lastState) => {
         if (state.start && !lastState.start) {
             onStart();

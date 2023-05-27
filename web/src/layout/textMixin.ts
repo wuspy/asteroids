@@ -1,7 +1,7 @@
-import { Text } from "@pixi/text";
 import { ISize } from "@pixi/core";
-import { MeasureMode } from "./FlexLayout";
 import { DisplayObject } from "@pixi/display";
+import { Text } from "@pixi/text";
+import { MeasureMode } from "./FlexLayout";
 
 Text.prototype.onLayoutMeasure = function (
     width: number,

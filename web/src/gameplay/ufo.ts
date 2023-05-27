@@ -1,9 +1,9 @@
-import { UFO, UFOType, UFO_SIZES } from "@wuspy/asteroids-core";
 import { IRenderer, Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
+import { UFO, UFOType, UFO_SIZES } from "@wuspy/asteroids-core";
 import { GameTheme } from "../GameTheme";
 import { Explosion } from "../animations";
 import { createDropShadowTexture } from "../util";

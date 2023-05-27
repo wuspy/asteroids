@@ -22,7 +22,12 @@ if (process.env.NODE_ENV === "development") {
                 alpha: 0.5,
                 smooth: false
             });
-            graphics.drawRect(object.boundingBox.x, object.boundingBox.y, object.boundingBox.width, object.boundingBox.height);
+            graphics.drawRect(
+                object.boundingBox.x,
+                object.boundingBox.y,
+                object.boundingBox.width,
+                object.boundingBox.height
+            );
             graphics.line.alpha = 0;
             graphics.beginFill(0xff0000, 0.5, false);
             if (typeof (object.hitArea) === "object") {
@@ -59,7 +64,7 @@ if (process.env.NODE_ENV === "development") {
                             const spector = new SPECTOR.Spector();
                             spector.displayUI();
                         });
-                    };
+                    }
                 },
             };
         });
@@ -68,6 +73,7 @@ if (process.env.NODE_ENV === "development") {
             window.asteroids = undefined;
         });
 
+        // eslint-disable-next-line solid/reactivity
         onTick("game", () => {
             graphics.clear();
             drawObjects(graphics, game.state.asteroids);

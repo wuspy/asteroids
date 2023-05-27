@@ -1,36 +1,30 @@
 declare namespace GlobalMixins
 {
-    type FlexLayout = import("./FlexLayout").default;
-    type MeasureMode = import ("./FlexLayout").MeasureMode;
-    type ISize = import ("@pixi/core").ISize;
-    type ContainerBackground = import("./containerMixin").ContainerBackground;
-    type BackgroundGraphics = import("@pixi/graphics-smooth").SmoothGraphics;
-
     interface DisplayObjectEvents {
-        layout: [computedLayout: Rectangle];
+        layout: [computedLayout: import("@pixi/core").Rectangle];
     }
 
     interface DisplayObject {
-        _layout?: FlexLayout;
-        get layout(): FlexLayout;
+        _layout?: import("./FlexLayout").default;
+        get layout(): import("./FlexLayout").default;
         get isLayoutChild(): boolean;
         onLayoutMeasure(
             width: number,
-            widthMeasureMode: MeasureMode,
+            widthMeasureMode: import("./FlexLayout").MeasureMode,
             height: number,
-            heightMeasureMode: MeasureMode,
-        ): ISize;
+            heightMeasureMode: import("./FlexLayout").MeasureMode,
+        ): import("@pixi/core").ISize;
     }
 
     interface Container {
         _flexContainer: boolean;
-        _backgroundGraphics?: BackgroundGraphics;
-        _backgroundStyle?: ContainerBackground;
-        _backgroundSize?: ISize;
-        _backgroundGraphicsHandler: (layout: ComputedLayout) => void;
-        _debugGraphics?: BackgroundGraphics;
-        _debugGraphicsHandler: (layout: ComputedLayout) => void;
-        set backgroundStyle(background: ContainerBackground | undefined);
+        _backgroundGraphics?: import("@pixi/graphics-smooth").SmoothGraphics;
+        _backgroundStyle?: import("./containerMixin").ContainerBackground;
+        _backgroundSize?: import("@pixi/core").ISize;
+        _backgroundGraphicsHandler: (layout: import("@pixi/core").Rectangle) => void;
+        _debugGraphics?: import("@pixi/graphics-smooth").SmoothGraphics;
+        _debugGraphicsHandler: (layout: import("@pixi/core").Rectangle) => void;
+        set backgroundStyle(background: import("./containerMixin").ContainerBackground | undefined);
         get debugLayout(): boolean;
         set debugLayout(debugLayout: boolean);
         get flexContainer(): boolean;
