@@ -1,6 +1,6 @@
 import { ISize } from "@pixi/core";
 import { Sprite } from "@pixi/sprite";
-import { MeasureMode } from "./FlexLayout";
+import { MeasureMode } from "./YogaPixi";
 
 Sprite.prototype.onLayoutMeasure = function (
     width: number,

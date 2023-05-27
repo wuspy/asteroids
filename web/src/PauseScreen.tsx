@@ -4,7 +4,7 @@ import { createEffect, createSignal } from "solid-js";
 import { onInputEvent, useApp } from "./AppContext";
 import { StartControl } from "./StartControl";
 import { ChromaticAbberationFilter } from "./filters";
-import { ContainerBackgroundShape } from "./layout";
+import { ContainerBackgroundShape } from "./yoga-pixi";
 import { ContainerProps } from "./solid-pixi";
 import { Button, FadeContainer, RevealText, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
 
@@ -43,7 +43,7 @@ export const PauseScreen = (props: ContainerProps) => {
             visible={visible()}
             fadeInDuration={100}
             fadeOutDuration={120}
-            flexContainer
+            yogaContainer
             yg:position="absolute"
             yg:width="100%"
             yg:flexDirection="column"
@@ -73,7 +73,7 @@ export const PauseScreen = (props: ContainerProps) => {
                 ]}
             />
             <StartControl color={UI_FOREGROUND_COLOR} type="resume" on:pointertap={onResumeClick} />
-            <container flexContainer yg:margin={24} yg:marginTop={36}>
+            <container yogaContainer yg:margin={24} yg:marginTop={36}>
                 <Button type="danger" text="Quit" onClick={onQuit} />
             </container>
         </FadeContainer>

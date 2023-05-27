@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { onGameEvent, useApp } from "../AppContext";
-import { ContainerBackgroundShape } from "../layout";
+import { ContainerBackgroundShape } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";
 import { ScoreText, UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR } from "../ui";
 
@@ -17,7 +17,7 @@ export const ScoreIndicator = (props: ScoreIndicatorProps) => {
         <container
             {...props}
             interactiveChildren={false}
-            flexContainer
+            yogaContainer
             yg:paddingX={12}
             yg:paddingY={8}
             backgroundStyle={{

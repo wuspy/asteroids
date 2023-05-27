@@ -1,6 +1,6 @@
 import { ISize } from "@pixi/core";
 import { DisplayObject, IDestroyOptions } from "@pixi/display";
-import FlexLayout from "./FlexLayout";
+import { YogaPixi } from "./YogaPixi";
 
 const displayObject = DisplayObject.prototype;
 
@@ -10,30 +10,30 @@ const _super = {
 };
 
 Object.defineProperties(displayObject, {
-    layout: {
-        get(this: DisplayObject): FlexLayout {
-            if (!this._layout) {
-                this._layout = new FlexLayout(this);
+    yoga: {
+        get(this: DisplayObject): YogaPixi {
+            if (!this._yoga) {
+                this._yoga = new YogaPixi(this);
             }
-            return this._layout;
+            return this._yoga;
         },
     },
-    isLayoutChild: {
+    isYogaChild: {
         get(this: DisplayObject): boolean {
-            return !!this.parent && this.parent.flexContainer && !this.layout.style.excluded;
+            return !!this.parent && this.parent.yogaContainer && !this.yoga.excluded;
         }
     },
 });
 
 displayObject.destroy = function (options?: boolean | IDestroyOptions) {
     _super.destroy.call(this, options);
-    if (this._layout) {
-        this._layout.destroy();
-        this._layout = undefined;
+    if (this._yoga) {
+        this._yoga.destroy();
+        this._yoga = undefined;
     }
 }
 
 displayObject.onLayoutMeasure = function (): ISize {
-    const { width, height } = this.layout.cachedLocalBounds;
+    const { width, height } = this.yoga.cachedLocalBounds;
     return { width, height };
 }

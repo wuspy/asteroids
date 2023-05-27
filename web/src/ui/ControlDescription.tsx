@@ -1,6 +1,6 @@
 import { Accessor, Show, splitProps } from "solid-js";
 import { controls } from "../input";
-import { FlexDirection } from "../layout";
+import { FlexDirection } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";
 import { ControlGraphic } from "./ControlGraphic";
 
@@ -25,16 +25,17 @@ export const ControlDescription = (_props: ControlDescriptionProps) => {
         "size",
     ]);
 
-    const margin = () => Math.round(props.size * (props.direction === "column" ? 0.3 : 0.4));
+    const gap = () => Math.round(props.size * (props.direction === "column" ? 0.3 : 0.4));
     const label = (label: Accessor<string>) =>
         <text text={label()} style:fontSize={props.size} style:fill={props.color} />;
 
     return (
         <container
             {...childProps}
-            flexContainer
+            yogaContainer
             yg:alignItems="center"
             yg:flexDirection={props.direction}
+            yg:gap={gap()}
         >
             <Show when={props.beforeLabel}>{label}</Show>
             <ControlGraphic
@@ -42,10 +43,6 @@ export const ControlDescription = (_props: ControlDescriptionProps) => {
                 analogValue={props.analogValue}
                 color={props.color}
                 size={props.size}
-                yg:marginLeft={props.beforeLabel && props.direction === "row" ? margin() : undefined}
-                yg:marginRight={props.afterLabel && props.direction === "row" ? margin() : undefined}
-                yg:marginTop={props.beforeLabel && props.direction === "column" ? margin() : undefined}
-                yg:marginBottom={props.afterLabel && props.direction === "column" ? margin() : undefined}
             />
             <Show when={props.afterLabel}>{label}</Show>
         </container>

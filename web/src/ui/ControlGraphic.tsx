@@ -8,7 +8,7 @@ import {
 import { Match, Show, Switch, splitProps } from "solid-js";
 import { useApp } from "../AppContext";
 import { controls } from "../input";
-import { ContainerBackgroundShape } from "../layout";
+import { ContainerBackgroundShape } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";
 
 export type ControlType = "key" | "button" | "trigger" | "stick";
@@ -152,7 +152,7 @@ export const ControlGraphic = (_props: ControlGraphicProps) => {
             <Match when={control().type === "key"}>
                 <container
                     {...childProps}
-                    flexContainer
+                    yogaContainer
                     yg:height={props.size}
                     yg:minWidth={props.size}
                     yg:paddingX={props.size * 0.25}

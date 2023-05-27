@@ -1,5 +1,5 @@
 import { IFillStyleOptions, ILineStyleOptions } from "@pixi/graphics-smooth";
-import { ContainerBackground, ContainerBackgroundShape } from "../layout";
+import { ContainerBackground, ContainerBackgroundShape } from "../yoga-pixi";
 
 // UI theme is constant and does not change with game theme
 

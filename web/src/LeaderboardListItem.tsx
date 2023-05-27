@@ -1,7 +1,7 @@
 import { GlowFilter } from "@pixi/filter-glow";
 import { HighScoreResponse } from "@wuspy/asteroids-core";
 import { splitProps } from "solid-js";
-import { ContainerBackground, ContainerBackgroundShape } from "./layout";
+import { ContainerBackground, ContainerBackgroundShape } from "./yoga-pixi";
 import { ContainerProps } from "./solid-pixi";
 import { UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "./ui";
 
@@ -48,7 +48,7 @@ export const LeaderboardListItem = (_props: LeaderboardListItemProps) => {
             on:pointertap={e => e.button === 0 && props.onClick(props.index)}
             backgroundStyle={props.selected ? activeBackground : inactiveBackground}
             filters={props.selected ? selectedFilters : null}
-            flexContainer
+            yogaContainer
             yg:height={LEADERBOARD_LIST_ITEM_HEIGHT}
             yg:alignItems="center"
             yg:paddingX={12}

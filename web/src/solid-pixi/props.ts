@@ -44,10 +44,10 @@ export function displayObjectSetProp(instance: DisplayObject, prop: string, newV
     } else if (prop.startsWith("yg:")) {
         // Yoga layout prop
         const style = prop.substring(3);
-        if (isPointType((instance.layout.style as any)[style])) {
-            setPoint((instance.layout.style as any)[style], newValue);
+        if (isPointType((instance.yoga as any)[style])) {
+            setPoint((instance.yoga as any)[style], newValue);
         } else {
-            (instance.layout.style as any)[style] = newValue;
+            (instance.yoga as any)[style] = newValue;
         }
     } else if (isPointType((instance as any)[prop])) {
         // set point value

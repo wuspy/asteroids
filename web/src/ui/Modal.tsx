@@ -31,7 +31,7 @@ export const Modal = (props: ModalProps) => {
         {...props}
         visible={props.open}
         backgroundStyle={MODAL_BACKGROUND}
-        flexContainer
+        yogaContainer
         fadeInDuration={200}
         fadeOutDuration={200}
         yg:position="absolute"
@@ -40,7 +40,7 @@ export const Modal = (props: ModalProps) => {
     >
         <Show when={!!props.header}>
             <container
-                flexContainer
+                yogaContainer
                 yg:width="100%"
                 yg:alignItems="center"
                 yg:justifyContent="space-between"

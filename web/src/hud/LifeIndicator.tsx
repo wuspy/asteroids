@@ -5,7 +5,7 @@ import { Index, createSignal } from "solid-js";
 import { onGameEvent, useApp } from "../AppContext";
 import { PopAnimation } from "../animations";
 import { createShipTexture } from "../gameplay";
-import { ContainerBackgroundShape } from "../layout";
+import { ContainerBackgroundShape } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";
 import { UI_BACKGROUND_ALPHA, UI_BACKGROUND_COLOR, UI_FOREGROUND_COLOR } from "../ui";
 
@@ -39,7 +39,7 @@ export const LifeIndicator = (props: LifeIndicatorProps) => {
             {...props}
             ref={container}
             interactiveChildren={false}
-            flexContainer
+            yogaContainer
             yg:flexDirection="row-reverse"
             yg:paddingX={14}
             yg:paddingY={12}
@@ -79,7 +79,7 @@ class LifeAnimation extends PopAnimation {
         this.anchor.set(0.5);
         this.alpha = 0.8;
         this.tint = UI_FOREGROUND_COLOR;
-        this.layout.style.excluded = true;
+        this.yoga.excluded = true;
         this.position.copyFrom(source);
     }
 }

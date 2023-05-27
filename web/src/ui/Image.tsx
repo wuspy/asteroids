@@ -14,7 +14,7 @@ export const Image = (_props: ImageProps) => {
 
     return <FadeContainer
         {...childProps}
-        flexContainer
+        yogaContainer
         fadeInDuration={200}
         fadeOutDuration={200}
         keepPixiVisible

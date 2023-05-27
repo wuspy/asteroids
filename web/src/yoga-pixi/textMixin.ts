@@ -1,7 +1,7 @@
 import { ISize } from "@pixi/core";
 import { DisplayObject } from "@pixi/display";
 import { Text } from "@pixi/text";
-import { MeasureMode } from "./FlexLayout";
+import { MeasureMode } from "./YogaPixi";
 
 Text.prototype.onLayoutMeasure = function (
     width: number,
@@ -17,7 +17,7 @@ Text.prototype.onLayoutMeasure = function (
     }
 
     if (styleID !== this.style.styleID) {
-        this.getLocalBounds(this.layout.cachedLocalBounds);
+        this.getLocalBounds(this.yoga.cachedLocalBounds);
     }
 
     return DisplayObject.prototype.onLayoutMeasure.call(this, width, widthMeasureMode, height, heightMeasureMode);

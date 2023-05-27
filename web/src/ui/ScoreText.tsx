@@ -28,13 +28,13 @@ export const ScoreText = (_props: ScoreTextProps) => {
         if (props.animate && props.score > 0) {
             // The reason we need to update the layout manually here is so we can position the animation
             // in case the number of digits, and therefore the score position, has changed
-            container.layout.update();
+            container.yoga.update();
             container.addChild(new ScoreAnimation(queue, text));
         }
     });
 
     return (
-        <container {...childProps} ref={container} flexContainer>
+        <container {...childProps} ref={container} yogaContainer>
             <Show when={DIGITS > scoreLength()}>
                 <text text={Array(DIGITS - scoreLength()).fill("0").join("")} style={props.style} alpha={props.zeroAlpha} />
             </Show>
@@ -53,7 +53,7 @@ class ScoreAnimation extends PopAnimation {
         });
         this.anchor.set(0.5);
         this.alpha = 0.8;
-        this.layout.style.excluded = true;
+        this.yoga.excluded = true;
         this.position.set(
             source.x + source.width / 2,
             source.y + source.height / 2

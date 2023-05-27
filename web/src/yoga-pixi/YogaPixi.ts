@@ -98,19 +98,35 @@ type YgValueSetter =
     | "setMinHeight"
     | "setMaxWidth"
     | "setMaxHeight"
-    | "setPadding";
+    | "setPadding"
+    | "setGap";
 
-export class FlexLayoutStyleProxy {
+export class YogaPixi {
     private readonly _node: yg.Node;
+    private readonly _displayObject: DisplayObject;
+    private _parent?: YogaPixi;
+    private _children: YogaPixi[];
 
-    constructor(node: yg.Node) {
-        this._node = node;
-        this.excluded = false;
-        this.anchor = new Point(0, 0);
-    }
+    readonly computedLayout: Rectangle;
+    readonly cachedLocalBounds: Rectangle;
 
     anchor: Point;
     excluded: boolean;
+
+    constructor(displayObject: DisplayObject) {
+        const yoga = getYoga();
+        const config = yoga.Config.create();
+        config.setUseWebDefaults(true);
+        config.setPointScaleFactor(10);
+        this.computedLayout = Rectangle.EMPTY;
+        this._node = yoga.Node.createWithConfig(config);
+        this._displayObject = displayObject;
+        this.cachedLocalBounds = Rectangle.EMPTY;
+        this._children = [];
+        this.excluded = false;
+        this.anchor = new Point(0, 0);
+        this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+    }
 
     get alignContent(): Align {
         return align[this._node.getAlignContent()];
@@ -284,6 +300,70 @@ export class FlexLayoutStyleProxy {
         this.setNativeValue("setPadding", yg.EDGE_ALL, value);
     }
 
+    get borderTop(): number {
+        return this._node.getBorder(yg.EDGE_TOP);
+    }
+
+    set borderTop(value: number) {
+        this._node.setBorder(yg.EDGE_TOP, value);
+    }
+
+    get borderBottom(): number {
+        return this._node.getBorder(yg.EDGE_BOTTOM);
+    }
+
+    set borderBottom(value: number) {
+        this._node.setBorder(yg.EDGE_BOTTOM, value);
+    }
+
+    get borderLeft(): number {
+        return this._node.getBorder(yg.EDGE_LEFT);
+    }
+
+    set borderLeft(value: number) {
+        this._node.setBorder(yg.EDGE_LEFT, value);
+    }
+
+    get borderRight(): number {
+        return this._node.getBorder(yg.EDGE_RIGHT);
+    }
+
+    set borderRight(value: number) {
+        this._node.setBorder(yg.EDGE_RIGHT, value);
+    }
+
+    set borderY(value: number) {
+        this._node.setBorder(yg.EDGE_VERTICAL, value);
+    }
+
+    set borderX(value: number) {
+        this._node.setBorder(yg.EDGE_HORIZONTAL, value);
+    }
+
+    set border(value: number) {
+        this._node.setBorder(yg.EDGE_ALL, value);
+    }
+
+    get gapX(): Value {
+        return fromNativeValue(this._node.getGap(yg.GUTTER_COLUMN));
+    }
+
+    set gapX(value: Value) {
+        this.setNativeValue("setGap", yg.GUTTER_COLUMN, value);
+    }
+
+    get gapY(): Value {
+        return fromNativeValue(this._node.getGap(yg.GUTTER_ROW));
+    }
+
+    set gapY(value: Value) {
+        this.setNativeValue("setGap", yg.GUTTER_ROW, value);
+    }
+
+    set gap(value: Value) {
+        this.setNativeValue("setGap", yg.GUTTER_ALL, value);
+    }
+
     get position(): PositionType {
         return positionType[this._node.getPositionType()];
     }
@@ -376,58 +456,19 @@ export class FlexLayoutStyleProxy {
         this.setNativeValue("setMinHeight", value);
     }
 
-    private setNativeValue<T extends YgValueSetter>(
-        method: T,
-        ...args: Parameters<yg.Node[T]> extends [...infer R, any]
-            ? [...R, Value]
-            : [Value]
-    ) {
-        const value = args.pop() as Value;
-        if (value === "auto") {
-            const setMethodAuto = `${method}Auto`;
-            if (!(setMethodAuto in this._node)) {
-                throw new Error(`${method} cannot take value 'auto'`);
-            }
-            // @ts-expect-error
-            this._node[setMethodAuto](...args);
-        } else if (value === undefined) {
-            // @ts-expect-error
-            this._node[method](...args, NaN);
-        } else if (typeof value === "string" && value.endsWith("%")) {
-            // @ts-expect-error
-            this._node[`${method}Percent`](...args, parseFloat(value));
-        } else {
-            // @ts-expect-error
-            this._node[method](...args, Number(value));
-        }
-    }
-}
-
-export default class FlexLayout {
-    private readonly _node: yg.Node;
-    private readonly _displayObject: DisplayObject;
-    private _parent?: FlexLayout;
-    private _children: FlexLayout[];
-
-    readonly style: FlexLayoutStyleProxy;
-    readonly computedLayout: Rectangle;
-    readonly cachedLocalBounds: Rectangle;
-
-    constructor(displayObject: DisplayObject) {
-        const yoga = getYoga();
-        const config = yoga.Config.create();
-        config.setUseWebDefaults(true);
-        config.setPointScaleFactor(10);
-        this.computedLayout = Rectangle.EMPTY;
-        this._node = yoga.Node.createWithConfig(config);
-        this._displayObject = displayObject;
-        this.style = new FlexLayoutStyleProxy(this._node);
-        this.cachedLocalBounds = Rectangle.EMPTY;
-        this._children = [];
-        this._node.setMeasureFunc((...args) => this._displayObject.onLayoutMeasure(...args));
+    get computedMargin(): ComputedEdges {
+        return this.getComputedEdges("Margin");
     }
 
-    insertChild(child: FlexLayout, index: number): void {
+    get computedPadding(): ComputedEdges {
+        return this.getComputedEdges("Padding");
+    }
+
+    get computedBorder(): ComputedEdges {
+        return this.getComputedEdges("Border");
+    }
+
+    insertChild(child: YogaPixi, index: number): void {
         if (child._parent) {
             child._parent.removeChild(child);
         }
@@ -440,11 +481,11 @@ export default class FlexLayout {
         child._parent = this;
     }
 
-    appendChild(child: FlexLayout): void {
+    appendChild(child: YogaPixi): void {
         this.insertChild(child, this._children.length);
     }
 
-    removeChild(child: FlexLayout): void {
+    removeChild(child: YogaPixi): void {
         const i = this._children.indexOf(child);
         if (i !== -1) {
             this._node.removeChild(child._node);
@@ -467,8 +508,8 @@ export default class FlexLayout {
 
     reset(): void {
         this._node.reset();
-        this.style.anchor.set(0, 0);
-        this.style.excluded = false;
+        this.anchor.set(0, 0);
+        this.excluded = false;
     }
 
     destroy(): void {
@@ -481,18 +522,6 @@ export default class FlexLayout {
         this._node.free();
     }
 
-    get computedMargin(): ComputedEdges {
-        return this.getComputedEdges("Margin");
-    }
-
-    get computedPadding(): ComputedEdges {
-        return this.getComputedEdges("Padding");
-    }
-
-    get computedBorder(): ComputedEdges {
-        return this.getComputedEdges("Border");
-    }
-
     isDirty(): boolean {
         return this._node.isDirty();
     }
@@ -501,8 +530,40 @@ export default class FlexLayout {
         this._node.markDirty();
     }
 
+    private setNativeValue<T extends YgValueSetter>(
+        method: T,
+        ...args: Parameters<yg.Node[T]> extends [...infer R, any]
+            ? [...R, Value]
+            : [Value]
+    ) {
+        const value = args.pop() as Value;
+        if (value === "auto") {
+            const setMethodAuto = `${method}Auto`;
+            if (!(setMethodAuto in this._node)) {
+                console.error(`${method.substring(3).toLowerCase()} cannot take value 'auto'`);
+                return;
+            }
+            // @ts-expect-error
+            this._node[setMethodAuto](...args);
+        } else if (value === undefined) {
+            // @ts-expect-error
+            this._node[method](...args, NaN);
+        } else if (typeof value === "string" && value.endsWith("%")) {
+            const setMethodPercent = `${method}Percent`;
+            if (!(setMethodPercent in this._node)) {
+                console.error(`${method.substring(3).toLowerCase()} cannot take a percentage value`);
+                return;
+            }
+            // @ts-expect-error
+            this._node[setMethodPercent](...args, parseFloat(value));
+        } else {
+            // @ts-expect-error
+            this._node[method](...args, Number(value));
+        }
+    }
+
     private prepareLayout(): void {
-        if (this.style.excluded || !this._displayObject.visible) {
+        if (this.excluded || !this._displayObject.visible) {
             this._node.setDisplay(yg.DISPLAY_NONE);
         } else {
             this._node.setDisplay(yg.DISPLAY_FLEX);
@@ -521,7 +582,7 @@ export default class FlexLayout {
     }
 
     private applyLayout(): void {
-        if (this.style.excluded || !this._displayObject.visible) {
+        if (this.excluded || !this._displayObject.visible) {
             return;
         }
 
@@ -538,8 +599,8 @@ export default class FlexLayout {
 
             if (this._parent) {
                 this._displayObject.position.set(
-                    layout.left + layout.width * this.style.anchor.x,
-                    layout.top + layout.height * this.style.anchor.y,
+                    layout.left + layout.width * this.anchor.x,
+                    layout.top + layout.height * this.anchor.y,
                 );
             }
             this._displayObject.emit("layout", this.computedLayout);

@@ -7,7 +7,7 @@ import { onGameEvent, onTick, useApp } from "./AppContext";
 import { LeaderboardModal } from "./LeaderboardModal";
 import { SaveScoreModal } from "./SaveScoreModal";
 import { ChromaticAbberationFilter } from "./filters";
-import { ContainerBackgroundShape } from "./layout";
+import { ContainerBackgroundShape } from "./yoga-pixi";
 import { ContainerProps } from "./solid-pixi";
 import {
     BUTTON_THEMES,
@@ -110,7 +110,7 @@ export const GameOverScreen = (props: ContainerProps) => {
             visible={visibility()}
             fadeInDuration={100}
             fadeOutDuration={200}
-            flexContainer
+            yogaContainer
             yg:position="absolute"
             yg:width="100%"
             yg:flexDirection="column"
@@ -139,26 +139,23 @@ export const GameOverScreen = (props: ContainerProps) => {
                 style={{ fontSize: 104 }}
                 filters={[scoreGlowFilter, scoreAbberationFilter]}
             />
-            <container flexContainer yg:margin={24} yg:marginTop={18}>
+            <container yogaContainer yg:margin={24} yg:marginTop={18} yg:gap={24}>
                 <Button
                     type={enableSave() ? "secondary" : "primary"}
                     text="New Game"
                     onClick={onNewGameClick}
-                    yg:marginX={12}
                 />
                 <Show when={enableSave()}>
                     <Button
                         type="secondary"
                         text="Leaderboard"
                         onClick={() => setLeaderboardOpen(true)}
-                        yg:marginX={12}
                     />
                     <Show when={!savedScoreId()} fallback={<DisabledSaveButton />}>
                         <Button
                             type="primary"
                             text={"Save Score"}
                             onClick={() => setSaveScoreOpen(true)}
-                            yg:marginX={12}
                         />
                     </Show>
                 </Show>
@@ -182,7 +179,7 @@ export const GameOverScreen = (props: ContainerProps) => {
 // TODO add native disabled state to button
 const DisabledSaveButton = () =>
     <container
-        flexContainer
+        yogaContainer
         yg:paddingX={14}
         yg:paddingY={10}
         yg:marginX={12}

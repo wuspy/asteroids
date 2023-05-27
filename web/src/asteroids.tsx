@@ -5,7 +5,7 @@ import { MIN_FPS, TickQueue } from "@wuspy/asteroids-core";
 import FontFaceObserver from "fontfaceobserver";
 import { AppProvider } from "./AppContext";
 import { AsteroidsGameContainer } from "./AsteroidsGameContainer";
-import { initYoga } from "./layout";
+import { initYoga } from "./yoga-pixi";
 import * as SolidPixi from "./solid-pixi";
 
 const MAX_DEVICE_PIXEL_RATIO = 2;

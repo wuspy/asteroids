@@ -10,7 +10,7 @@ interface PlaceholderProps {
 
 const Placeholder = (props: PlaceholderProps) =>
     <container
-        flexContainer
+        yogaContainer
         yg:flexDirection="column"
         yg:position="absolute"
         yg:alignItems="center"
@@ -52,7 +52,7 @@ export const LeaderboardModal = (props: LeaderboardProps) => (
         header="Leaderboard"
         onRequestClose={props.onClose}
     >
-        <container flexContainer yg:width={800} yg:height={390}>
+        <container yogaContainer yg:width={800} yg:height={390}>
             <Content selectedId={props.selectedId} />
         </container>
     </Modal>
@@ -110,12 +110,12 @@ const Content = (props: ContentProps) => {
                 </VirtualizedList>
                 <Divider direction="vertical" yg:marginX={16} />
                 <container
-                    flexContainer
+                    yogaContainer
                     yg:flexDirection="column"
                     yg:alignItems="center"
                     yg:flexGrow={1}
                 >
-                    <container flexContainer yg:marginTop={8}>
+                    <container yogaContainer yg:marginTop={8}>
                         <text
                             text={`#${selectedIndex() + 1}`}
                             style:fontSize={32}
@@ -128,9 +128,9 @@ const Content = (props: ContentProps) => {
                         />
                     </container>
                     <Divider direction="horizontal" yg:marginY={24} yg:width={200} />
-                    <container flexContainer yg:width="100%">
+                    <container yogaContainer yg:width="100%">
                         <container
-                            flexContainer
+                            yogaContainer
                             yg:flexDirection="column"
                             yg:alignItems="center"
                             yg:width="50%"
@@ -148,7 +148,7 @@ const Content = (props: ContentProps) => {
                             />
                         </container>
                         <container
-                            flexContainer
+                            yogaContainer
                             yg:flexDirection="column"
                             yg:alignItems="center"
                             yg:width="50%"
@@ -167,14 +167,13 @@ const Content = (props: ContentProps) => {
                         </container>
                     </container>
                     <Divider direction="horizontal" yg:marginY={24} yg:width={200} />
-                    <container flexContainer>
+                    <container yogaContainer yg:gap={16}>
                         <container
-                            flexContainer
+                            yogaContainer
                             alpha={0.25}
                             yg:flexDirection="column"
                             yg:alignItems="flex-end"
                             yg:width="60%"
-                            yg:marginRight={8}
                         >
                             <DetailItem text="Level Reached" />
                             <DetailItem text="Shots Fired" />
@@ -183,10 +182,9 @@ const Content = (props: ContentProps) => {
                             <DetailItem text="Saucers Hit" />
                         </container>
                         <container
-                            flexContainer
+                            yogaContainer
                             yg:flexDirection="column"
                             yg:width="40%"
-                            yg:marginLeft={8}
                         >
                             <DetailItem text={selectedItem().level.toFixed()} />
                             <DetailItem text={selectedItem().shots.toFixed()} />

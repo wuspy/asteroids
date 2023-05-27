@@ -1,6 +1,6 @@
 import { Container, DisplayObject, DisplayObjectEvents, IDestroyOptions } from "@pixi/display";
 import { JSX, Ref } from "solid-js";
-import { FlexLayoutStyleProxy } from "../layout";
+import { YogaPixi } from "../yoga-pixi";
 import { PointLike, displayObjectSetProp } from './props';
 
 export type IfEquals<X, Y, A = X, B = never> =
@@ -16,11 +16,12 @@ export type WithPrefix<P extends string, T> = {
     [K in keyof T as K extends string | number ? `${P}:${K}` : never]: T[K];
 };
 
-type FlexLayoutPointLikes = "anchor";
+type YogaPixiPointLikes = "anchor";
 
-export type YogaLayoutProps = Partial<WithPrefix<"yg", Omit<
-    FlexLayoutStyleProxy, FlexLayoutPointLikes | ReadonlyKeys<FlexLayoutStyleProxy>
-> & WithPointLike<FlexLayoutPointLikes>>>;
+export type YogaProps = Partial<WithPrefix<"yg", Omit<
+    YogaPixi,
+    YogaPixiPointLikes | ReadonlyKeys<YogaPixi>
+> & WithPointLike<YogaPixiPointLikes>>>;
 
 type DisplayObjectPointLikes = "position" | "scale" | "pivot" | "anchor" | "skew";
 
@@ -31,7 +32,7 @@ export type DisplayObjectEventProps = WithPrefix<"on", {
 export type PixiDisplayObjectProps<T extends DisplayObject> = Partial<
     Omit<T, "children" | "style" | "layout" | DisplayObjectPointLikes | ReadonlyKeys<T>>
         & WithPointLike<DisplayObjectPointLikes>
-> & DisplayObjectEventProps & YogaLayoutProps & { ref?: Ref<T> };
+> & DisplayObjectEventProps & YogaProps & { ref?: Ref<T> };
 
 export type PixiContainerProps<T extends Container> = PixiDisplayObjectProps<T> & { children?: JSX.Element };
 

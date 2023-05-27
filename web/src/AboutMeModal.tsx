@@ -18,7 +18,7 @@ interface CatProps extends ContainerProps {
 const Cat = (_props: CatProps) => {
     const [props, childProps] = splitProps(_props, ["imageUrl", "name", "caption"]);
     return (
-        <container {...childProps} flexContainer yg:flexDirection="column" yg:alignItems="center" yg:marginX={8}>
+        <container {...childProps} yogaContainer yg:flexDirection="column" yg:alignItems="center" yg:marginX={8}>
             <Image url={props.imageUrl} yg:width={144} yg:aspectRatio={1} />
             <text
                 text={props.name}
@@ -56,8 +56,8 @@ export const AboutMeModal = (props: AboutMeModalProps) => {
     });
 
     return <Modal open={props.open} onRequestClose={props.onClose} padding={24} yg:width={700}>
-        <container flexContainer yg:flexDirection="column" yg:width="100%" yg:marginBottom={24}>
-            <container flexContainer yg:marginTop={4} yg:marginBottom={12}>
+        <container yogaContainer yg:flexDirection="column" yg:width="100%" yg:marginBottom={24}>
+            <container yogaContainer yg:marginTop={4} yg:marginBottom={12}>
                 <text text="Hi!" style={headerTextStyle} />
                 <text text="👋" style={headerTextStyle} yg:marginX={10} />
                 <text text="I'm Jacob." style={headerTextStyle} />
@@ -91,31 +91,28 @@ export const AboutMeModal = (props: AboutMeModalProps) => {
             style:lineHeight={24}
             style:wordWrap
         />
-        <container flexContainer yg:marginBottom={32} yg:marginTop={28} yg:justifyContent="space-around">
+        <container yogaContainer yg:marginBottom={32} yg:marginTop={28} yg:justifyContent="space-around">
             <Cat name="Stormy" caption={"a very fitting name\nbut he's very sweet"} imageUrl={stormyRoundedWebpUrl} />
             <Cat name="Booties" caption={"cause her feet look\nlike little booties"} imageUrl={bootiesRoundedWebpUrl} />
             <Cat name="G.K." caption={"it stands for gray\nkitty don't judge me"} imageUrl={gkRoundedWebpUrl} />
         </container>
-        <container flexContainer yg:alignSelf="center">
+        <container yogaContainer yg:alignSelf="center" yg:gap={24}>
             <Button
                 type="secondary"
                 text="GitHub"
                 imageUrl={github64pxWebpUrl}
                 onClick={() => window.open("https://github.com/wuspy", "_blank")}
-                yg:marginX={12}
             />
             <Button
                 type="secondary"
                 text="LinkedIn"
                 imageUrl={linkedin64pxWebpUrl}
                 onClick={() => window.open("https://linkedin.com/in/jacob-jordan-0b6831128", "_blank")}
-                yg:marginX={12}
             />
             <Button
                 type="secondary"
                 text="Back to Game"
                 onClick={props.onClose}
-                yg:marginX={12}
             />
         </container>
     </Modal>;

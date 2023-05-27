@@ -43,7 +43,7 @@ export function drawContainerBackground(
 
 const container = Container.prototype;
 
-container._flexContainer = false;
+container._yogaContainer = false;
 
 const _super = {
     render: container.render,
@@ -57,32 +57,32 @@ const _super = {
 };
 
 Object.defineProperties(container, {
-    flexContainer: {
+    yogaContainer: {
         get(this: Container): boolean {
-            return this._flexContainer;
+            return this._yogaContainer;
         },
-        set(this: Container, flexContainer: boolean) {
-            if (flexContainer && !this._flexContainer) {
+        set(this: Container, yogaContainer: boolean) {
+            if (yogaContainer && !this._yogaContainer) {
                 // Add all children's layout nodes to our node
                 for (const child of this.children) {
-                    this.layout.appendChild(child.layout);
+                    this.yoga.appendChild(child.yoga);
                 }
-            } else if (!flexContainer && this._flexContainer) {
+            } else if (!yogaContainer && this._yogaContainer) {
                 // Remove child nodes
                 for (const child of this.children) {
-                    this.layout.removeChild(child.layout);
+                    this.yoga.removeChild(child.yoga);
                 }
                 if (this._debugGraphics) {
                     this._debugGraphics.destroy();
                     this._debugGraphics = undefined;
                 }
             }
-            this._flexContainer = flexContainer;
+            this._yogaContainer = yogaContainer;
         },
     },
-    isLayoutRoot: {
+    isYogaRoot: {
         get(this: Container): boolean {
-            return this._flexContainer && (!this.parent || !this.parent.flexContainer);
+            return this._yogaContainer && (!this.parent || !this.parent._yogaContainer);
         },
     },
     debugLayout: {
@@ -91,13 +91,13 @@ Object.defineProperties(container, {
         },
         set(this: Container, debugLayout: boolean) {
             if (process.env.NODE_ENV === "development") {
-                if (!this._flexContainer) {
-                    console.error("Cannot set debugLayout on a non-flex container");
+                if (!this._yogaContainer) {
+                    console.error("Cannot set debugLayout on a non-yoga container");
                     return;
                 }
                 if (debugLayout && !this._debugGraphics) {
                     this._debugGraphics = new Graphics();
-                    this._debugGraphics.layout.style.excluded = true;
+                    this._debugGraphics.yoga.excluded = true;
                     this._debugGraphics.zIndex = Number.MAX_SAFE_INTEGER;
                     this.addChild(this._debugGraphics);
                     this.addListener("layout", this._debugGraphicsHandler);
@@ -119,7 +119,7 @@ Object.defineProperties(container, {
             }
             if (background && !this._backgroundGraphics) {
                 this._backgroundGraphics = new Graphics();
-                this._backgroundGraphics.layout.style.excluded = true;
+                this._backgroundGraphics.yoga.excluded = true;
                 this.addChildAt(this._backgroundGraphics, 0);
                 this._backgroundSize = { width: 0, height: 0 };
                 this.addListener("layout", this._backgroundGraphicsHandler);
@@ -129,7 +129,7 @@ Object.defineProperties(container, {
                 this._backgroundSize = undefined;
                 this.removeListener("layout", this._backgroundGraphicsHandler);
             } else if (background && this._backgroundGraphics) {
-                const { width, height } = this.layout.computedLayout;
+                const { width, height } = this.yoga.computedLayout;
                 if (width && height) {
                     this._backgroundGraphics!.clear();
                     drawContainerBackground(this._backgroundGraphics!, background, width, height);
@@ -144,16 +144,16 @@ Object.defineProperties(container, {
 container.addChild = function <T extends DisplayObject[]>(...children: T): T[0] {
     const result = _super.addChild.call(this, ...children);
     // Container calls addChild recursively on every item in children
-    if (this._flexContainer && children.length === 1) {
-        this.layout.appendChild(children[0].layout);
+    if (this._yogaContainer && children.length === 1) {
+        this.yoga.appendChild(children[0].yoga);
     }
     return result;
 }
 
 container.addChildAt = function <T extends DisplayObject>(child: T, index: number): T {
     const result = _super.addChildAt.call(this, child, index) as T;
-    if (this._flexContainer) {
-        this.layout.insertChild(child.layout, index);
+    if (this._yogaContainer) {
+        this.yoga.insertChild(child.yoga, index);
     }
     return result;
 }
@@ -161,25 +161,25 @@ container.addChildAt = function <T extends DisplayObject>(child: T, index: numbe
 container.removeChild = function <T extends DisplayObject[]>(...children: T): T[0] {
     const result = _super.removeChild.call(this, ...children);
     // Container calls removeChild recursively on every item in children
-    if (this._flexContainer && children.length === 1) {
-        this.layout.removeChild(children[0].layout);
+    if (this._yogaContainer && children.length === 1) {
+        this.yoga.removeChild(children[0].yoga);
     }
     return result;
 }
 
 container.removeChildAt = function (index: number): DisplayObject {
     const result = _super.removeChildAt.call(this, index);
-    if (this._flexContainer) {
-        this.layout.removeChild(result.layout);
+    if (this._yogaContainer) {
+        this.yoga.removeChild(result.layout);
     }
     return result;
 }
 
 container.swapChildren = function (child: DisplayObject, child2: DisplayObject): void {
     _super.swapChildren.call(this, child, child2);
-    if (this._flexContainer) {
-        this.layout.removeChild(child.layout);
-        this.layout.removeChild(child2.layout);
+    if (this._yogaContainer) {
+        this.yoga.removeChild(child.yoga);
+        this.yoga.removeChild(child2.yoga);
         let firstChild = undefined, secondChild = undefined;
         let i1 = -1, i2 = -1;
         for (let i = 0; i < this.children.length; i++) {
@@ -195,27 +195,27 @@ container.swapChildren = function (child: DisplayObject, child2: DisplayObject):
                 }
             }
         }
-        this.layout.insertChild(firstChild!.layout, i1);
-        this.layout.insertChild(secondChild!.layout, i2);
+        this.yoga.insertChild(firstChild!.layout, i1);
+        this.yoga.insertChild(secondChild!.layout, i2);
     }
 }
 
 container.sortChildren = function (): void {
     _super.sortChildren.call(this);
-    if (this._flexContainer) {
+    if (this._yogaContainer) {
         // Remove and re-add all children in the new order
         for (const child of this.children) {
-            this.layout.removeChild(child.layout);
+            this.yoga.removeChild(child.layout);
         }
         for (const child of this.children) {
-            this.layout.appendChild(child.layout);
+            this.yoga.appendChild(child.layout);
         }
     }
 }
 
 container.render = function (renderer: Renderer) {
-    if (this.isLayoutRoot) {
-        this.layout.update();
+    if (this.isYogaRoot) {
+        this.yoga.update();
         this.updateTransform();
     }
     _super.render.call(this, renderer);
@@ -239,7 +239,7 @@ if (process.env.NODE_ENV === "development") {
 
         // Draw container padding, and the margin and border for all children
         this._debugGraphics.clear();
-        const padding = this.layout.computedPadding;
+        const padding = this.yoga.computedPadding;
 
         // Draw padding
         this._debugGraphics.beginFill(0x3300ff, 0.125, false);

@@ -34,7 +34,7 @@ export const LoadingAnimation = (_props: LoadingAnimationParams) => {
     return (
         <container
             {...childProps}
-            flexContainer
+            yogaContainer
             yg:alignItems="center"
             yg:justifyContent="center"
         >

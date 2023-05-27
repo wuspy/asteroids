@@ -76,7 +76,7 @@ export class DOMTextInput extends Container {
         const view = renderer.view as HTMLCanvasElement;
         this.element.style.left = `${this.worldTransform.tx + view.offsetLeft + this.padding * this.worldTransform.a}px`;
         this.element.style.top = `${this.worldTransform.ty + view.offsetTop + this.padding * this.worldTransform.d}px`;
-        this.element.style.width = `${(this.layout.computedLayout.width - this.padding * 2) * this.worldTransform.a}px`;
+        this.element.style.width = `${(this.yoga.computedLayout.width - this.padding * 2) * this.worldTransform.a}px`;
         this.element.style.fontSize = `${this.fontSize * this.worldTransform.d}px`;
 
         if (this._focusNextRender) {

@@ -5,19 +5,19 @@ declare namespace GlobalMixins
     }
 
     interface DisplayObject {
-        _layout?: import("./FlexLayout").default;
-        get layout(): import("./FlexLayout").default;
-        get isLayoutChild(): boolean;
+        _yoga?: import("./YogaPixi").YogaPixi;
+        get yoga(): import("./YogaPixi").YogaPixi;
+        get isYogaChild(): boolean;
         onLayoutMeasure(
             width: number,
-            widthMeasureMode: import("./FlexLayout").MeasureMode,
+            widthMeasureMode: import("./YogaPixi").MeasureMode,
             height: number,
-            heightMeasureMode: import("./FlexLayout").MeasureMode,
+            heightMeasureMode: import("./YogaPixi").MeasureMode,
         ): import("@pixi/core").ISize;
     }
 
     interface Container {
-        _flexContainer: boolean;
+        _yogaContainer: boolean;
         _backgroundGraphics?: import("@pixi/graphics-smooth").SmoothGraphics;
         _backgroundStyle?: import("./containerMixin").ContainerBackground;
         _backgroundSize?: import("@pixi/core").ISize;
@@ -27,8 +27,8 @@ declare namespace GlobalMixins
         set backgroundStyle(background: import("./containerMixin").ContainerBackground | undefined);
         get debugLayout(): boolean;
         set debugLayout(debugLayout: boolean);
-        get flexContainer(): boolean;
-        set flexContainer(flexContainer: boolean);
-        get isLayoutRoot(): boolean;
+        get yogaContainer(): boolean;
+        set yogaContainer(yogaContainer: boolean);
+        get isYogaRoot(): boolean;
     }
 }

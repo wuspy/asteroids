@@ -67,7 +67,7 @@ export const RevealText = (_props: RevealTextProps) => {
     onTick("app", timestamp => anim()!.tick(timestamp), anim);
 
     return (
-        <container {...childProps} flexContainer={false} onLayoutMeasure={onLayoutMeasure}>
+        <container {...childProps} yogaContainer={false} onLayoutMeasure={onLayoutMeasure}>
             <text ref={text} text={` ${props.text} `} style={props.style} />
             <text ref={leftBracket} text={"["} style={props.style} />
             <text ref={rightBracket} text={"]"} style={props.style} />

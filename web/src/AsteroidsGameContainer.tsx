@@ -76,7 +76,7 @@ export const AsteroidsGameContainer = () => {
         <container filterArea={renderer.screen} filters={[mainAbberationFilter, mainWarpFilter]}>
             <GameplayContainer filters={[mainAlphaFilter]} />
             <container
-                flexContainer
+                yogaContainer
                 yg:width={worldSize().width}
                 yg:height={worldSize().height}
                 yg:alignItems="center"

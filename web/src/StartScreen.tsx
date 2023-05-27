@@ -81,7 +81,7 @@ export const StartScreen = (props: ContainerProps) => {
             keepMounted={!started()}
             fadeInDuration={500}
             fadeOutDuration={500}
-            flexContainer
+            yogaContainer
             yg:alignItems="center"
             yg:justifyContent="center"
         >
@@ -210,7 +210,7 @@ export const StartScreen = (props: ContainerProps) => {
                 blur={0}
                 filterPadding={24}
                 skew={[-0.02, 0.02]}
-                flexContainer
+                yogaContainer
                 yg:flexDirection="column"
                 yg:alignItems="center"
                 yg:top={220}
@@ -222,20 +222,18 @@ export const StartScreen = (props: ContainerProps) => {
                     yg:margin={24}
                     on:pointertap={onStartClick}
                 />
-                <container flexContainer yg:flexDirection="column" yg:alignItems="center">
-                    <container flexContainer>
+                <container yogaContainer yg:flexDirection="column" yg:alignItems="center">
+                    <container yogaContainer yg:gap={24}>
                         <Button
                             text="About Me"
                             type="secondary"
                             onClick={onAboutClick}
-                            yg:marginX={12}
                         />
                         <Show when={nextToken()}>
                             <Button
                                 text="Leaderboard"
                                 type="secondary"
                                 onClick={onLeaderboardClick}
-                                yg:marginX={12}
                             />
                         </Show>
                     </container>

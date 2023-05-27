@@ -7,7 +7,7 @@ import {
 import { Show, createEffect, createSignal } from "solid-js";
 import { useApp } from "./AppContext";
 import { ApiErrorType, saveGame } from "./api";
-import { ContainerBackgroundShape } from "./layout";
+import { ContainerBackgroundShape } from "./yoga-pixi";
 import { useTextStyle } from "./solid-pixi";
 import { Button, DOMTextInput, InputProps, Modal, TEXT_INPUT_THEME } from "./ui";
 
@@ -135,7 +135,7 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
             header="Enter a Name"
         >
             <container
-                flexContainer
+                yogaContainer
                 yg:flexDirection="column"
                 yg:alignItems="center"
                 yg:padding={8}

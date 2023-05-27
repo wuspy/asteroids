@@ -3,7 +3,7 @@ import { FederatedPointerEvent } from "@pixi/events";
 import { GlowFilter } from "@pixi/filter-glow";
 import { Show, createRenderEffect, mergeProps, splitProps } from "solid-js";
 import { onTick } from "../AppContext";
-import { ContainerBackgroundShape } from "../layout";
+import { ContainerBackgroundShape } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";
 import { Image } from "./Image";
 import { LoadingAnimation } from "./LoadingAnimation";
@@ -105,7 +105,7 @@ export const Button = (_props: ButtonProps) => {
                 stroke: theme().inactive.stroke,
             }}
             filters={[inactiveGlowFilter]}
-            flexContainer
+            yogaContainer
             eventMode={props.enabled ? "static" : "auto"}
             cursor="pointer"
             on:pointertap={onPointerTap}

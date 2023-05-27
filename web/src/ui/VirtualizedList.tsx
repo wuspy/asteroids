@@ -5,7 +5,7 @@ import { SmoothGraphics } from "@pixi/graphics-smooth";
 import { clamp, lineSegmentLength } from "@wuspy/asteroids-core";
 import { For, JSX, Setter, createMemo, createRenderEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { onTick, useApp } from "../AppContext";
-import { drawContainerBackground } from "../layout";
+import { drawContainerBackground } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";
 import { LIST_BACKGROUND } from "./theme";
 
@@ -209,7 +209,7 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
     return <container
         {...props}
         ref={root}
-        flexContainer
+        yogaContainer
         eventMode={isBlockingMove() ? "auto" : "static"}
         backgroundStyle={LIST_BACKGROUND}
         on:layout={onLayout}
@@ -223,7 +223,7 @@ export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Da
             ref={itemContainer}
             mask={mask}
             interactiveChildren={false}
-            flexContainer
+            yogaContainer
             yg:flexDirection="column"
             yg:position="absolute"
             yg:top={position() > 0 ? -position() % props.itemHeight : -position()}
