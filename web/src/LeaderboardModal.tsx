@@ -1,4 +1,4 @@
-import { Match, Show, Switch, createEffect, createResource, createSignal } from "solid-js";
+import { Match, Show, Switch, createEffect, createResource, createSignal, onCleanup, onMount } from "solid-js";
 import { LEADERBOARD_LIST_ITEM_HEIGHT, LeaderboardListItem } from "./LeaderboardListItem";
 import { getHighScores } from "./api";
 import { Divider, LoadingAnimation, Modal, UI_FOREGROUND_COLOR, VirtualizedList, VirtualizedListActions } from "./ui";
@@ -104,6 +104,35 @@ const Content = (props: ContentProps) => {
         </Match>
         <Match when={someItems()}>{items => {
             const selectedItem = () => items()[selectedIndex()];
+            let search = "";
+            let lastSearchInput = 0;
+
+            const keypress = (ev: KeyboardEvent) => {
+                if (ev.key.length === 1) {
+                    if (performance.now() - lastSearchInput > 1000) {
+                        search = ev.key
+                    } else {
+                        search += ev.key;
+                    }
+                    lastSearchInput = performance.now();
+                    ev.stopPropagation();
+                    const idx = items().findIndex((data) =>
+                        data.name.toLocaleLowerCase().startsWith(search.toLocaleLowerCase())
+                    );
+                    if (idx >= 0) {
+                        setSelectedIndex(idx);
+                        listActions()?.scrollToIndex(idx, true, true);
+                    }
+                }
+            };
+
+            onMount(() => {
+                window.addEventListener("keypress", keypress);
+            });
+
+            onCleanup(() => {
+                window.removeEventListener("keypress", keypress);
+            });
 
             return <>
                 <VirtualizedList
