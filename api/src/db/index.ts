@@ -1,29 +1,15 @@
-import { InsertResult, Kysely, PostgresDialect } from "kysely";
-import { Pool } from "pg";
+import { InsertResult } from "kysely";
 import config from "../config";
-import { Game, GameToken, HighScore } from "../models";
+import db from "./connection";
+import { Game, GameToken } from "../models";
 import { ValidUnsavedGame } from "../models/ValidUnsavedGame";
-import { Database, PlayerNameFilterAction } from "./schema";
+import { PlayerNameFilterAction } from "./schema";
 import { bufferToUintArray, uintArrayToBuffer } from "./util";
+import { HighScoreResponse } from "@wuspy/asteroids-core";
 
-console.log(`Using database at ${config.ASTEROIDS_DB_HOST}:${config.ASTEROIDS_DB_PORT}`);
+export {default as db} from "./connection";
 
-const db = new Kysely<Database>({
-    dialect: new PostgresDialect({
-        pool: new Pool({
-            database: "asteroids",
-            user: config.ASTEROIDS_DB_USER,
-            host: config.ASTEROIDS_DB_HOST,
-            password: config.ASTEROIDS_DB_PASS,
-            port: config.ASTEROIDS_DB_PORT,
-            ssl: config.ASTEROIDS_DB_SSL,
-        }),
-    }),
-});
-
-export const destroyConnection = () => db.destroy();
-
-export const findHighScores = async (): Promise<HighScore[]> =>
+export const findHighScores = async (): Promise<HighScoreResponse[]> =>
     await db.selectFrom("game")
         .select([
             "game_id as id",

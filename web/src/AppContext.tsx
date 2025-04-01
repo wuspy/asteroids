@@ -170,7 +170,7 @@ export const AppProvider = (
                     game.random = createRandom(decodeIntArray(nextToken()!.randomSeed));
                     setToken(nextToken());
                     game.enableLogging = true;
-                } catch (e) {
+                } catch {
                     console.error("Failed to seed random from token");
                     setToken(undefined);
                     game.random = createRandom(createRandomSeed());
@@ -236,7 +236,11 @@ export const onTick = (type: "app" | "game", callback: TickFn, enabled = trueFn)
     createEffect(() => {
         if (!!enabled() !== registered) {
             registered = !!enabled();
-            registered ? queue.add(TICK_PRIORITY, callback) : queue.remove(callback);
+            if (registered) {
+                queue.add(TICK_PRIORITY, callback);
+            } else {
+                queue.remove(callback);
+            }
         }
     });
 
@@ -254,7 +258,11 @@ export const onGameEvent = <K extends keyof GameEvents>(
     createEffect(() => {
         if (!!enabled() !== registered) {
             registered = !!enabled();
-            registered ? game.events.on(event, callback) : game.events.off(event, callback);
+            if (registered) {
+                game.events.on(event, callback);
+            } else {
+                game.events.off(event, callback)
+            }
         }
     });
 
@@ -272,7 +280,11 @@ export const onInputEvent = <K extends keyof InputProviderEvents<typeof controls
     createEffect(() => {
         if (!!enabled() !== registered) {
             registered = !!enabled();
-            registered ? input.events.on(event, callback) : input.events.off(event, callback);
+            if (registered) {
+                input.events.on(event, callback)
+            } else {
+                input.events.off(event, callback);
+            }
         }
     });
 

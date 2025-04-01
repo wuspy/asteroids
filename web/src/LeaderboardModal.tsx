@@ -1,6 +1,6 @@
 import { Match, Show, Switch, createEffect, createResource, createSignal } from "solid-js";
 import { LEADERBOARD_LIST_ITEM_HEIGHT, LeaderboardListItem } from "./LeaderboardListItem";
-import { empty, error, getHighScores, some } from "./api";
+import { getHighScores } from "./api";
 import { Divider, LoadingAnimation, Modal, UI_FOREGROUND_COLOR, VirtualizedList, VirtualizedListActions } from "./ui";
 
 interface PlaceholderProps {
@@ -64,12 +64,25 @@ interface ContentProps {
 
 const Content = (props: ContentProps) => {
     const [items] = createResource(getHighScores);
+    const someItems = () => {
+        const value = items();
+        return value?.ok && !!value.data ? value.data : undefined;
+    }
+
+    const noItems = () => {
+        const value = items();
+        return value?.ok ? value.data.length === 0 : false;
+    }
+
+    const error = () => items()?.ok === false ? "Error contacting server. Try again later." : undefined;
+
     const [listActions, setListActions] = createSignal<VirtualizedListActions>();
     const [selectedIndex, setSelectedIndex] = createSignal(0);
 
     createEffect(() => {
-        if (props.selectedId !== undefined && some(items)) {
-            const selectedIndex = some(items)!.findIndex(item => item.id === props.selectedId);
+        const items = someItems();
+        if (props.selectedId !== undefined && items) {
+            const selectedIndex = items.findIndex(item => item.id === props.selectedId);
             if (selectedIndex !== -1) {
                 setSelectedIndex(selectedIndex);
                 setTimeout(() => {
@@ -80,16 +93,16 @@ const Content = (props: ContentProps) => {
     });
 
     return <Switch>
-        <Match when={items.loading}>
+        <Match when={items.loading || items === undefined}>
             <Placeholder loading message="Connecting to mainframe..." />
         </Match>
-        <Match when={empty(items)}>
+        <Match when={noItems()}>
             <Placeholder loading message="There's nothing here." />;
         </Match>
-        <Match when={error(items)}>{message =>
+        <Match when={error()}>{message =>
             <Placeholder loading={false} message={message()} />}
         </Match>
-        <Match when={some(items)}>{items => {
+        <Match when={someItems()}>{items => {
             const selectedItem = () => items()[selectedIndex()];
 
             return <>

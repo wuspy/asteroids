@@ -35,7 +35,7 @@ export interface VirtualizedListProps<Data> extends Omit<ContainerProps, "childr
     data: readonly Data[];
     itemHeight: number;
     overscroll?: number;
-    actions?: Setter<VirtualizedListActions>;
+    actions?: Setter<VirtualizedListActions | undefined>;
 }
 
 export const VirtualizedList = <Data extends any>(props: VirtualizedListProps<Data>) => {

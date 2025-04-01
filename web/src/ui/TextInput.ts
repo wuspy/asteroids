@@ -220,7 +220,9 @@ registerPixiComponent<InputProps, DOMTextInput>("input", {
                 instance.addInputEventListener(event, newValue as any);
             }
         } else if (prop === "focus") {
-            newValue && instance.focus();
+            if (newValue) {
+                instance.focus();
+            }
         } else {
             displayObjectSetProp(instance, prop, newValue, oldValue);
         }

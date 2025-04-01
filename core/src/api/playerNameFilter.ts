@@ -12,11 +12,20 @@ export const PLAYER_NAME_CODE_POINT_WHITELIST = [
     [0x0400, 0x045F],   // cyrillic
 ] as const;
 
-export const isValidPlayerNameCodePoint = (code: number): boolean => {
+const isValidPlayerNameCodePoint = (code: number): boolean => {
     for (const [start, end] of PLAYER_NAME_CODE_POINT_WHITELIST) {
         if ((!end && code === start) || (end && start <= code && code <= end)) {
             return true;
         }
     }
     return false;
+}
+
+export const isValidPlayerName = (name: string): boolean => {
+    for (const char of name) {
+        if (!isValidPlayerNameCodePoint(char.codePointAt(0)!)) {
+            return false;
+        }
+    }
+    return true;
 }

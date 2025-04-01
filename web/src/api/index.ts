@@ -1,37 +1,28 @@
-export { ApiErrorType } from "./request";
-export type { ApiResponse } from "./request";
-export * from "./solid";
 import { GameResponse, GameTokenResponse, HighScoreResponse, SaveGameRequest } from "@wuspy/asteroids-core";
-import { ApiResponse, get, mapApiResponse, post } from "./request";
+import { ApiResponse, createApi } from "./api";
 
-export const getHighScores = async (): Promise<ApiResponse<HighScoreResponse[]>> => get({
-    url: "/api/leaderboard",
-    accept: "application/json",
-    timeout: 10000,
-});
+const api = createApi(process.env.NODE_ENV === "development" ? "http://localhost:8080" : "");
 
-export const getGame = async (gameId: number): Promise<ApiResponse<GameResponse>> => get({
-    url: `/api/game/${gameId}`,
-    accept: "application/json",
-    timeout: 10000,
-});
+export const getHighScores = async () =>
+    api.json.get<HighScoreResponse[]>("/api/leaderboard", { timeout: 10000 });
 
-export const getGameLog = async (gameId: number): Promise<ApiResponse<Uint8Array>> => mapApiResponse(
-    get({
-        url: `/api/game/${gameId}/log`,
-        accept: "application/octet-stream",
-        timeout: 30000,
-    }),
-    async (blob) => new Uint8Array(await blob.arrayBuffer())
-);
+export const getGame = async (gameId: number) =>
+    api.json.get<GameResponse>(`/api/game/${gameId}`, { timeout: 10000 });
 
-export const getGameToken = async (): Promise<ApiResponse<GameTokenResponse>> => get({
-    url: "/api/game-token",
-    accept: "application/json",
-    timeout: 4000,
-});
+export const getGameLog = async (gameId: number) => {
+    const response = await api.octetStream.get(`/api/game/${gameId}/log`, { timeout: 30000 });
+    if (response.ok) {
+        const data = await response.data.arrayBuffer();
+        return {ok: true, status: response.status, data} as ApiResponse<typeof data, void>;
+    } else {
+        return response;
+    }
+};
 
-export const saveGame = async (game: SaveGameRequest): Promise<ApiResponse<GameResponse>> => {
+export const getGameToken = async () =>
+    api.json.get<GameTokenResponse>("/api/game-token", { timeout: 4000 });
+
+export const saveGame = async (game: SaveGameRequest) => {
     const body = new FormData();
     body.append("playerName", game.playerName);
     if (game.playerNameAuth !== undefined) {
@@ -42,10 +33,8 @@ export const saveGame = async (game: SaveGameRequest): Promise<ApiResponse<GameR
     body.append("tokenId", game.tokenId.toFixed());
     body.append("version", game.version);
     body.append("log", new Blob([game.log]));
-    return post({
-        url: "/api/games",
-        accept: "application/json",
-        body,
-        timeout: 30000,
-    });
+
+    return api.json.post<GameResponse, string>("/api/games", { body, timeout: 30000 });
 }
+
+export type { ApiResponse } from "./api";

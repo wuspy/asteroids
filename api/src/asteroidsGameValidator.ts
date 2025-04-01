@@ -64,7 +64,7 @@ export const validateAsteroidsGame = (request: GameValidatorRequest): GameValida
 
     try {
         game.random = createRandom(request.randomSeed);
-    } catch (e) {
+    } catch {
         return { success: false, error: GameValidatorError.InvalidRandomSeed };
     }
 
@@ -109,7 +109,7 @@ export const validateAsteroidsGame = (request: GameValidatorRequest): GameValida
             largeUfosDestroyed,
             smallUfosDestroyed,
         };
-    } catch (e) {
+    } catch {
         return {
             success: false,
             error: GameValidatorError.LogParseError,

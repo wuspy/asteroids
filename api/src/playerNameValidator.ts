@@ -1,4 +1,4 @@
-import { MAX_PLAYER_NAME_LENGTH, MIN_PLAYER_NAME_LENGTH, isValidPlayerNameCodePoint } from "@wuspy/asteroids-core";
+import { MAX_PLAYER_NAME_LENGTH, MIN_PLAYER_NAME_LENGTH, isValidPlayerName } from "@wuspy/asteroids-core";
 import * as bcrypt from "bcrypt";
 import { findPlayerNameFilters, findReservedPlayerNames } from "./db";
 import { PlayerNameFilterAction } from "./db/schema";
@@ -37,11 +37,8 @@ export const validatePlayerName = async (name: string, auth?: any): Promise<Name
         return { ok: false, error: "Enter a shorter name." };
     }
 
-    for (const char of name) {
-        const code = char.codePointAt(0)!;
-        if (!isValidPlayerNameCodePoint(code)) {
-            return { ok: false, error: DEFAULT_ERROR };
-        }
+    if (!isValidPlayerName(name)) {
+        return { ok: false, error: DEFAULT_ERROR };
     }
 
     const now = performance.now();

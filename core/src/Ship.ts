@@ -95,7 +95,9 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
                     this._random(this.boundingBox.width, this.worldSize.width - this.boundingBox.width * 2),
                     this._random(this.boundingBox.height, this.worldSize.height - this.boundingBox.height * 2),
                 );
-                this.onHyperspace && this.onHyperspace(oldPosition, oldRotation, this.position, this.rotation);
+                if (this.onHyperspace) {
+                    this.onHyperspace(oldPosition, oldRotation, this.position, this.rotation);
+                }
             }
             this._hyperspaceCountdown = Math.max(0, this._hyperspaceCountdown - elapsed);
         }
@@ -107,7 +109,9 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
         if (this._powerupRemaining) {
             this._powerupRemaining = Math.max(0, this._powerupRemaining - elapsed);
             if (this._powerupRemaining === 0) {
-                this.onPowerupEnd && this.onPowerupEnd();
+                if (this.onPowerupEnd) {
+                    this.onPowerupEnd();
+                }
             }
         }
 
@@ -253,7 +257,9 @@ export class Ship extends DynamicGameObject<GameState, ShipDestroyOptions, GameE
 
     startPowerup(): void {
         this._powerupRemaining = SHIP_POWERUP_DURATION;
-        this.onPowerupStart && this.onPowerupStart();
+        if (this.onPowerupStart) {
+            this.onPowerupStart();
+        }
     }
 
     get powerupRemaining(): number {

@@ -4,17 +4,16 @@
     "license": "MIT",
     "private": true,
     "engines": {
-        "node": ">= 18",
-        "npm": ">= 8"
+        "node": ">= 22",
+        "npm": ">= 10"
     },
     "devDependencies": {
-        "@types/node": "^18.16.1",
-        "@typescript-eslint/eslint-plugin": "^5.59.7",
-        "@typescript-eslint/parser": "^5.59.7",
-        "eslint": "^8.41.0",
-        "rimraf": "^5.0.0",
-        "tslib": "^2.5.0",
-        "typescript": "^5.0.4"
+        "@types/node": "^22.13.0",
+        "eslint": "^9.23.0",
+        "rimraf": "^6.0.0",
+        "tslib": "^2.8.0",
+        "typescript": "^5.8.2",
+        "typescript-eslint": "^8.28.0"
     },
     "scripts": {
         "lint": "npm run lint --workspaces",
@@ -24,7 +23,7 @@
         "build:api": "npm run build -w api",
         "clean:dependencies": "rimraf node_modules",
         "clean:build": "npm run clean --workspaces",
-        "clean": "npm run clean:dependencies && npm run clean:build"
+        "clean": "npm run clean:build && npm run clean:dependencies"
     },
     "workspaces": [
         "api",

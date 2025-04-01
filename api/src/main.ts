@@ -1,11 +1,7 @@
-console.log(`Version ${process.env.npm_package_version}`);
-
 import { promisify } from "util";
 import {
     GameResponse,
     GameTokenResponse,
-    HighScoreResponse,
-    SaveGameResponse,
     createRandomSeed,
     encodeIntArray
 } from "@wuspy/asteroids-core";
@@ -17,18 +13,19 @@ import { validateAsteroidsGame } from "./asteroidsGameValidator";
 import config from "./config";
 import {
     createGameToken,
-    destroyConnection,
+    db,
     findGame,
     findGameLog,
     findHighScores,
+    findReservedPlayerNames,
     findUnusedGameToken,
     storeGame
 } from "./db";
 import { SaveGameRequest } from "./models";
 import { validatePlayerName } from "./playerNameValidator";
+import * as log from "./log";
 
-const successResponse = <T>(data: T) => ({ ok: true, data });
-const errorResponse = (message: string) => ({ ok: false, message });
+log.info(`---------- Version ${process.env.npm_package_version} ----------`);
 
 const app = express();
 const upload = multer();
@@ -45,167 +42,158 @@ if (config.ASTEROIDS_LOG) {
 }
 
 app.get("/api/game-token", async (request, response) => {
-    try {
-        const randomSeed = createRandomSeed();
-        const { id } = await createGameToken(randomSeed);
-        response.json(successResponse<GameTokenResponse>({ id, randomSeed: encodeIntArray(randomSeed) }));
-    } catch (e) {
-        console.error(e);
-        response.sendStatus(500);
-    }
+    const randomSeed = createRandomSeed();
+    const { id } = await createGameToken(randomSeed);
+    response.json(<GameTokenResponse>{ id, randomSeed: encodeIntArray(randomSeed) });
 });
 
 app.get("/api/leaderboard", async (request, response) => {
-    try {
-        response.json(successResponse<HighScoreResponse[]>(await findHighScores()));
-    } catch (e) {
-        console.error(e);
-        response.sendStatus(500);
+    response.json(await findHighScores());
+});
+
+app.get("/api/game/:id{\\d{1,10}}", async (request, response) => {
+    const id = parseInt(request.params.id + "", 10);
+    const game = await findGame(id);
+    if (game) {
+        response.json(<GameResponse>{
+            ...game,
+            randomSeed: encodeIntArray(game.randomSeed)
+        });
+    } else {
+        response.sendStatus(404);
     }
 });
 
-app.get("/api/game/:id(\\d{1,10})", async (request, response) => {
-    try {
-        const id = parseInt(request.params.id + "", 10);
-        const game = await findGame(id);
-        if (game) {
-            response.json(successResponse<GameResponse>({
-                ...game,
-                randomSeed: encodeIntArray(game.randomSeed)
-            }));
-        } else {
-            response.sendStatus(404);
-        }
-    } catch (e) {
-        console.error(e);
-        response.sendStatus(500);
-    }
-});
-
-app.get("/api/game/:id(\\d{1,10})/log", async (request, response) => {
-    try {
-        const id = parseInt(request.params.id + "", 10);
-        const log = await findGameLog(id);
-        if (log) {
-            response.writeHead(200, {
-                "Content-Type": "application/octet-stream",
-                "Content-Length": log.byteLength,
-            });
-            response.end(log);
-        } else {
-            response.sendStatus(404);
-        }
-    } catch (e) {
-        console.error(e);
-        response.sendStatus(500);
+app.get("/api/game/:id{\\d{1,10}}/log", async (request, response) => {
+    const id = parseInt(request.params.id + "", 10);
+    const log = await findGameLog(id);
+    if (log) {
+        response.writeHead(200, {
+            "Content-Type": "application/octet-stream",
+            "Content-Length": log.byteLength,
+        });
+        response.end(log);
+    } else {
+        response.sendStatus(404);
     }
 });
 
 app.post("/api/games", upload.single("log"), async (request, response) => {
-    try {
-        const { body } = request;
-        const log = request.file?.buffer;
-        if (!log) {
-            return response.sendStatus(400);
-        }
-        const params: SaveGameRequest = {
-            playerName: body.playerName,
-            playerNameAuth: body.playerNameAuth,
-            score: parseInt(body.score + "", 10),
-            level: parseInt(body.level + "", 10),
-            tokenId: parseInt(body.tokenId + "", 10),
-            version: body.version,
-            log: request.file!.buffer,
-        };
+    const { body } = request;
+    const log = request.file?.buffer;
+    if (!log) {
+        response.sendStatus(400);
+        return;
+    }
 
-        if (typeof params.playerName !== "string"
-            || !["undefined", "string"].includes(typeof params.playerNameAuth)
-            || typeof params.version !== "string"
-            || !params.log
-            || isNaN(params.score)
-            || isNaN(params.level)
-            || isNaN(params.tokenId)
-        ) {
-            return response.sendStatus(400);
-        }
+    const params: SaveGameRequest = {
+        playerName: body.playerName,
+        playerNameAuth: body.playerNameAuth,
+        score: parseInt(body.score + "", 10),
+        level: parseInt(body.level + "", 10),
+        tokenId: parseInt(body.tokenId + "", 10),
+        version: body.version,
+        log: request.file!.buffer,
+    };
 
-        const token = await findUnusedGameToken(params.tokenId);
-        if (!token) {
-            return response.json(errorResponse("Invalid game token."));
-        }
+    if (typeof params.playerName !== "string"
+        || !["undefined", "string"].includes(typeof params.playerNameAuth)
+        || typeof params.version !== "string"
+        || !params.log
+        || isNaN(params.score)
+        || isNaN(params.level)
+        || isNaN(params.tokenId)
+    ) {
+        response.sendStatus(400);
+        return;
+    }
 
-        const nameResult = await validatePlayerName(params.playerName, params.playerNameAuth);
-        if (nameResult.ok) {
-            params.playerName = nameResult.playerName;
-        } else if ("unauthorized" in nameResult) {
-            if (params.playerNameAuth !== undefined) {
-                await promisify(setTimeout)(2000);
-            }
-            return response.sendStatus(401);
-        } else {
-            return response.json(errorResponse(nameResult.error));
-        }
+    const token = await findUnusedGameToken(params.tokenId);
+    if (!token) {
+        response.status(404).json("Invalid game token.");
+        return;
+    }
 
-        const gameResult = validateAsteroidsGame({
+    const nameResult = await validatePlayerName(params.playerName, params.playerNameAuth);
+    if (nameResult.ok) {
+        params.playerName = nameResult.playerName;
+    } else if ("unauthorized" in nameResult) {
+        if (params.playerNameAuth !== undefined) {
+            await promisify(setTimeout)(2000);
+        }
+        response.sendStatus(401);
+        return;
+    } else {
+        response.status(400).json(nameResult.error);
+        return;
+    }
+
+    const gameResult = validateAsteroidsGame({
+        ...params,
+        randomSeed: token.randomSeed,
+    });
+    if (gameResult.success) {
+        response.json(await storeGame({
             ...params,
-            randomSeed: token.randomSeed,
-        });
-        if (gameResult.success) {
-            response.json(successResponse<SaveGameResponse>(await storeGame({
+            ...gameResult
+        }));
+    } else {
+        if (config.ASTEROIDS_SAVE_FAILED_GAMES) {
+            await storeGame({
                 ...params,
-                ...gameResult
-            })));
-        } else {
-            if (config.ASTEROIDS_SAVE_FAILED_GAMES) {
-                await storeGame({
-                    ...params,
-                    largeUfosDestroyed: -1,
-                    smallUfosDestroyed: -1,
-                    asteroidsDestroyed: -1,
-                    shotsFired: -1,
-                    accuracy: -1,
-                    duration: -1,
-                }, true);
-            }
-            response.json(errorResponse("That score doesn't seem to be possible."));
+                largeUfosDestroyed: -1,
+                smallUfosDestroyed: -1,
+                asteroidsDestroyed: -1,
+                shotsFired: -1,
+                accuracy: -1,
+                duration: -1,
+            }, true);
         }
-    } catch (e) {
-        console.error(e);
-        response.sendStatus(500);
+        response.status(400).json("That score doesn't seem to be possible.");
     }
 });
 
-if (process.env.NODE_ENV === "development") {
-    console.log("Server is running in development move");
-    const createViteProxy = async () => {
-        const { existsSync } = await import("fs");
-        if (existsSync("../web/dist")) {
-            console.log("Serving static assets from web/dist");
-            app.use(express.static("../web/dist"));
+(async () => {
+    try {
+        log.info("Checking database connection...")
+        await findReservedPlayerNames();
+        log.success("Database connection OK")
+    } catch (error) {
+        log.err(`Database connection failed: ${error}`);
+        log.err("Exiting");
+        return;
+    }
+
+    if (process.env.NODE_ENV === "development") {
+        log.warn("Server is running in development mode");
+        log.warn("Proxying all non-API requests to http://localhost:8081");
+        const { createProxyMiddleware } = await import("http-proxy-middleware");
+        app.use(createProxyMiddleware({
+            target: "http://localhost:8081",
+            changeOrigin: true,
+            ws: true,
+        }));
+    }
+
+    log.info("Starting web server on 0.0.0.0:8080...");
+    const server = app.listen(8080, "0.0.0.0", (error) => {
+        if (error) {
+            log.err(`Failed to start web server: ${error}`)
         } else {
-            console.log("Proxying all non-API requests to Vite at http://localhost:8081");
-            const { createProxyMiddleware } = await import("http-proxy-middleware");
-            app.use(createProxyMiddleware({
-                target: "http://localhost:8081",
-                changeOrigin: true,
-                ws: true,
-            }));
+            log.success("Server is up");
+            log.info(`------------------------------------`);
         }
-    };
-
-    createViteProxy();
-}
-
-const server = app.listen(8080, "0.0.0.0", () => console.log("Server listening on port 8080"));
-
-const shutdown = () => {
-    console.log("Shutting down server");
-    server.close(() => {
-        console.log("Closing database connection");
-        destroyConnection();
-        console.log("Done");
     });
-}
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+    const shutdown = (signal: any) => {
+        log.warn(`Received ${signal}`)
+        log.info("Shutting down server...");
+        server.close(() => {
+            log.info("Closing database connection...");
+            db.destroy().then(() => log.info("Shutdown complete"));
+        });
+    }
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+})();

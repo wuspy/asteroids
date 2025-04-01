@@ -79,7 +79,9 @@ if (process.env.NODE_ENV === "development") {
             drawObjects(graphics, game.state.asteroids);
             drawObjects(graphics, game.state.ufos);
             drawObjects(graphics, game.state.projectiles);
-            game.state.ship && drawObjects(graphics, [game.state.ship]);
+            if (game.state.ship) {
+                drawObjects(graphics, [game.state.ship]);
+            }
         }, visible);
 
         return <graphics ref={graphics} visible={visible()} />;

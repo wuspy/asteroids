@@ -127,7 +127,9 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
     }
 
     destroy(options: DestroyOptions) {
-        this.onDestroyed && this.onDestroyed(options);
+        if (this.onDestroyed) {
+            this.onDestroyed(options);
+        }
         this.events.offThis(this);
         this.queue.remove(this.tick, this);
         this._destroyed = true;
@@ -150,7 +152,9 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
         this._sinRotation = Math.sin(this._rotation);
         this._cosRotation = Math.cos(this._rotation);
         this.updateHitarea();
-        this.onRotationChange && this.onRotationChange(this._rotation);
+        if (this.onRotationChange) {
+            this.onRotationChange(this._rotation);
+        }
     }
 
     get sinRotation(): number {
@@ -253,7 +257,9 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
             }
         }
         this.updateHitarea();
-        this.onPositionChange && this.onPositionChange(this.position);
+        if (this.onPositionChange) {
+            this.onPositionChange(this.position);
+        }
         if (wrapped && this.onScreenWrap) {
             this.onScreenWrap();
         }

@@ -2,11 +2,11 @@ import {
     GameResponse,
     MAX_PLAYER_NAME_LENGTH,
     MIN_PLAYER_NAME_LENGTH,
-    isValidPlayerNameCodePoint
+    isValidPlayerName
 } from "@wuspy/asteroids-core";
 import { Show, createEffect, createSignal } from "solid-js";
 import { useApp } from "./AppContext";
-import { ApiErrorType, saveGame } from "./api";
+import { saveGame } from "./api";
 import { ContainerBackgroundShape } from "./yoga-pixi";
 import { useTextStyle } from "./solid-pixi";
 import { Button, DOMTextInput, InputProps, Modal, TEXT_INPUT_THEME } from "./ui";
@@ -81,7 +81,7 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
 
         if (response.ok) {
             props.onSaved(response.data);
-        } else if (response.error === ApiErrorType.HttpError && response.status === 401) {
+        } else if (response.status === 401) {
             if (needsPassword()) {
                 setPasswordInfoText("Incorrect password.");
             } else {
@@ -89,8 +89,8 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
                 setPasswordInfoText("This name requires a password. Enter it here.");
             }
             setInfoText(DEFAULT_INFO_TEXT);
-        } else if (response.error === ApiErrorType.ApiError) {
-            setInfoText(response.message);
+        } else if (response.data) {
+            setInfoText(response.data);
         } else {
             setInfoText("Error contacting server. Try again later.");
         }
@@ -98,11 +98,9 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
 
     const onNameBeforeinput = (e: InputEvent) => {
         if (e.data) {
-            for (const char of e.data) {
-                if (!isValidPlayerNameCodePoint(char.codePointAt(0)!)) {
-                    e.preventDefault();
-                    return;
-                }
+            if (!isValidPlayerName(e.data)) {
+                e.preventDefault();
+                return;
             }
         }
         setNeedsPassword(false);
