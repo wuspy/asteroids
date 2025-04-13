@@ -15,6 +15,10 @@ export const addVec2 = (a: Vec2, b: Vec2): Vec2 => ({ x: a.x + b.x, y: a.y + b.y
 
 export const subVec2 = (a: Vec2, b: Vec2): Vec2 => ({ x: a.x - b.x, y: a.y - b.y });
 
+export const scaleVec2 = (a: Vec2, b: number): Vec2 => ({ x: a.x * b, y: a.y * b });
+
+export const vec2Length = (a: Vec2): number => Math.sqrt(a.x ** 2 + a.y ** 2);
+
 export const clamp = (value: number, max: number, min?: number): number => Math.max(min ?? -max, Math.min(max, value));
 
 export type HitArea = Polygon | number;
@@ -30,6 +34,8 @@ export const linesIntersect = (a: LineSegment, b: LineSegment) =>
 // Returns true if points a and b are within a certain distance from eachother
 export const pointsCoincident = (a: Vec2, b: Vec2, distance = 0) =>
     Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2) <= distance;
+
+export const pointsEqual = (a: Vec2, b: Vec2) => a.x === b.x && a.y === b.y;
 
 // Gets the midpoint of a line segment
 export const lineMidpoint = (line: LineSegment): Vec2 => ({

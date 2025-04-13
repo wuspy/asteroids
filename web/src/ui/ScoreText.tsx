@@ -3,7 +3,7 @@ import { ITextStyle, Text } from "@pixi/text";
 import { TickQueue } from "@wuspy/asteroids-core";
 import { Show, createEffect, splitProps } from "solid-js";
 import { useApp } from "../AppContext";
-import { PopAnimation } from "../animations";
+import { PopAnimation } from "../effects";
 import { ContainerProps } from "../solid-pixi";
 
 const DIGITS = 7;
@@ -36,7 +36,11 @@ export const ScoreText = (_props: ScoreTextProps) => {
     return (
         <container {...childProps} ref={container} yogaContainer>
             <Show when={DIGITS > scoreLength()}>
-                <text text={Array(DIGITS - scoreLength()).fill("0").join("")} style={props.style} alpha={props.zeroAlpha} />
+                <text
+                    text={Array(DIGITS - scoreLength()).fill("0").join("")}
+                    style={props.style}
+                    alpha={props.zeroAlpha}
+                />
             </Show>
             <text ref={text} text={scoreString()} style={props.style} />
         </container>

@@ -106,7 +106,7 @@ export const createGameToken = async (randomSeed: number[]): Promise<{ id: numbe
         ])
         .executeTakeFirstOrThrow();
 
-export const storeGame = async (game: ValidUnsavedGame, deleted = false): Promise<{ id: number, timeAdded: string }> =>
+export const storeGame = async (game: ValidUnsavedGame, deleted = false): Promise<number> =>
     await db.insertInto("game")
         .values({
             player_name: game.playerName,
@@ -124,10 +124,10 @@ export const storeGame = async (game: ValidUnsavedGame, deleted = false): Promis
             deleted,
         })
         .returning([
-            "game_id as id",
-            "time_added as timeAdded",
+            "game_id as id"
         ])
-        .executeTakeFirstOrThrow();
+        .executeTakeFirstOrThrow()
+        .then(({id}) => id)
 
 export const storeReservedPlayerName = async (playerName: string, password: string): Promise<InsertResult> =>
     await db.insertInto("reserved_player_name")

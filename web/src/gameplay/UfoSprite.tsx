@@ -4,9 +4,11 @@ import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
 import { UFO, UFOType, UFO_SIZES } from "@wuspy/asteroids-core";
-import { GameTheme } from "../GameTheme";
-import { Explosion } from "../animations";
+import { Explosion } from "../effects";
 import { createDropShadowTexture } from "../util";
+import { useApp } from "../AppContext";
+import { onMount } from "solid-js";
+import { trackGameObject } from "./util";
 
 const EXPLOSION_SIZES: Readonly<{ [Key in UFOType]: number }> = {
     large: 250,
@@ -54,41 +56,39 @@ const generateTextureCache = (renderer: IRenderer) => {
     });
 };
 
-export interface UFODisplayProps {
+interface UFOSpriteProps {
     ufo: UFO;
-    theme: GameTheme;
-    mainContainer: Container;
-    foregroundContainer: Container;
-    renderer: IRenderer;
+    effectsContainer: Container;
 }
 
-export const displayUFO = ({ ufo, theme, mainContainer, foregroundContainer, renderer }: UFODisplayProps) => {
+export const UfoSprite = (props: UFOSpriteProps) => {
+    const { renderer, theme } = useApp();
+
     if (!TEXTURE_CACHE.has(renderer)) {
         generateTextureCache(renderer);
     }
 
-    const sprite = new Sprite(TEXTURE_CACHE.get(renderer)![ufo.type]);
-    sprite.tint = theme.ufoColor;
-    sprite.position.copyFrom(ufo.position);
-    sprite.rotation = ufo.rotation;
+    let sprite!: Sprite;
 
-    mainContainer.addChild(sprite);
+    onMount(() => {
+        trackGameObject(props.ufo, sprite);
+        props.ufo.onDestroyed = ({ hit }) => { // eslint-disable-line solid/reactivity
+            if (hit) {
+                props.effectsContainer.addChild(new Explosion({
+                    source: props.ufo,
+                    diameter: EXPLOSION_SIZES[props.ufo.type],
+                    maxDuration: 2000,
+                    color: theme().ufoColor,
+                    renderer,
+                }));
+            }
+        };
+    });
 
-    ufo.onPositionChange = position => sprite.position.copyFrom(position);
-    ufo.onRotationChange = rotation => sprite.rotation = rotation;
-    ufo.onDestroyed = ({ hit }) => {
-        if (hit) {
-            const explosion = new Explosion({
-                queue: ufo.queue,
-                diameter: EXPLOSION_SIZES[ufo.type],
-                maxDuration: 2000,
-                color: theme.ufoColor,
-                renderer,
-            });
-            explosion.position.copyFrom(sprite.position);
-            explosion.rotation = sprite.rotation;
-            foregroundContainer.addChild(explosion);
-        }
-        sprite.destroy();
-    };
+    return <sprite
+        ref={sprite}
+        texture={TEXTURE_CACHE.get(renderer)![props.ufo.type]}
+        tint={theme().ufoColor}
+        anchor={0.5}
+    />;
 };

@@ -25,7 +25,7 @@ export const ControlDescription = (_props: ControlDescriptionProps) => {
         "size",
     ]);
 
-    const gap = () => Math.round(props.size * (props.direction === "column" ? 0.3 : 0.4));
+    const gap = () => Math.round(props.size * (props.direction.startsWith("column") ? 0.3 : 0.4));
     const label = (label: Accessor<string>) =>
         <text text={label()} style:fontSize={props.size} style:fill={props.color} />;
 

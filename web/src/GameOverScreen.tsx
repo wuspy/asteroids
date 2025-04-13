@@ -1,6 +1,6 @@
 import { GlowFilter } from "@pixi/filter-glow";
 import { TextStyleFill } from "@pixi/text";
-import { GameResponse, GameStatus } from "@wuspy/asteroids-core";
+import { GameStatus } from "@wuspy/asteroids-core";
 import anime from "animejs";
 import { Show, batch, createRenderEffect, createSignal } from "solid-js";
 import { onGameEvent, onTick, useApp } from "./AppContext";
@@ -96,9 +96,9 @@ export const GameOverScreen = (props: ContainerProps) => {
         }, 200);
     };
 
-    const onScoreSaved = (game: GameResponse) => {
+    const onScoreSaved = (gameId: number) => {
         setSaveScoreOpen(false);
-        setSavedScoreId(game.id);
+        setSavedScoreId(gameId);
         setTimeout(() => setLeaderboardOpen(true), 200);
     };
 

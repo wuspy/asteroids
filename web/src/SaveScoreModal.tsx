@@ -1,5 +1,4 @@
 import {
-    GameResponse,
     MAX_PLAYER_NAME_LENGTH,
     MIN_PLAYER_NAME_LENGTH,
     isValidPlayerName
@@ -15,7 +14,7 @@ const DEFAULT_INFO_TEXT = `${MIN_PLAYER_NAME_LENGTH} - ${MAX_PLAYER_NAME_LENGTH}
 export interface SaveScoreModalProps {
     open: boolean;
     onClose: () => void;
-    onSaved: (game: GameResponse) => void;
+    onSaved: (gameId: number) => void;
 }
 
 export const SaveScoreModal = (props: SaveScoreModalProps) => {
@@ -82,15 +81,9 @@ export const SaveScoreModal = (props: SaveScoreModalProps) => {
         if (response.ok) {
             props.onSaved(response.data);
         } else if (response.status === 401) {
-            if (needsPassword()) {
-                setPasswordInfoText("Incorrect password.");
-            } else {
-                setNeedsPassword(true);
-                setPasswordInfoText("This name requires a password. Enter it here.");
-            }
+            setNeedsPassword(true);
+            setPasswordInfoText(response.data as string);
             setInfoText(DEFAULT_INFO_TEXT);
-        } else if (response.data) {
-            setInfoText(response.data);
         } else {
             setInfoText("Error contacting server. Try again later.");
         }

@@ -2,8 +2,9 @@ import { ColorSource, DEG_TO_RAD, IRenderer, Texture } from "@pixi/core";
 import { Container, IDestroyOptions } from "@pixi/display";
 import { SmoothGraphics as Graphics } from "@pixi/graphics-smooth";
 import { Sprite } from "@pixi/sprite";
-import { TickQueue, urandom } from "@wuspy/asteroids-core";
+import { GameObject, TickQueue, urandom } from "@wuspy/asteroids-core";
 import anime from "animejs";
+import { UI_TICK_PRIORITY } from "../AppContext";
 import { createDropShadowTexture } from "../util";
 
 interface Particle {
@@ -31,7 +32,7 @@ const generateTextureCache = (renderer: IRenderer) => {
 }
 
 export interface ExplosionProps {
-    queue: TickQueue;
+    source: GameObject;
     diameter: number;
     maxDuration: number;
     color: ColorSource;
@@ -42,9 +43,11 @@ export class Explosion extends Container {
     private readonly _timeline: anime.AnimeTimelineInstance;
     private readonly _queue: TickQueue;
 
-    constructor({ queue, diameter, maxDuration, color, renderer }: ExplosionProps) {
+    constructor({ source, diameter, maxDuration, color, renderer }: ExplosionProps) {
         super();
-        this._queue = queue;
+        this._queue = source.queue;
+        this.position.copyFrom(source.position);
+        this.rotation = source.rotation;
 
         if (!TEXTURE_CACHE.has(renderer)) {
             generateTextureCache(renderer);
@@ -98,7 +101,7 @@ export class Explosion extends Container {
             },
         });
 
-        queue.add(100, this._timeline.tick, this._timeline);
+        this._queue.add(UI_TICK_PRIORITY, this._timeline.tick, this._timeline);
     }
 
     override destroy(options?: boolean | IDestroyOptions) {

@@ -30,6 +30,8 @@ log.info(`---------- Version ${process.env.npm_package_version} ----------`);
 const app = express();
 const upload = multer();
 
+const ID_REGEX = "{\\d{1,10}}";
+
 app.set("trust proxy", config.ASTEROIDS_TRUST_PROXY);
 
 app.use(
@@ -51,9 +53,8 @@ app.get("/api/leaderboard", async (request, response) => {
     response.json(await findHighScores());
 });
 
-app.get("/api/game/:id{\\d{1,10}}", async (request, response) => {
-    const id = parseInt(request.params.id + "", 10);
-    const game = await findGame(id);
+app.get(`/api/game/:id${ID_REGEX}`, async (request, response) => {
+    const game = await findGame(Number(request.params.id));
     if (game) {
         response.json(<GameResponse>{
             ...game,
@@ -64,9 +65,8 @@ app.get("/api/game/:id{\\d{1,10}}", async (request, response) => {
     }
 });
 
-app.get("/api/game/:id{\\d{1,10}}/log", async (request, response) => {
-    const id = parseInt(request.params.id + "", 10);
-    const log = await findGameLog(id);
+app.get(`/api/game/:id${ID_REGEX}/log`, async (request, response) => {
+    const log = await findGameLog(Number(request.params.id));
     if (log) {
         response.writeHead(200, {
             "Content-Type": "application/octet-stream",
@@ -82,7 +82,7 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
     const { body } = request;
     const log = request.file?.buffer;
     if (!log) {
-        response.sendStatus(400);
+        response.sendStatus(400).json("Bad request");
         return;
     }
 
@@ -104,13 +104,13 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
         || isNaN(params.level)
         || isNaN(params.tokenId)
     ) {
-        response.sendStatus(400);
+        response.status(400).json("Bad request");
         return;
     }
 
     const token = await findUnusedGameToken(params.tokenId);
     if (!token) {
-        response.status(404).json("Invalid game token.");
+        response.status(400).json("Invalid game token.");
         return;
     }
 
@@ -120,8 +120,10 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
     } else if ("unauthorized" in nameResult) {
         if (params.playerNameAuth !== undefined) {
             await promisify(setTimeout)(2000);
+            response.status(401).json("Incorrect password.");
+        } else {
+            response.status(401).json("This name requires a password. Enter it here.");
         }
-        response.sendStatus(401);
         return;
     } else {
         response.status(400).json(nameResult.error);
@@ -133,10 +135,7 @@ app.post("/api/games", upload.single("log"), async (request, response) => {
         randomSeed: token.randomSeed,
     });
     if (gameResult.success) {
-        response.json(await storeGame({
-            ...params,
-            ...gameResult
-        }));
+        response.status(201).json(await storeGame({ ...params, ...gameResult }));
     } else {
         if (config.ASTEROIDS_SAVE_FAILED_GAMES) {
             await storeGame({

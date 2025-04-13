@@ -223,21 +223,29 @@ export const AppProvider = (
     );
 }
 
+export type QueueType = "app" | "game";
 export const useApp = () => useContext(AppContext)!;
+export const useQueue = (type: QueueType) => {
+    const app = useApp();
+    switch (type) {
+        case "app": return app.queue;
+        case "game": return app.game.queue;
+    }
+}
 
-const TICK_PRIORITY = 100;
+export const UI_TICK_PRIORITY = 100;
+
 const trueFn: () => any = () => true;
 
-export const onTick = (type: "app" | "game", callback: TickFn, enabled = trueFn) => {
-    const app = useApp();
-    const queue = type === "app" ? app.queue : app.game.queue;
+export const onTick = (type: "app" | "game" | TickQueue, callback: TickFn, enabled = trueFn) => {
+    const queue = typeof type === "string" ? useQueue(type) : type;
     let registered = false;
 
     createEffect(() => {
         if (!!enabled() !== registered) {
             registered = !!enabled();
             if (registered) {
-                queue.add(TICK_PRIORITY, callback);
+                queue.add(UI_TICK_PRIORITY, callback);
             } else {
                 queue.remove(callback);
             }

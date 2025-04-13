@@ -1,14 +1,16 @@
-import { DEG_TO_RAD, PI_2 } from "@pixi/core";
-import { Container } from "@pixi/display";
+import { DEG_TO_RAD, PI_2, Point } from "@pixi/core";
+import { Container, DisplayObject } from "@pixi/display";
 import { LINE_JOIN } from "@pixi/graphics";
 import { SmoothGraphics } from "@pixi/graphics-smooth";
 import anime from "animejs";
-import { createEffect, createSignal, splitProps } from "solid-js";
+import { createEffect, createMemo, createRenderEffect, createSignal, splitProps } from "solid-js";
 import { onTick } from "../AppContext";
-import { ContainerProps } from "../solid-pixi";
+import { ContainerProps, PointLike, setPoint } from "../solid-pixi";
+import { subVec2 } from "@wuspy/asteroids-core";
 
-export interface PointerProps extends ContainerProps {
-    childAttachment: "top" | "bottom" | "left" | "right";
+export interface PointerProps extends Omit<ContainerProps, "position" | "x" | "y" | "rotation"> {
+    target: DisplayObject;
+    attachment: PointLike;
     angle: number;
     length: number;
     delay?: number;
@@ -20,7 +22,8 @@ const CIRCLE_RADIUS = 3;
 
 export const Pointer = (_props: PointerProps) => {
     const [props, childProps] = splitProps(_props, [
-        "childAttachment",
+        "target",
+        "attachment",
         "angle",
         "length",
         "delay",
@@ -29,99 +32,150 @@ export const Pointer = (_props: PointerProps) => {
         "children",
     ]);
 
-    // eslint-disable-next-line solid/reactivity
-    const [progress, setProgress] = createSignal(props.revealed ? 1 : 0);
-    // eslint-disable-next-line solid/reactivity
-    const [contentAlpha, setContentAlpha] = createSignal(props.revealed ? 1 : 0);
-    // eslint-disable-next-line solid/reactivity
-    let wasRevealed = props.revealed;
+    const animation = {
+        length: 0,
+        pointerAlpha: 0,
+        contentAlpha: 0.01,
+    };
+    let wasRevealed = false;
 
-    let target!: Container;
+    let child!: Container;
     let container!: Container;
     let g!: SmoothGraphics;
 
-    const angleRad = () => (props.angle * DEG_TO_RAD) % PI_2;
-    const childPosition = () => ({
-        x: (CIRCLE_RADIUS + props.length) * progress() * Math.sin(angleRad()),
-        y: (CIRCLE_RADIUS + props.length) * progress() * -Math.cos(angleRad()),
+    const propsRotation = createMemo(() => (props.angle * DEG_TO_RAD) % PI_2);
+    // eslint-disable-next-line solid/reactivity
+    const [targetRotation, setTargetRotation] = createSignal(propsRotation());
+
+    // props.attachment converted into a Point
+    const attachment = createMemo(() => {
+        const point = new Point();
+        setPoint(point, props.attachment);
+        return point;
     });
 
-    const [anim, setAnim] = createSignal<anime.AnimeInstance>();
+    const [revealAnim, setRevealAnim] = createSignal<anime.AnimeInstance>();
+
+    createEffect(() => {
+        setPoint(container.position, props.attachment);
+    });
 
     createEffect(() => {
         if (props.revealed !== wasRevealed) {
-            const targets = { progress: progress(), contentAlpha: contentAlpha() };
-            setAnim(anime.timeline({
+            setRevealAnim(anime.timeline({
                 autoplay: false,
-                targets,
+                targets: animation,
                 delay: props.revealed ? props.delay : 0,
-                easing: "spring(10, 80, 54, 4)",
+                easing: "spring(1, 80, 54, 0)",
                 complete: () => {
-                    setProgress(props.revealed ? 1 : 0);
-                    setContentAlpha(props.revealed ? 1 : 0);
-                    setAnim(undefined);
+                    setRevealAnim(undefined);
                 },
-            }).add({
-                progress: props.revealed ? 1 : 0,
-                change: () => setProgress(targets.progress),
-            }, props.revealed ? 0 : 135).add({
-                contentAlpha: props.revealed ? 1 : 0,
-                change: () => setContentAlpha(targets.contentAlpha),
-            }, props.revealed ? 235 : 0));
+            }).add(
+                { length: props.revealed ? props.length : 0 },
+                props.revealed ? 0 : 135
+            ).add(
+                { pointerAlpha: props.revealed ? 0.5 : 0 },
+                props.revealed ? 0 : 135
+            ).add(
+                { contentAlpha: props.revealed ? 1 : 0.01 },
+                props.revealed ? 235 : 0
+            ));
 
             wasRevealed = props.revealed;
         }
     });
 
-    // eslint-disable-next-line solid/reactivity
-    onTick("app", timestamp => anim()!.tick(timestamp), anim);
+    // Spring constants
+    const m = 2;
+    const k = 50;
+    const d = 10;
 
-    createEffect(() => {
+    const childPosition = { x: 0, y: 0 };
+    let childAngularVelocity = 0;
+    // eslint-disable-next-line solid/reactivity
+    let rotation = targetRotation();
+    const lastTargetPosition = { x: 0, y: 0 };
+
+    createRenderEffect(() => {
+        lastTargetPosition.x = props.target.x;
+        lastTargetPosition.y = props.target.y;
+    });
+
+    // eslint-disable-next-line solid/reactivity
+    onTick("app", (timestamp, elapsed) => {
+        revealAnim()?.tick(timestamp);
+
+        // Apply transform from target
+        container.position.copyFrom(props.target.localTransform.apply(attachment()));
+        setTargetRotation((propsRotation() + props.target.rotation) % PI_2);
+
+        // Calculate angular force on pointer and apply it to rotation
+        let displacement = rotation - targetRotation();
+        const childVelocity = subVec2(props.target.position, lastTargetPosition);
+        lastTargetPosition.x = props.target.x;
+        lastTargetPosition.y = props.target.y;
+        if (animation.length) {
+            if (childVelocity.x) {
+                displacement += childVelocity.x * Math.cos(rotation) / Math.sqrt(animation.length);
+            }
+            if (childVelocity.y) {
+                displacement += childVelocity.y * Math.sin(rotation) / Math.sqrt(animation.length);
+            }
+        }
+        // if (Math.abs(displacement) < 0.0001) {
+        //     return;
+        // }
+
+        const force = displacement * -k - childAngularVelocity * d;
+        childAngularVelocity += force / m * elapsed;
+        rotation += childAngularVelocity * elapsed;
+
+        const [sinRot, cosRot] = [Math.sin(rotation), Math.cos(rotation)];
+        childPosition.x = (CIRCLE_RADIUS + animation.length) * sinRot;
+        childPosition.y = (CIRCLE_RADIUS + animation.length) * -cosRot;
+
+        const { x, y } = childPosition;
+
         g.clear();
         g.beginFill(props.color, 1, true);
         const origin = {
-            x: (1 - progress()) * -5 * Math.sin(angleRad()),
-            y: (1 - progress()) * -5 * -Math.cos(angleRad()),
+            x: (1 - animation.length / props.length) * -5 * sinRot,
+            y: (1 - animation.length / props.length) * -5 * -cosRot,
         };
         g.drawCircle(origin.x, origin.y, CIRCLE_RADIUS);
         g.endFill()
-        if (progress() > 0) {
+        if (animation.length > 0) {
             g.lineStyle({
                 color: props.color,
                 width: 2,
                 join: LINE_JOIN.BEVEL,
             });
             g.moveTo(
-                origin.x + (CIRCLE_RADIUS) * Math.sin(angleRad()),
-                origin.y + (CIRCLE_RADIUS) * -Math.cos(angleRad())
+                origin.x + (CIRCLE_RADIUS) * sinRot,
+                origin.y + (CIRCLE_RADIUS) * -cosRot,
             );
-            g.lineTo(childPosition().x, childPosition().y);
+            g.lineTo(x, y);
         }
-    });
 
-    createEffect(() => {
-        const { width, height } = target.getLocalBounds();
-        const { x, y } = childPosition();
-        switch (props.childAttachment) {
-            case "left":
-                target.position.set(x, y - height / 2);
-                break;
-            case "right":
-                target.position.set(x - width, y - height / 2);
-                break;
-            case "top":
-                target.position.set(x - width / 2, y);
-                break;
-            case "bottom":
-                target.position.set(x - width / 2, y - height);
-                break;
+        const { width, height } = child.getLocalBounds();
+        if (props.angle < 45) { // bottom attachment
+            child.position.set(x - width / 2, y - height);
+        } else if (props.angle < 135) { // left attachment
+            child.position.set(x, y - height / 2);
+        } else if (props.angle < 225) { // top attachment
+            child.position.set(x - width / 2, y);
+        } else { // right attachment
+            child.position.set(x - width, y - height / 2);
         }
+
+        g.alpha = animation.pointerAlpha;
+        child.alpha = animation.contentAlpha;
     });
 
     return (
         <container {...childProps} ref={container}>
-            <graphics ref={g} alpha={Math.min(progress(), 0.5)} />
-            <container ref={target} alpha={Math.max(contentAlpha(), 0.01)}>
+            <graphics ref={g} />
+            <container ref={child}>
                 {props.children}
             </container>
         </container>

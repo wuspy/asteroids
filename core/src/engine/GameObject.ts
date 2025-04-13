@@ -24,7 +24,7 @@ export const enum WrapMode {
 }
 
 export interface GameObjectParams<State, Events extends EventMap<keyof Events>> {
-    state: Readonly<State>;
+    state: State;
     events: EventManager<Events>,
     queue: TickQueue;
     queuePriority: number;
@@ -44,7 +44,6 @@ export type CoreGameObjectParams<State, Events extends EventMap<keyof Events>> =
         | "state"
         | "events"
         | "queue"
-        | "queue"
         | "worldSize"
         | "random"
     >;
@@ -54,11 +53,11 @@ export abstract class GameObject<State = any, DestroyOptions = any, Events exten
     onRotationChange?: (rotation: number) => void;
     onDestroyed?: (options: DestroyOptions) => void;
     onScreenWrap?: () => void;
-    readonly state: Readonly<State>;
+    readonly state: State;
     readonly events: EventManager<Events>
     readonly queue: TickQueue;
     readonly queuePriority: number;
-    readonly worldSize: Readonly<ISize>;
+    readonly worldSize: ISize;
     readonly position: ObservablePoint;
     readonly velocity: Vec2;
     protected readonly _random: RandomFn;

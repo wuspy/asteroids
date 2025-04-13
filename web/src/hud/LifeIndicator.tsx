@@ -3,7 +3,7 @@ import { Sprite } from "@pixi/sprite";
 import { LIVES, TickQueue } from "@wuspy/asteroids-core";
 import { Index, createSignal } from "solid-js";
 import { onGameEvent, useApp } from "../AppContext";
-import { PopAnimation } from "../animations";
+import { PopAnimation } from "../effects";
 import { createShipTexture } from "../gameplay";
 import { ContainerBackgroundShape } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";

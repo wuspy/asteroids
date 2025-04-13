@@ -1,21 +1,28 @@
-import { Texture } from "@pixi/core";
+import { ColorSource, Texture } from "@pixi/core";
 import { IDestroyOptions } from "@pixi/display";
 import { Sprite } from "@pixi/sprite";
 import { TickQueue } from "@wuspy/asteroids-core";
 import anime from "animejs";
+import { UI_TICK_PRIORITY } from "../AppContext";
+
+interface PopAnimationProps {
+    queue: TickQueue;
+    texture: Texture;
+    scale: number;
+    duration: number;
+    tint?: ColorSource;
+}
 
 export class PopAnimation extends Sprite {
     private readonly _timeline: anime.AnimeTimelineInstance;
     private readonly _queue: TickQueue;
 
-    constructor({ queue, texture, scale, duration }: {
-        queue: TickQueue,
-        texture: Texture,
-        scale: number,
-        duration: number,
-    }) {
+    constructor({ queue, texture, scale, duration, tint }: PopAnimationProps) {
         super(texture);
         this._queue = queue;
+        if (tint !== undefined) {
+            this.tint = tint;
+        }
 
         this._timeline = anime.timeline({
             duration,
@@ -31,7 +38,7 @@ export class PopAnimation extends Sprite {
             y: scale,
         }, 0);
 
-        queue.add(100, this._timeline.tick, this._timeline);
+        this._queue.add(UI_TICK_PRIORITY, this._timeline.tick, this._timeline);
     }
 
     override destroy(options?: boolean | IDestroyOptions) {

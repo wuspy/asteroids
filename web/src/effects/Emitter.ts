@@ -12,21 +12,21 @@ export interface EmitterOwner {
 export interface EmitterConfig extends Omit<EmitterConfigV3, "autoUpdate"> {
     queue: TickQueue;
     parent: Container;
-    owner?: EmitterOwner;
+    owner: EmitterOwner;
     destroyWhenComplete?: boolean;
-    destroyParent?: boolean;
+    onDestroyed?: () => void;
 }
 
 export class Emitter extends PixiEmitter {
-    destroyParent: boolean;
-    owner?: EmitterOwner;
+    readonly owner: EmitterOwner;
     protected readonly queue: TickQueue;
+    onDestroyed?: () => void;
 
     constructor(config: EmitterConfig) {
         super(config.parent, config);
         this.autoUpdate = false;
         this._destroyWhenComplete = !!config.destroyWhenComplete;
-        this.destroyParent = !!config.destroyParent;
+        this.onDestroyed = config.onDestroyed;
         this.owner = config.owner;
         this.queue = config.queue;
         this.queue.add(101, this.tick, this);
@@ -45,24 +45,21 @@ export class Emitter extends PixiEmitter {
     }
 
     tick(timestamp: number, elapsed: number) {
-        if (this.owner) {
-            if (this.owner.destroyed) {
-                this._emit = false;
-                this._destroyWhenComplete = true;
-            } else {
-                this.updateOwnerPos(this.owner.x, this.owner.y);
-                this.rotate(this.owner.rotation);
-            }
+        if (this.owner.destroyed) {
+            this._emit = false;
+            this._destroyWhenComplete = true;
+        } else {
+            this.updateOwnerPos(this.owner.x, this.owner.y);
+            this.rotate(this.owner.rotation);
         }
         this.update(elapsed);
     }
 
     override destroy() {
-        const parent = this.parent;
         super.destroy();
         this.queue.remove(this.tick, this);
-        if (this.destroyParent && parent && !parent.destroyed) {
-            parent.destroy({ children: true });
+        if (this.onDestroyed) {
+            this.onDestroyed();
         }
     }
 }

@@ -34,7 +34,7 @@ export const saveGame = async (game: SaveGameRequest) => {
     body.append("version", game.version);
     body.append("log", new Blob([game.log]));
 
-    return api.json.post<GameResponse, string>("/api/games", { body, timeout: 30000 });
+    return api.json.post<number, string>("/api/games", { body, timeout: 30000 });
 }
 
 export type { ApiResponse } from "./api";

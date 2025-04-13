@@ -5,28 +5,30 @@ import {
     GamepadButtonName,
     InputMapping
 } from "@wuspy/asteroids-core";
-import { Match, Show, Switch, splitProps } from "solid-js";
-import { useApp } from "../AppContext";
+import { Match, Show, Switch, createRenderEffect, splitProps } from "solid-js";
+import { onInputEvent, useApp } from "../AppContext";
 import { controls } from "../input";
 import { ContainerBackgroundShape } from "../yoga-pixi";
 import { ContainerProps } from "../solid-pixi";
+import { GlowFilter } from "@pixi/filter-glow";
 
 export type ControlType = "key" | "button" | "trigger" | "stick";
 
 const KEY_LABELS: { [Key in string]: string } = {
     " ": "Space",
     "Escape": "Esc",
-    "ArrowUp": "↑",
-    "ArrowLeft": "←",
-    "ArrowRight": "→",
-    "ArrowDown": "↓",
+    "ArrowUp": "⮝",
+    "ArrowLeft": "⮜",
+    "ArrowRight": "⮞",
+    "ArrowDown": "⮟",
 };
 
 const isMappingForControl = <Controls extends readonly string[]>(
     control: Controls[number],
     mapping: DigitalInputMapping<Controls> | AnalogInputMapping<Controls>,
     analogValue?: number,
-) => control === mapping.control && (analogValue === undefined || !("value" in mapping) || mapping.value === analogValue);
+) => control === mapping.control
+    && (analogValue === undefined || !("value" in mapping) || mapping.value === analogValue);
 
 const findControlValues = <Controls extends readonly string[]>(
     control: Controls[number],
@@ -117,6 +119,7 @@ export interface ControlGraphicProps extends ContainerProps {
     analogValue?: number;
     size: number;
     color: number;
+    glow?: boolean
 }
 
 export const ControlGraphic = (_props: ControlGraphicProps) => {
@@ -125,27 +128,22 @@ export const ControlGraphic = (_props: ControlGraphicProps) => {
 
     const control = () => findControlValues(props.control, input.mapping!, props.analogValue);
 
-    // This filter was designed to make the graphic glow when the associated input
-    // is pressed, however enabling it for first time causes a severe hang in Chrome at
-    // getUniformLocation in ShaderSystem.generateProgram.
-    // The amount of time it hangs also depends on the values of distance and quality.
+    const glowFilter = new GlowFilter({
+        outerStrength: 2,
+        innerStrength: 0,
+        distance: 10,
+        quality: 0.2,
+    });
 
-    // const glowFilter = new GlowFilter({
-    //     outerStrength: 2,
-    //     innerStrength: 0,
-    //     distance: 10,
-    //     quality: 0.5,
-    // });
+    glowFilter.enabled = false;
 
-    // glowFilter.enabled = false;
+    createRenderEffect(() => glowFilter.color = props.color);
 
-    // createRenderEffect(() => glowFilter.color = props.color);
-
-    // onInputEvent("poll", (state) => {
-    //     glowFilter.enabled = props.analogValue
-    //         ? Math.abs(props.analogValue - state[props.control]) < 1
-    //         : !!state[props.control];
-    // });
+    onInputEvent("poll", (state) => { // eslint-disable-line solid/reactivity
+        glowFilter.enabled = props.analogValue
+            ? Math.abs(props.analogValue - state[props.control]) < 1
+            : !!state[props.control];
+    });
 
     return <Show when={control()}>{control =>
         <Switch>
@@ -158,6 +156,7 @@ export const ControlGraphic = (_props: ControlGraphicProps) => {
                     yg:paddingX={props.size * 0.25}
                     yg:alignItems="center"
                     yg:justifyContent="center"
+                    filters={[glowFilter]}
                     backgroundStyle={{
                         shape: ContainerBackgroundShape.Rectangle,
                         cornerRadius: props.size * 0.2,
@@ -172,7 +171,9 @@ export const ControlGraphic = (_props: ControlGraphicProps) => {
                         style:fontSize={props.size / 1.618}
                         style:fontWeight="bold"
                         style:fill={props.color}
-                        text={capitalizeFirstLetter(control().name in KEY_LABELS ? KEY_LABELS[control().name] : control().name)}
+                        text={capitalizeFirstLetter(
+                            control().name in KEY_LABELS ? KEY_LABELS[control().name] : control().name
+                        )}
                     />
                 </container>
             </Match>
