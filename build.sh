@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ ! "$1" ]; then
+    echo "A package name is required"
+    exit 1
+fi;
+
 if [ ! -f "Dockerfile.$1" ] || [ ! -f "$1/package.json" ]; then
     echo Invalid package \"$1\"
     exit 1
@@ -16,4 +21,5 @@ package_json_get() {
 VERSION=$(package_json_get $1 version)
 NAME=$(package_json_get $1 name)
 
-docker build --no-cache -f Dockerfile.$1 --build-arg npm_package_version=$VERSION -t $NAME:v$VERSION .
+echo "Building $NAME:$VERSION"
+# docker build --no-cache -f Dockerfile.$1 --build-arg npm_package_version=$VERSION -t $NAME:v$VERSION .
