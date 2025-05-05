@@ -2,26 +2,30 @@ import { Container } from "@pixi/display";
 import { Emitter } from "./Emitter";
 import { Color, ColorSource, Texture } from "@pixi/core";
 import { Projectile } from "@wuspy/asteroids-core";
+import { UI_TICK_PRIORITY } from "../AppContext";
 
 interface ProjectileEmitterProps {
+    parent: Container;
     owner: Container;
     color: ColorSource;
     texture: Texture;
     projectile: Projectile;
 }
 
-export class ProjectileEmitter extends Container {
-    private readonly emitter: Emitter;
+export class ProjectileEmitter extends Emitter {
+    public constructor({ parent, owner, color, texture, projectile }: ProjectileEmitterProps) {
+        const tick = () => {
+            const scale = projectile.life + 1;
+            this.maxLifetime = 0.2 / scale;
+            this.minLifetime = 0.1 / scale;
+        };
 
-    public constructor({ owner, color, texture, projectile }: ProjectileEmitterProps) {
-        super();
-
-        this.emitter = new Emitter({
+        super({
             queue: projectile.queue,
-            parent: this,
+            parent,
             onDestroyed: () => {
                 projectile.onScreenWrap = undefined;
-                this.destroy();
+                projectile.queue.remove(tick);
             },
             owner,
             emit: true,
@@ -51,6 +55,7 @@ export class ProjectileEmitter extends Container {
             }],
         });
 
-        projectile.onScreenWrap = () => this.emitter.resetPositionTracking();
+        projectile.onScreenWrap = () => this.resetPositionTracking();
+        projectile.queue.add(UI_TICK_PRIORITY, tick);
     }
 }

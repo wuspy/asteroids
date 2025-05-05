@@ -248,7 +248,11 @@ export const StartScreen = (props: ContainerProps) => {
                 sortableChildren
             >
                 <For each={projectiles()}>{projectile =>
-                    <ProjectileSprite projectile={projectile} effectsContainer={shipContainer} />}
+                    <ProjectileSprite
+                        projectile={projectile}
+                        effectsContainer={shipContainer}
+                        destroyEmitterImmediately
+                    />}
                 </For>
                 <Show when={ship()}>{ship => <>
                     <ShipSprite

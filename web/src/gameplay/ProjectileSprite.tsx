@@ -6,7 +6,7 @@ import { PROJECTILE_LIFETIME, Projectile, Ship, UFO } from "@wuspy/asteroids-cor
 import { ProjectileEmitter } from "../effects";
 import { createDropShadowTexture } from "../util";
 import { onTick, useApp } from "../AppContext";
-import { onMount } from "solid-js";
+import { onCleanup, onMount } from "solid-js";
 import { trackGameObject } from "./util";
 
 const TEXTURE_CACHE = new WeakMap<IRenderer, Texture>();
@@ -25,6 +25,7 @@ const generateTextureCache = (renderer: IRenderer) => {
 interface ProjectileSpriteProps {
     projectile: Projectile;
     effectsContainer: Container;
+    destroyEmitterImmediately?: boolean;
 }
 
 export const ProjectileSprite = (props: ProjectileSpriteProps) => {
@@ -45,17 +46,26 @@ export const ProjectileSprite = (props: ProjectileSpriteProps) => {
 
     onMount(() => {
         trackGameObject(props.projectile, sprite);
-        props.effectsContainer.addChild(projectileEmitter = new ProjectileEmitter({
+        projectileEmitter = new ProjectileEmitter({
+            parent: props.effectsContainer,
             owner: sprite,
             color: sprite.tint,
             texture: sprite.texture,
             projectile: props.projectile,
-        }));
+        });
+    });
+
+    onCleanup(() => {
+        if (props.destroyEmitterImmediately) {
+            projectileEmitter.destroy();
+        } else {
+            projectileEmitter.emit = false;
+            projectileEmitter.destroyWhenComplete = true;
+        }
     });
 
     onTick(props.projectile.queue, () => { // eslint-disable-line solid/reactivity
-        sprite.alpha = projectileEmitter.alpha =
-            Math.min((PROJECTILE_LIFETIME - props.projectile.life) / (PROJECTILE_LIFETIME * 0.2), 1);
+        sprite.alpha = Math.min((PROJECTILE_LIFETIME - props.projectile.life) / (PROJECTILE_LIFETIME * 0.2), 1);
     });
 
     return <sprite
